@@ -1,0 +1,31 @@
+# =============================================================================
+# compose.override.yaml — Desenvolvimento local
+# Ativado automaticamente pelo Docker Compose quando presente
+# Reduz segurança para facilitar iteração; não usar em produção
+# =============================================================================
+services:
+  postgres:
+    ports:
+      - "5432:5432"
+
+  n8n:
+    environment:
+      N8N_HOST: localhost
+      N8N_PROTOCOL: http
+      N8N_EDITOR_BASE_URL: http://localhost:5678
+      WEBHOOK_URL: http://localhost:5678/
+      N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS: "false"
+    ports:
+      - "5678:5678"
+
+  worker:
+    environment:
+      LOG_PRETTY: "true"
+      APP_ENV: development
+    ports:
+      - "3001:3001"
+      - "9090:9090"
+
+  caddy:
+    profiles:
+      - production

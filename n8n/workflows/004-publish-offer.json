@@ -1,0 +1,38 @@
+{
+  "name": "WF-004 - Publicar Oferta",
+  "active": false,
+  "nodes": [
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.WORKER_INTERNAL_BASE_URL }}/v1/offers/{{ $json.offerId }}/publish",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ $env.WORKER_SERVICE_TOKEN }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyJson": "{\"idempotencyKey\":\"{{ $json.idempotencyKey }}\"}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "publish",
+      "name": "Publish Offer",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        0,
+        0
+      ]
+    }
+  ],
+  "connections": {},
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

@@ -1,0 +1,16 @@
+node_modules/
+dist/
+build/
+.git/
+.github/
+docs/
+*.log
+.env
+.env.*
+.auth/
+**/.auth/
+apps/worker/data/screenshots/
+apps/worker/data/traces/
+coverage/
+test-results/
+playwright-report/

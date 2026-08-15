@@ -1,0 +1,45 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build output
+dist/
+build/
+*.tsbuildinfo
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Auth / sessions (Playwright storageState)
+.auth/
+**/.auth/
+apps/worker/data/auth/
+
+# Screenshots / traces
+apps/worker/data/screenshots/
+apps/worker/data/traces/
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Coverage
+coverage/
+.nyc_output/
+
+# Playwright
+playwright-report/
+test-results/
