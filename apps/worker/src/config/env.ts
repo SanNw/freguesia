@@ -8,7 +8,9 @@ const envSchema = z.object({
   APP_NAME: z.string().default("Freguesia"),
   APP_ENV: z.enum(["development", "test", "staging", "production"]),
   APP_VERSION: z.string().default("0.1.0"),
-  NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
+  NODE_ENV: z
+    .enum(["development", "test", "production"])
+    .default("development"),
   TZ: z.string().default("America/Sao_Paulo"),
   LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]).default("info"),
   LOG_PRETTY: booleanString.default("false"),
@@ -51,7 +53,9 @@ const envSchema = z.object({
   TELEGRAM_PARSE_MODE: z.enum(["HTML", "MarkdownV2"]).default("HTML"),
   TELEGRAM_DISABLE_NOTIFICATION: booleanString.default("false"),
   TELEGRAM_PROTECT_CONTENT: booleanString.default("false"),
-  TELEGRAM_MESSAGE_FOOTER: z.string().default("Preco sujeito a alteracao. Link de afiliado."),
+  TELEGRAM_MESSAGE_FOOTER: z
+    .string()
+    .default("Preco sujeito a alteracao. Link de afiliado."),
   TELEGRAM_MAX_CAPTION_LENGTH: z.coerce.number().default(1024),
 
   AFFILIATE_DISCLOSURE_TEXT: z.string().default(""),
@@ -61,7 +65,9 @@ const envSchema = z.object({
   AFFILIATE_ALLOWED_DOMAINS: z.string().default(""),
 
   IMAGE_MAX_BYTES: z.coerce.number().default(5242880),
-  IMAGE_ALLOWED_MIME_TYPES: z.string().default("image/jpeg,image/png,image/webp"),
+  IMAGE_ALLOWED_MIME_TYPES: z
+    .string()
+    .default("image/jpeg,image/png,image/webp"),
   IMAGE_DOWNLOAD_TIMEOUT_MS: z.coerce.number().default(15000),
   IMAGE_CACHE_TTL_HOURS: z.coerce.number().default(1),
   IMAGE_HOTLINK_ALLOWED_BY_DEFAULT: booleanString.default("false"),

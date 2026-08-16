@@ -1,4 +1,10 @@
-import { existsSync, readFileSync, writeFileSync, mkdirSync } from "node:fs";
+import {
+  existsSync,
+  readFileSync,
+  writeFileSync,
+  mkdirSync,
+  unlinkSync,
+} from "node:fs";
 import { join } from "node:path";
 
 export class SessionStore {
@@ -26,7 +32,7 @@ export class SessionStore {
   delete(source: string): void {
     const p = this.pathFor(source);
     if (existsSync(p)) {
-      require("node:fs").unlinkSync(p);
+      unlinkSync(p);
     }
   }
 }

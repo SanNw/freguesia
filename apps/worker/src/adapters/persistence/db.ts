@@ -21,9 +21,7 @@ export class Database {
     return result.rows;
   }
 
-  async withTransaction<T>(
-    fn: (client: PoolClient) => Promise<T>,
-  ): Promise<T> {
+  async withTransaction<T>(fn: (client: PoolClient) => Promise<T>): Promise<T> {
     const client = await this.pool.connect();
     try {
       await client.query("BEGIN");

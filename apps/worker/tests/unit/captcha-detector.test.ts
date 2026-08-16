@@ -1,5 +1,8 @@
 import { describe, it, expect } from "vitest";
-import { detectCaptcha, detectBlocked } from "../../src/adapters/browser/captcha-detector.js";
+import {
+  detectCaptcha,
+  detectBlocked,
+} from "../../src/adapters/browser/captcha-detector.js";
 
 describe("detectCaptcha", () => {
   it("detects recaptcha", () => {

@@ -7,10 +7,13 @@ export function createLogger(service: string, pretty: boolean) {
   };
 
   if (pretty) {
-    return pino(base, pino.transport({
-      target: "pino-pretty",
-      options: { colorize: true, translateTime: "SYS:standard" },
-    }));
+    return pino(
+      base,
+      pino.transport({
+        target: "pino-pretty",
+        options: { colorize: true, translateTime: "SYS:standard" },
+      }),
+    );
   }
 
   return pino(base);

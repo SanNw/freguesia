@@ -1,7 +1,6 @@
-import type { ExtractedProduct, Offer } from "../domain/offer.js";
+import type { ExtractedProduct } from "../domain/offer.js";
 import { calculateDiscountPercent, validatePrice } from "../domain/price.js";
 import { env } from "../config/env.js";
-import { AppError } from "../shared/errors.js";
 
 export function validateOffer(extracted: ExtractedProduct): {
   valid: boolean;
@@ -32,7 +31,10 @@ export function validateOffer(extracted: ExtractedProduct): {
     return { valid: false, reason: "DISCOUNT_BELOW_MINIMUM" };
   }
 
-  if (discount > env.MAX_AUTOMATIC_DISCOUNT_PERCENT && env.MAX_AUTOMATIC_DISCOUNT_PERCENT < 100) {
+  if (
+    discount > env.MAX_AUTOMATIC_DISCOUNT_PERCENT &&
+    env.MAX_AUTOMATIC_DISCOUNT_PERCENT < 100
+  ) {
     return { valid: false, reason: "DISCOUNT_TOO_HIGH_REVIEW" };
   }
 
@@ -46,5 +48,9 @@ export function validateOffer(extracted: ExtractedProduct): {
   if (!extracted.title || extracted.title.length < 5) score -= 10;
   if (!extracted.imageUrl) score -= 10;
 
-  return { valid: true, score: Math.max(0, Math.round(score)), discountPercent: discount };
+  return {
+    valid: true,
+    score: Math.max(0, Math.round(score)),
+    discountPercent: discount,
+  };
 }

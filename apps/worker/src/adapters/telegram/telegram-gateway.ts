@@ -2,8 +2,7 @@ import { env } from "../../config/env.js";
 import type { Logger } from "../../config/logger.js";
 
 export function adminUserIds(): number[] {
-  return env.TELEGRAM_ADMIN_USER_IDS
-    .split(",")
+  return env.TELEGRAM_ADMIN_USER_IDS.split(",")
     .map((s) => parseInt(s.trim(), 10))
     .filter((n) => !isNaN(n));
 }
@@ -33,7 +32,9 @@ export class TelegramGateway {
     return `https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}`;
   }
 
-  async sendPhoto(input: TelegramSendPhotoInput): Promise<{ messageId: number }> {
+  async sendPhoto(
+    input: TelegramSendPhotoInput,
+  ): Promise<{ messageId: number }> {
     const body: Record<string, unknown> = {
       chat_id: input.chatId,
       photo: input.photo,
@@ -51,15 +52,25 @@ export class TelegramGateway {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
     });
-    const data = await resp.json() as { ok: boolean; result?: { message_id: number }; description?: string };
+    const data = (await resp.json()) as {
+      ok: boolean;
+      result?: { message_id: number };
+      description?: string;
+    };
     if (!data.ok) {
-      this.logger.error({ description: data.description }, "Telegram sendPhoto failed");
+      this.logger.error(
+        { description: data.description },
+        "Telegram sendPhoto failed",
+      );
       throw new Error(`Telegram sendPhoto failed: ${data.description}`);
     }
     return { messageId: data.result!.message_id };
   }
 
-  async sendMessage(chatId: string, text: string): Promise<{ messageId: number }> {
+  async sendMessage(
+    chatId: string,
+    text: string,
+  ): Promise<{ messageId: number }> {
     const resp = await fetch(`${this.baseUrl}/sendMessage`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -70,7 +81,11 @@ export class TelegramGateway {
         disable_web_page_preview: false,
       }),
     });
-    const data = await resp.json() as { ok: boolean; result?: { message_id: number }; description?: string };
+    const data = (await resp.json()) as {
+      ok: boolean;
+      result?: { message_id: number };
+      description?: string;
+    };
     if (!data.ok) {
       throw new Error(`Telegram sendMessage failed: ${data.description}`);
     }
@@ -93,13 +108,19 @@ export class TelegramGateway {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
     });
-    const data = await resp.json() as { ok: boolean; description?: string };
+    const data = (await resp.json()) as { ok: boolean; description?: string };
     if (!data.ok) {
-      this.logger.warn({ description: data.description }, "Telegram editMessageText failed");
+      this.logger.warn(
+        { description: data.description },
+        "Telegram editMessageText failed",
+      );
     }
   }
 
-  async answerCallbackQuery(callbackQueryId: string, text?: string): Promise<void> {
+  async answerCallbackQuery(
+    callbackQueryId: string,
+    text?: string,
+  ): Promise<void> {
     await fetch(`${this.baseUrl}/answerCallbackQuery`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -115,15 +136,30 @@ export class TelegramGateway {
     return {
       inline_keyboard: [
         [
-          { text: "\u2705 Aprovar", callback_data: `offer:approve:${offerShortId}` },
-          { text: "\u270f\ufe0f Editar", callback_data: `offer:edit:${offerShortId}` },
+          {
+            text: "\u2705 Aprovar",
+            callback_data: `offer:approve:${offerShortId}`,
+          },
+          {
+            text: "\u270f\ufe0f Editar",
+            callback_data: `offer:edit:${offerShortId}`,
+          },
         ],
         [
-          { text: "\u274c Descartar", callback_data: `offer:reject:${offerShortId}` },
-          { text: "\ud83d\udd04 Revalidar", callback_data: `offer:revalidate:${offerShortId}` },
+          {
+            text: "\u274c Descartar",
+            callback_data: `offer:reject:${offerShortId}`,
+          },
+          {
+            text: "\ud83d\udd04 Revalidar",
+            callback_data: `offer:revalidate:${offerShortId}`,
+          },
         ],
         [
-          { text: "\ud83d\udd52 Agendar", callback_data: `offer:schedule:${offerShortId}` },
+          {
+            text: "\ud83d\udd52 Agendar",
+            callback_data: `offer:schedule:${offerShortId}`,
+          },
         ],
       ],
     };

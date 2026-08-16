@@ -1,5 +1,27 @@
 import { z } from "zod";
 
+export const createManualOfferSchema = z.object({
+  title: z.string().min(3).max(300),
+  canonicalUrl: z.string().url(),
+  currentPriceCents: z.number().int().positive(),
+  previousPriceCents: z.number().int().positive().optional().nullable(),
+  currency: z.string().length(3).optional(),
+  imageUrl: z.string().url().optional().nullable(),
+  affiliateUrl: z.string().url().optional().nullable(),
+  store: z.string().optional(),
+  category: z.string().optional().nullable(),
+  brand: z.string().optional().nullable(),
+  availability: z
+    .enum(["in_stock", "out_of_stock", "preorder", "unknown"])
+    .optional(),
+});
+
+export const listOffersQuerySchema = z.object({
+  status: z.string().optional(),
+  limit: z.coerce.number().int().min(1).max(100).default(25),
+  offset: z.coerce.number().int().min(0).default(0),
+});
+
 export const createDiscoveryRunSchema = z.object({
   sourceSlug: z.string().min(1),
   query: z.string().optional(),

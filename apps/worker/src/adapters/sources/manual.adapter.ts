@@ -14,7 +14,7 @@ export class ManualAdapter implements SourceAdapter {
     throw new Error("Manual adapter does not extract from URLs");
   }
 
-  async revalidate(product: ProductRef): Promise<PriceSnapshot> {
+  async revalidate(_product: ProductRef): Promise<PriceSnapshot> {
     return {
       currentPriceCents: 0,
       previousPriceCents: null,
@@ -24,7 +24,7 @@ export class ManualAdapter implements SourceAdapter {
     };
   }
 
-  async createAffiliateLink(canonicalUrl: URL): Promise<AffiliateLinkResult> {
+  async createAffiliateLink(_canonicalUrl: URL): Promise<AffiliateLinkResult> {
     return {
       status: "manual_required",
       reason: "Manual adapter requires human-provided affiliate link",

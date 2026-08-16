@@ -19,15 +19,21 @@ describe("normalizeUrl", () => {
 
 describe("isAllowedDomain", () => {
   it("matches exact domain", () => {
-    expect(isAllowedDomain("https://amazon.com.br/product", ["amazon.com.br"])).toBe(true);
+    expect(
+      isAllowedDomain("https://amazon.com.br/product", ["amazon.com.br"]),
+    ).toBe(true);
   });
 
   it("matches subdomain", () => {
-    expect(isAllowedDomain("https://www.amazon.com.br/product", ["amazon.com.br"])).toBe(true);
+    expect(
+      isAllowedDomain("https://www.amazon.com.br/product", ["amazon.com.br"]),
+    ).toBe(true);
   });
 
   it("rejects unrelated domain", () => {
-    expect(isAllowedDomain("https://evil.com/product", ["amazon.com.br"])).toBe(false);
+    expect(isAllowedDomain("https://evil.com/product", ["amazon.com.br"])).toBe(
+      false,
+    );
   });
 });
 
@@ -51,25 +57,41 @@ describe("isPrivateOrLoopback", () => {
 
 describe("validateExternalUrl", () => {
   it("rejects non-https when required", () => {
-    const result = validateExternalUrl("http://example.com", ["example.com"], true);
+    const result = validateExternalUrl(
+      "http://example.com",
+      ["example.com"],
+      true,
+    );
     expect(result.valid).toBe(false);
     expect(result.reason).toBe("NOT_HTTPS");
   });
 
   it("rejects private IP", () => {
-    const result = validateExternalUrl("https://127.0.0.1/path", ["127.0.0.1"], true);
+    const result = validateExternalUrl(
+      "https://127.0.0.1/path",
+      ["127.0.0.1"],
+      true,
+    );
     expect(result.valid).toBe(false);
     expect(result.reason).toBe("PRIVATE_IP");
   });
 
   it("rejects disallowed domain", () => {
-    const result = validateExternalUrl("https://evil.com/path", ["amazon.com.br"], true);
+    const result = validateExternalUrl(
+      "https://evil.com/path",
+      ["amazon.com.br"],
+      true,
+    );
     expect(result.valid).toBe(false);
     expect(result.reason).toBe("DOMAIN_NOT_ALLOWED");
   });
 
   it("accepts valid https allowed domain", () => {
-    const result = validateExternalUrl("https://amazon.com.br/product", ["amazon.com.br"], true);
+    const result = validateExternalUrl(
+      "https://amazon.com.br/product",
+      ["amazon.com.br"],
+      true,
+    );
     expect(result.valid).toBe(true);
   });
 });

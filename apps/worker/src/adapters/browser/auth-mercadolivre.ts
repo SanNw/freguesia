@@ -15,7 +15,9 @@ async function main() {
   console.log("Navegando para Mercado Livre...");
   await page.goto("https://www.mercadolivre.com.br");
 
-  console.log("Fac?a login manualmente. Pressione Enter no terminal quando terminar.");
+  console.log(
+    "Fac?a login manualmente. Pressione Enter no terminal quando terminar.",
+  );
   await new Promise<void>((resolve) => {
     process.stdin.resume();
     process.stdin.once("data", () => resolve());

@@ -1,10 +1,14 @@
-import type { FastifyReply, FastifyRequest, DoneFuncWithErrOrRes } from "fastify";
+import type {
+  FastifyReply,
+  FastifyRequest,
+  DoneFuncWithErrOrRes,
+} from "fastify";
 import { env } from "../../config/env.js";
 import { AppError } from "../../shared/errors.js";
 
 export function serviceTokenAuth(
   request: FastifyRequest,
-  reply: FastifyReply,
+  _reply: FastifyReply,
   done: DoneFuncWithErrOrRes,
 ) {
   if (request.url === "/health" || request.url === "/ready") {
@@ -14,7 +18,14 @@ export function serviceTokenAuth(
 
   const auth = request.headers.authorization;
   if (!auth || !auth.startsWith("Bearer ")) {
-    done(new AppError("UNAUTHORIZED", "Missing or invalid Authorization header", false, 401));
+    done(
+      new AppError(
+        "UNAUTHORIZED",
+        "Missing or invalid Authorization header",
+        false,
+        401,
+      ),
+    );
     return;
   }
 

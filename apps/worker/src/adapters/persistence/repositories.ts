@@ -25,9 +25,13 @@ export class ApprovalRepository {
           notes, payload_before, payload_after)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
         [
-          input.id, input.offerId, input.decision,
-          input.actorTelegramUserId, input.actorUsername,
-          input.notes, JSON.stringify(input.payloadBefore),
+          input.id,
+          input.offerId,
+          input.decision,
+          input.actorTelegramUserId,
+          input.actorUsername,
+          input.notes,
+          JSON.stringify(input.payloadBefore),
           input.payloadAfter ? JSON.stringify(input.payloadAfter) : null,
         ],
       );
@@ -61,9 +65,16 @@ export class PublicationRepository {
         final_image_url, final_affiliate_url, status, idempotency_key, published_at)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
       [
-        input.id, input.offerId, input.channelId, input.telegramMessageId,
-        input.finalCaption, input.finalImageUrl, input.finalAffiliateUrl,
-        input.status, input.idempotencyKey, input.publishedAt,
+        input.id,
+        input.offerId,
+        input.channelId,
+        input.telegramMessageId,
+        input.finalCaption,
+        input.finalImageUrl,
+        input.finalAffiliateUrl,
+        input.status,
+        input.idempotencyKey,
+        input.publishedAt,
       ],
     );
   }
@@ -90,8 +101,12 @@ export class WorkflowEventRepository {
       `INSERT INTO workflow_events (correlation_id, entity_type, entity_id, event_type, actor, payload)
        VALUES ($1, $2, $3, $4, $5, $6)`,
       [
-        input.correlationId, input.entityType, input.entityId,
-        input.eventType, input.actor, JSON.stringify(input.payload),
+        input.correlationId,
+        input.entityType,
+        input.entityId,
+        input.eventType,
+        input.actor,
+        JSON.stringify(input.payload),
       ],
     );
   }

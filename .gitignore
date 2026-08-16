@@ -43,3 +43,8 @@ coverage/
 # Playwright
 playwright-report/
 test-results/
+
+# Python artifacts (experimental OAuth helper - do not track)
+__pycache__/
+*.py[cod]
+.venv/

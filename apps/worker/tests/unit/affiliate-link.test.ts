@@ -39,4 +39,42 @@ describe("validateAffiliateUrl", () => {
     );
     expect(result.valid).toBe(true);
   });
+
+  it("rejects invalid URL", () => {
+    const result = validateAffiliateUrl(
+      "not-a-url",
+      ["mercadolivre.com.br"],
+      true,
+    );
+    expect(result.valid).toBe(false);
+    expect(result.reason).toBe("INVALID_URL");
+  });
+
+  it("accepts http when requireHttps is false", () => {
+    const result = validateAffiliateUrl(
+      "http://example.com/product",
+      ["example.com"],
+      false,
+    );
+    expect(result.valid).toBe(true);
+  });
+
+  it("accepts multiple allowed domains", () => {
+    const result = validateAffiliateUrl(
+      "https://amzn.to/abc123",
+      ["mercadolivre.com.br", "amzn.to"],
+      true,
+    );
+    expect(result.valid).toBe(true);
+  });
+
+  it("rejects empty domain list", () => {
+    const result = validateAffiliateUrl(
+      "https://mercadolivre.com.br/product",
+      [],
+      true,
+    );
+    expect(result.valid).toBe(false);
+    expect(result.reason).toBe("DOMAIN_NOT_ALLOWED");
+  });
 });

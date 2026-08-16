@@ -74,4 +74,54 @@ describe("scoreOffer", () => {
     });
     expect(score).toBe(0);
   });
+
+  it("scores higher with more discount", () => {
+    const lowDiscount = scoreOffer({
+      discountPercent: 20,
+      currentPriceCents: 8000,
+      previousPriceCents: 10000,
+      sourceReliability: 10,
+      availability: "in_stock",
+      rating: 4,
+      reviewCount: 50,
+      nicheMatch: 5,
+      hasPreviousPriceEvidence: true,
+      titleComplete: true,
+      hasImage: true,
+      isExperimental: false,
+    });
+    const highDiscount = scoreOffer({
+      discountPercent: 50,
+      currentPriceCents: 5000,
+      previousPriceCents: 10000,
+      sourceReliability: 10,
+      availability: "in_stock",
+      rating: 4,
+      reviewCount: 50,
+      nicheMatch: 5,
+      hasPreviousPriceEvidence: true,
+      titleComplete: true,
+      hasImage: true,
+      isExperimental: false,
+    });
+    expect(highDiscount).toBeGreaterThan(lowDiscount);
+  });
+
+  it("gives full source reliability bonus", () => {
+    const score = scoreOffer({
+      discountPercent: 25,
+      currentPriceCents: 7500,
+      previousPriceCents: 10000,
+      sourceReliability: 15,
+      availability: "in_stock",
+      rating: null,
+      reviewCount: null,
+      nicheMatch: 0,
+      hasPreviousPriceEvidence: true,
+      titleComplete: true,
+      hasImage: true,
+      isExperimental: false,
+    });
+    expect(score).toBeGreaterThanOrEqual(15);
+  });
 });

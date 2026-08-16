@@ -42,7 +42,11 @@ export function validatePrice(
   if (currentCents > maxCents) {
     return { valid: false, reason: "PRICE_ABOVE_MAXIMUM" };
   }
-  if (previousCents !== null && previousCents > 0 && previousCents <= currentCents) {
+  if (
+    previousCents !== null &&
+    previousCents > 0 &&
+    previousCents <= currentCents
+  ) {
     return { valid: false, reason: "PREVIOUS_PRICE_NOT_GREATER" };
   }
   return { valid: true };
@@ -65,4 +69,17 @@ export function parseBRLPrice(text: string): number | null {
   const parsed = parseFloat(cleaned);
   if (isNaN(parsed) || parsed <= 0) return null;
   return Math.round(parsed * 100);
+}
+
+export function calculatePriceDropPercent(
+  previousCents: number,
+  currentCents: number,
+): number {
+  if (previousCents <= 0 || currentCents <= 0) {
+    return 0;
+  }
+  if (currentCents >= previousCents) {
+    return 0;
+  }
+  return Math.round((100 * (previousCents - currentCents)) / previousCents);
 }

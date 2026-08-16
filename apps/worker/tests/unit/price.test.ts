@@ -4,6 +4,7 @@ import {
   validatePrice,
   formatBRL,
   parseBRLPrice,
+  calculatePriceDropPercent,
 } from "../../src/domain/price.js";
 
 describe("calculateDiscountPercent", () => {
@@ -78,5 +79,27 @@ describe("parseBRLPrice", () => {
   it("returns null for invalid", () => {
     expect(parseBRLPrice("")).toBeNull();
     expect(parseBRLPrice("abc")).toBeNull();
+  });
+});
+
+describe("calculatePriceDropPercent", () => {
+  it("returns 0 when no price drop", () => {
+    expect(calculatePriceDropPercent(4990, 5000)).toBe(0);
+    expect(calculatePriceDropPercent(4990, 4990)).toBe(0);
+  });
+
+  it("calculates price drop correctly", () => {
+    expect(calculatePriceDropPercent(10000, 7500)).toBe(25);
+    expect(calculatePriceDropPercent(7990, 4990)).toBe(38);
+  });
+
+  it("returns 0 for zero or negative", () => {
+    expect(calculatePriceDropPercent(0, 4990)).toBe(0);
+    expect(calculatePriceDropPercent(4990, 0)).toBe(0);
+    expect(calculatePriceDropPercent(-100, 5000)).toBe(0);
+  });
+
+  it("rounds to nearest integer", () => {
+    expect(calculatePriceDropPercent(10000, 7550)).toBe(25);
   });
 });

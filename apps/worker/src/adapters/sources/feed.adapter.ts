@@ -48,7 +48,7 @@ export class FeedAdapter implements SourceAdapter {
     throw new Error("FeedAdapter does not extract from individual URLs");
   }
 
-  async revalidate(product: ProductRef): Promise<PriceSnapshot> {
+  async revalidate(_product: ProductRef): Promise<PriceSnapshot> {
     return {
       currentPriceCents: 0,
       previousPriceCents: null,
@@ -58,8 +58,11 @@ export class FeedAdapter implements SourceAdapter {
     };
   }
 
-  async createAffiliateLink(canonicalUrl: URL): Promise<AffiliateLinkResult> {
-    return { status: "unsupported", reason: "Feed adapter does not generate affiliate links" };
+  async createAffiliateLink(_canonicalUrl: URL): Promise<AffiliateLinkResult> {
+    return {
+      status: "unsupported",
+      reason: "Feed adapter does not generate affiliate links",
+    };
   }
 
   async healthCheck() {

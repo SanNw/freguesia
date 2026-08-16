@@ -1,12 +1,8 @@
 import type { FastifyInstance } from "fastify";
 import type { Logger } from "../../config/logger.js";
 import { db } from "../../adapters/persistence/db.js";
-import { browserPool } from "../../adapters/browser/browser-pool.js";
 
-export function registerHealthRoutes(
-  app: FastifyInstance,
-  logger: Logger,
-) {
+export function registerHealthRoutes(app: FastifyInstance, logger: Logger) {
   app.get("/health", async (_req, reply) => {
     reply.send({ status: "ok" });
   });
