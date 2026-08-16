@@ -1,0 +1,16 @@
+[
+  {
+    "id": "promo123",
+    "title": "Awin Smartphone Teste 512GB",
+    "description": "Super promoção",
+    "urlTracking": "https://awin.example.com/p/promo123",
+    "destinationUrl": "https://store.example.com/product/xyz",
+    "merchantId": "999",
+    "advertiserId": "999",
+    "advertiserName": "Loja Awin",
+    "currency": "BRL",
+    "price": 2999.00,
+    "originalPrice": 3499.00,
+    "imageUrl": "https://awin.example.com/image.jpg"
+  }
+]

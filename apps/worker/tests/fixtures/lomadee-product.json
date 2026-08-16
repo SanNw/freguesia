@@ -1,0 +1,16 @@
+{
+  "products": [
+    {
+      "id": 12345,
+      "name": "Smartphone Teste 256GB Preto",
+      "url": "https://example.com/p/12345",
+      "price": 1999.90,
+      "originalPrice": 2499.90,
+      "imageUrl": "https://example.com/image.jpg",
+      "availability": "in stock",
+      "brand": "Teste",
+      "gtin": "1234567890123",
+      "ean": "1234567890123"
+    }
+  ]
+}
