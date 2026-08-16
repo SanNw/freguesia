@@ -1,0 +1,52 @@
+{
+  "name": "INT-07 Record Click Reference",
+  "nodes": [
+    {
+      "parameters": {},
+      "name": "Start",
+      "type": "n8n-nodes-base.start",
+      "typeVersion": 1,
+      "position": [
+        250,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{.WORKER_INTERNAL_BASE_URL}}/v1/clicks",
+        "method": "POST",
+        "authentication": "bearerToken",
+        "nodeCredentialType": "n8n-nodes-base.bearerToken",
+        "options": {
+          "body": "={{}}"
+        }
+      },
+      "name": "Record Click",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [
+        470,
+        300
+      ],
+      "credentials": {
+        "bearerToken": {
+          "id": "={{.INTERNAL_API_TOKEN_ID}}",
+          "name": "Internal API Token"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Start": {
+      "main": [
+        [
+          {
+            "node": "Record Click",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

@@ -1,0 +1,85 @@
+{
+  "name": "INT-02 Upsert Product and Offer",
+  "nodes": [
+    {
+      "parameters": {},
+      "name": "Start",
+      "type": "n8n-nodes-base.start",
+      "typeVersion": 1,
+      "position": [
+        250,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{.WORKER_INTERNAL_BASE_URL}}/v1/products",
+        "authentication": "bearerToken",
+        "nodeCredentialType": "n8n-nodes-base.bearerToken",
+        "options": {
+          "body": "={{}}"
+        }
+      },
+      "name": "Upsert Product",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [
+        470,
+        300
+      ],
+      "credentials": {
+        "bearerToken": {
+          "id": "={{.INTERNAL_API_TOKEN_ID}}",
+          "name": "Internal API Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{.WORKER_INTERNAL_BASE_URL}}/v1/offers",
+        "authentication": "bearerToken",
+        "nodeCredentialType": "n8n-nodes-base.bearerToken",
+        "options": {
+          "body": "={{}}"
+        }
+      },
+      "name": "Upsert Offer",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [
+        690,
+        300
+      ],
+      "credentials": {
+        "bearerToken": {
+          "id": "={{.INTERNAL_API_TOKEN_ID}}",
+          "name": "Internal API Token"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Start": {
+      "main": [
+        [
+          {
+            "node": "Upsert Product",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upsert Product": {
+      "main": [
+        [
+          {
+            "node": "Upsert Offer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

@@ -1,0 +1,82 @@
+{
+  "name": "INT-09 Dead-letter Handler",
+  "nodes": [
+    {
+      "parameters": {},
+      "name": "Start",
+      "type": "n8n-nodes-base.start",
+      "typeVersion": 1,
+      "position": [
+        250,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{.WORKER_INTERNAL_BASE_URL}}/v1/dead-letters",
+        "method": "POST",
+        "authentication": "bearerToken",
+        "nodeCredentialType": "n8n-nodes-base.bearerToken",
+        "options": {
+          "body": "={{}}"
+        }
+      },
+      "name": "Save Dead Letter",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [
+        470,
+        300
+      ],
+      "credentials": {
+        "bearerToken": {
+          "id": "={{.INTERNAL_API_TOKEN_ID}}",
+          "name": "Internal API Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{.ALERT_TELEGRAM_CHAT_ID}}",
+        "text": "Dead-letter: {{.entityType}} {{.entityId}} - {{.errorCode}}"
+      },
+      "name": "Send Alert",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [
+        690,
+        300
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "={{.TELEGRAM_CREDENTIAL_ID}}",
+          "name": "Telegram"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Start": {
+      "main": [
+        [
+          {
+            "node": "Save Dead Letter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Dead Letter": {
+      "main": [
+        [
+          {
+            "node": "Send Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "name": "INT-04 Compare Offers",
+  "nodes": [
+    {
+      "parameters": {},
+      "name": "Start",
+      "type": "n8n-nodes-base.start",
+      "typeVersion": 1,
+      "position": [
+        250,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "const offers = .map(i => i.json);\\n\\n// Ordenar por effective_price\\noffers.sort((a, b) => (a.price.currentCents + (a.shipping.amountCents || 0)) - (b.price.currentCents + (b.shipping.amountCents || 0)));\\n\\nconst winner = offers[0];\\nconst alternatives = offers.slice(1, 4);\\n\\n = { winner, alternatives };\\n"
+      },
+      "name": "Compare and select winner",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        470,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Start": {
+      "main": [
+        [
+          {
+            "node": "Compare and select winner",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

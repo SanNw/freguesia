@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "n8n-mcp": {
+      "type": "http",
+      "url": "https://freguesiapromo.app.n8n.cloud/mcp-server/http",
+      "headers": {
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI5MzEyZDk4Ni1hZjFiLTRjMDktOGZiZC0yM2U1ZDcwNDEwMDAiLCJpc3MiOiJuOG4iLCJhdWQiOiJtY3Atc2VydmVyLWFwaSIsImp0aSI6IjU2NDI1MTNmLTAzODktNGZiNi05NTU3LTJkMWQ3MjFjNjI3ZiIsImlhdCI6MTc4NjkwNzI0NH0.irZUJaHwkgD7CdNQpuPsmXo-LWpJTOUJli0yF4hgCss"
+      }
+    }
+  }
+}

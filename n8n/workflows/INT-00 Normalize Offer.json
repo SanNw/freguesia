@@ -1,0 +1,40 @@
+{
+  "name": "INT-00 Normalize Offer",
+  "nodes": [
+    {
+      "parameters": {},
+      "name": "Start",
+      "type": "n8n-nodes-base.start",
+      "typeVersion": 1,
+      "position": [
+        250,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "const offer = ;\\n\\n// Mapear campos para o contrato interno\\nconst normalized = {\\n  schemaVersion: '1.0',\\n  source: offer.source,\\n  sourceOfferId: offer.externalId,\\n  sourceProductId: offer.productId,\\n  merchantId: offer.merchantId,\\n  merchantName: offer.merchantName,\\n  title: offer.title,\\n  brand: offer.brand,\\n  model: offer.model,\\n  identifiers: {\\n    gtin: offer.gtin,\\n    ean: offer.ean,\\n    isbn: offer.isbn,\\n    mpn: offer.mpn,\\n    asin: offer.asin,\\n  },\\n  categoryPath: offer.categoryPath,\\n  condition: offer.condition || 'new',\\n  price: {\\n    currentCents: Math.round(offer.price * 100),\\n    originalCents: offer.originalPrice ? Math.round(offer.originalPrice * 100) : null,\\n    currency: offer.currency || 'BRL',\\n    discountPercent: offer.discountPercent,\\n    installments: offer.installments,\\n    installmentValueCents: offer.installmentValue ? Math.round(offer.installmentValue * 100) : null,\\n  },\\n  shipping: {\\n    amountCents: offer.shippingCost ? Math.round(offer.shippingCost * 100) : null,\\n    isFree: offer.shippingCost === 0,\\n    confirmed: false,\\n  },\\n  tax: {\\n    amountCents: null,\\n    included: null,\\n    confirmed: false,\\n  },\\n  coupon: {\\n    code: offer.couponCode,\\n    description: offer.couponDescription,\\n    autoApplied: false,\\n  },\\n  availability: {\\n    inStock: offer.availability === 'in_stock',\\n    quantity: offer.quantity,\\n  },\\n  urls: {\\n    canonical: offer.canonicalUrl,\\n    affiliate: offer.affiliateUrl,\\n    image: offer.imageUrl,\\n  },\\n  seller: {\\n    name: offer.sellerName,\\n    id: offer.sellerId,\\n  },\\n  validity: {\\n    fetchedAt: new Date().toISOString(),\\n    lastVerifiedAt: new Date().toISOString(),\\n  },\\n  tracking: {\\n    campaign: 'telegram_freguesia',\\n    clickReference: offer-,\\n    attributionVerified: false,\\n  },\\n  rawHash: '', // Será preenchido depois\\n};\\n\\n = normalized;\\n"
+      },
+      "name": "Map to NormalizedOffer",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        470,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Start": {
+      "main": [
+        [
+          {
+            "node": "Map to NormalizedOffer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

@@ -1,0 +1,81 @@
+{
+  "name": "INT-06 Publish Telegram",
+  "nodes": [
+    {
+      "parameters": {},
+      "name": "Start",
+      "type": "n8n-nodes-base.start",
+      "typeVersion": 1,
+      "position": [
+        250,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{.WORKER_INTERNAL_BASE_URL}}/v1/offers/{{.offerId}}/publish-payload",
+        "authentication": "bearerToken",
+        "nodeCredentialType": "n8n-nodes-base.bearerToken"
+      },
+      "name": "Get Publish Payload",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [
+        470,
+        300
+      ],
+      "credentials": {
+        "bearerToken": {
+          "id": "={{.INTERNAL_API_TOKEN_ID}}",
+          "name": "Internal API Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{.TELEGRAM_PUBLIC_CHANNEL_ID}}",
+        "text": "={{[\"Get Publish Payload\"].json.caption}}",
+        "extraOptions": {
+          "photo": "={{[\"Get Publish Payload\"].json.imageUrl}}"
+        }
+      },
+      "name": "Send to Telegram",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [
+        690,
+        300
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "={{.TELEGRAM_CREDENTIAL_ID}}",
+          "name": "Telegram"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Start": {
+      "main": [
+        [
+          {
+            "node": "Get Publish Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Publish Payload": {
+      "main": [
+        [
+          {
+            "node": "Send to Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}
