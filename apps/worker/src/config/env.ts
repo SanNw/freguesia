@@ -83,6 +83,9 @@ const envSchema = z.object({
   READINESS_PATH: z.string().default("/ready"),
   METRICS_ENABLED: booleanString.default("true"),
   METRICS_PORT: z.coerce.number().default(9090),
+
+  SOURCE_MERCADOLIVRE_ENABLED: booleanString.default("false"),
+  SOURCE_MERCADOLIVRE_MAX_PAGES_PER_RUN: z.coerce.number().default(3),
 });
 
 export type Env = z.infer<typeof envSchema>;
