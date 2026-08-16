@@ -29,6 +29,22 @@ CREATE TABLE IF NOT EXISTS sources (
 );
 
 -- ---------------------------------------------------------------------------
+-- merchants: lojas parceiras de redes de afiliados
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS merchants (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  source_id UUID NOT NULL REFERENCES sources(id),
+  external_id TEXT NOT NULL,
+  name TEXT NOT NULL,
+  relationship_status TEXT,
+  country TEXT,
+  feed_enabled BOOLEAN NOT NULL DEFAULT FALSE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE(source_id, external_id)
+);
+
+-- ---------------------------------------------------------------------------
 -- products: produtos normalizados
 -- ---------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS products (
@@ -52,6 +68,30 @@ CREATE TABLE IF NOT EXISTS products (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   UNIQUE(source_id, external_id)
 );
+
+CREATE INDEX IF NOT EXISTS idx_products_gtin ON products(gtin) WHERE gtin IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_products_brand_model ON products(brand, model);
+CREATE INDEX IF NOT EXISTS idx_products_normalized_title ON products USING gin(to_tsvector('portuguese', normalized_title));
+
+-- ---------------------------------------------------------------------------
+-- source_products: mapeamento source_id + external_product_id -> product_id
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS source_products (
+  source_id UUID NOT NULL REFERENCES sources(id),
+  external_product_id TEXT NOT NULL,
+  product_id UUID NOT NULL REFERENCES products(id),
+  merchant_id UUID REFERENCES merchants(id),
+  raw_title TEXT,
+  raw_identifiers JSONB NOT NULL DEFAULT '{}',
+  raw_attributes JSONB NOT NULL DEFAULT '{}',
+  first_seen_at TIMESTAMPTZ NOT NULL,
+  last_seen_at TIMESTAMPTZ NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE(source_id, external_product_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_source_products_product ON source_products(product_id);
 
 -- ---------------------------------------------------------------------------
 -- price_observations: histórico de preços
@@ -92,6 +132,50 @@ CREATE TABLE IF NOT EXISTS offers (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+CREATE INDEX IF NOT EXISTS idx_offers_status ON offers(status);
+CREATE INDEX IF NOT EXISTS idx_offers_product ON offers(product_id);
+
+-- ---------------------------------------------------------------------------
+-- offer_price_history: histórico imutável de preços por oferta
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS offer_price_history (
+  id BIGSERIAL PRIMARY KEY,
+  offer_id UUID NOT NULL REFERENCES offers(id),
+  current_price_cents BIGINT NOT NULL,
+  previous_price_cents BIGINT,
+  currency CHAR(3) NOT NULL,
+  captured_at TIMESTAMPTZ NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_offer_price_history_offer
+  ON offer_price_history(offer_id, captured_at DESC);
+
+-- ---------------------------------------------------------------------------
+-- product_matches: comparações de produtos entre fontes
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS product_matches (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  left_source_product_id UUID NOT NULL REFERENCES source_products(product_id),
+  right_source_product_id UUID NOT NULL REFERENCES source_products(product_id),
+  score NUMERIC(3,2) NOT NULL CHECK (score >= 0 AND score <= 1),
+  method TEXT NOT NULL,
+  evidence JSONB NOT NULL DEFAULT '{}',
+  status TEXT NOT NULL DEFAULT 'review',
+  reviewed_by TEXT,
+  reviewed_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE(left_source_product_id, right_source_product_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_product_matches_left
+  ON product_matches(left_source_product_id);
+CREATE INDEX IF NOT EXISTS idx_product_matches_right
+  ON product_matches(right_source_product_id);
+CREATE INDEX IF NOT EXISTS idx_product_matches_status
+  ON product_matches(status);
+
 -- ---------------------------------------------------------------------------
 -- approvals: registro de decisões humanas
 -- ---------------------------------------------------------------------------
@@ -126,6 +210,8 @@ CREATE TABLE IF NOT EXISTS publications (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+CREATE INDEX IF NOT EXISTS idx_publications_offer ON publications(offer_id);
+
 -- ---------------------------------------------------------------------------
 -- workflow_events: auditoria append-only
 -- ---------------------------------------------------------------------------
@@ -145,3 +231,20 @@ CREATE INDEX IF NOT EXISTS idx_workflow_events_correlation
 
 CREATE INDEX IF NOT EXISTS idx_workflow_events_entity
   ON workflow_events(entity_type, entity_id);
+
+-- ---------------------------------------------------------------------------
+-- dead_letters: ofertas que falharam após retries
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS dead_letters (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  entity_type TEXT NOT NULL,
+  entity_id TEXT NOT NULL,
+  error_code TEXT NOT NULL,
+  error_detail JSONB NOT NULL DEFAULT '{}',
+  attempts INTEGER NOT NULL DEFAULT 0,
+  last_attempt_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_dead_letters_entity
+  ON dead_letters(entity_type, entity_id);
