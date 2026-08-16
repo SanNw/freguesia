@@ -1,0 +1,127 @@
+{
+  "name": "Lomadee - Collect Offers",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": "custom",
+        "cron": "={{$env.LOMADEE_SYNC_CRON || '*/20 * * * *'}}"
+      },
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.schedule",
+      "typeVersion": 1,
+      "position": [
+        250,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{$env.WORKER_INTERNAL_BASE_URL}}/v1/discovery-runs",
+        "method": "POST",
+        "authentication": "bearerToken",
+        "nodeCredentialType": "n8n-nodes-base.bearerToken",
+        "options": {
+          "body": {
+            "sourceSlug": "lomadee",
+            "limit": 100
+          }
+        }
+      },
+      "name": "Discover Lomadee Offers",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [
+        470,
+        300
+      ],
+      "credentials": {
+        "bearerToken": {
+          "id": "={{$env.INTERNAL_API_TOKEN_ID}}",
+          "name": "Internal API Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "workflowId": "={{$env.INT00_NORMALIZE_OFFER_WORKFLOW_ID}}"
+      },
+      "name": "Normalize Offer",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1,
+      "position": [
+        690,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "workflowId": "={{$env.INT01_VALIDATE_AFFILIATE_URL_WORKFLOW_ID}}"
+      },
+      "name": "Validate URL",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1,
+      "position": [
+        910,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "workflowId": "={{$env.INT02_UPSERT_PRODUCT_AND_OFFER_WORKFLOW_ID}}"
+      },
+      "name": "Upsert Product and Offer",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1,
+      "position": [
+        1130,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Discover Lomadee Offers",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Discover Lomadee Offers": {
+      "main": [
+        [
+          {
+            "node": "Normalize Offer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Offer": {
+      "main": [
+        [
+          {
+            "node": "Validate URL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate URL": {
+      "main": [
+        [
+          {
+            "node": "Upsert Product and Offer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}
