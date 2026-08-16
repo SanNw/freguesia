@@ -22,7 +22,14 @@ export class MercadolivreExperimentalAdapter implements SourceAdapter {
   async discover(input: DiscoveryInput): Promise<DiscoveredProduct[]> {
     const maxPages = env.SOURCE_MERCADOLIVRE_MAX_PAGES_PER_RUN;
     const limit = input.limit ?? 20;
-    const category = input.category ?? "eletronicos";
+    const query = input.query;
+    const category = input.category;
+
+    const baseUrl = query
+      ? `https://lista.mercadolivre.com.br/${encodeURIComponent(query)}`
+      : category
+        ? `https://ofertas.mercadolivre.com.br/${category}`
+        : "https://ofertas.mercadolivre.com.br";
 
     const context = await browserPool.acquire();
     try {
@@ -35,10 +42,7 @@ export class MercadolivreExperimentalAdapter implements SourceAdapter {
         pageNum <= maxPages && products.length < limit;
         pageNum++
       ) {
-        const url =
-          pageNum === 1
-            ? `https://ofertas.mercadolivre.com.br/${category}`
-            : `https://ofertas.mercadolivre.com.br/${category}?page=${pageNum}`;
+        const url = pageNum === 1 ? baseUrl : `${baseUrl}?page=${pageNum}`;
 
         await page.goto(url, { timeout: 30000 });
         await page.waitForLoadState("domcontentloaded", { timeout: 10000 });

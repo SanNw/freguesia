@@ -29,7 +29,11 @@ export class Database {
       await client.query("COMMIT");
       return result;
     } catch (e) {
-      await client.query("ROLLBACK");
+      try {
+        await client.query("ROLLBACK");
+      } catch {
+        // ROLLBACK falhou - client pode já estar fechado
+      }
       throw e;
     } finally {
       client.release();

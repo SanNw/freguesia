@@ -1,6 +1,7 @@
 import type { Logger } from "../config/logger.js";
 import { offerRepository } from "../adapters/persistence/offer-repository.js";
 import { productRepository } from "../adapters/persistence/product-repository.js";
+import { workflowEventRepository } from "../adapters/persistence/repositories.js";
 import { TelegramGateway } from "../adapters/telegram/telegram-gateway.js";
 import { env } from "../config/env.js";
 import { AppError } from "../shared/errors.js";
@@ -47,6 +48,15 @@ export async function requestApproval(
   }
 
   await offerRepository.updateStatus(offerId, "pending_approval");
+
+  await workflowEventRepository.record({
+    correlationId: offer.idempotencyKey,
+    entityType: "offer",
+    entityId: offerId,
+    eventType: "offer.pending_approval",
+    actor: "system",
+    payload: { messageId, shortId },
+  });
 
   logger.info({ offerId, messageId }, "Approval requested in Telegram");
 

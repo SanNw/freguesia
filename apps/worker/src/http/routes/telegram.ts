@@ -43,39 +43,39 @@ export function registerTelegramRoutes(app: FastifyInstance, logger: Logger) {
 
     const action = parts[1];
     const offerShortId = parts[2];
-    const offer = await offerRepository.getOffer(offerShortId);
+    const offer = await offerRepository.getByIdShort(offerShortId);
 
     if (!offer) {
       throw new AppError("OFFER_NOT_FOUND", "Offer not found", false, 404);
     }
 
     logger.info(
-      { action, offerId: offerShortId, userId },
+      { action, offerId: offer.id, userId },
       "Telegram callback received",
     );
 
     switch (action) {
       case "approve":
-        await offerRepository.updateStatus(offerShortId, "approved");
+        await offerRepository.updateStatus(offer.id, "approved");
         break;
       case "reject":
         await offerRepository.updateStatus(
-          offerShortId,
+          offer.id,
           "rejected",
           "Discarded by admin",
         );
         break;
       case "revalidate":
         logger.info(
-          { offerId: offerShortId },
+          { offerId: offer.id },
           "Revalidation requested via callback",
         );
         break;
       case "edit":
-        logger.info({ offerId: offerShortId }, "Edit requested via callback");
+        logger.info({ offerId: offer.id }, "Edit requested via callback");
         break;
       case "schedule":
-        await offerRepository.updateStatus(offerShortId, "scheduled");
+        await offerRepository.updateStatus(offer.id, "scheduled");
         break;
       default:
         throw new AppError(

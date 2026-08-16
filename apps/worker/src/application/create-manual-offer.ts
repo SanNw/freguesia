@@ -82,6 +82,10 @@ function buildCaption(
   lines.push("\u{1F6CD}Comprar com desconto");
   lines.push("");
   lines.push(env.TELEGRAM_MESSAGE_FOOTER);
+  if (env.AFFILIATE_DISCLOSURE_TEXT) {
+    lines.push("");
+    lines.push(env.AFFILIATE_DISCLOSURE_TEXT);
+  }
   return lines.join("\n");
 }
 
