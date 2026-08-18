@@ -14,6 +14,12 @@ n8n (orquestra) → Worker Node.js/TS/Playwright (executa) → PostgreSQL (fonte
 - **PostgreSQL** mantém ofertas, histórico de preços, auditoria e idempotência.
 - **Telegram Bot API** recebe aprovações e publica no canal.
 
+## Manual completo
+
+Para aprender a arquitetura do zero, recriar o projeto ou adaptá-lo para outros tipos de automação, consulte o [Manual de Arquitetura Replicável](./docs/MANUAL-ARQUITETURA-REPLICAVEL.md).
+
+O manual aborda Worker, PostgreSQL, n8n, Telegram, Docker, fontes de dados, OAuth, afiliados, classificação, aprovação humana, publicação, segurança, testes, observabilidade, recuperação e replicação por pessoas ou agentes de IA.
+
 ## Pré-requisitos
 
 - Docker e Docker Compose
@@ -60,6 +66,7 @@ Ver [Freguesia.md](./Freguesia.md) para a especificação técnica completa.
 
 ## Documentação
 
+- [Manual de Arquitetura Replicável](./docs/MANUAL-ARQUITETURA-REPLICAVEL.md)
 - [Especificação técnica](./Freguesia.md)
 - [ADRs](./docs/adr/)
 - [Security](./docs/SECURITY.md)
