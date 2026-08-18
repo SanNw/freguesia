@@ -6,7 +6,10 @@ export const createManualOfferSchema = z.object({
   currentPriceCents: z.number().int().positive(),
   previousPriceCents: z.number().int().positive().optional().nullable(),
   currency: z.string().length(3).optional(),
-  imageUrl: z.string().url().optional().nullable(),
+  imageUrl: z.string().url(),
+  additionalImages: z.array(z.string().url()).max(9).default([]),
+  couponCode: z.string().min(1).max(100).optional().nullable(),
+  couponDescription: z.string().min(1).max(300).optional().nullable(),
   affiliateUrl: z.string().url().optional().nullable(),
   store: z.string().optional(),
   category: z.string().optional().nullable(),
@@ -14,6 +17,15 @@ export const createManualOfferSchema = z.object({
   availability: z
     .enum(["in_stock", "out_of_stock", "preorder", "unknown"])
     .optional(),
+  shippingOrigin: z.enum(["brazil", "international", "unknown"]).optional(),
+  rating: z.number().min(0).max(5).optional().nullable(),
+  reviewCount: z.number().int().min(0).optional().nullable(),
+  taxAmountCents: z.number().int().nonnegative().optional().nullable(),
+  taxIncluded: z.boolean().optional().nullable(),
+  taxConfirmed: z.boolean().optional(),
+  installmentCount: z.number().int().min(2).max(48).optional().nullable(),
+  installmentValueCents: z.number().int().positive().optional().nullable(),
+  interestFree: z.boolean().optional(),
 });
 
 export const listOffersQuerySchema = z.object({
@@ -26,7 +38,7 @@ export const createDiscoveryRunSchema = z.object({
   sourceSlug: z.string().min(1),
   query: z.string().optional(),
   category: z.string().optional(),
-  limit: z.number().int().min(1).max(100).default(20),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
   correlationId: z.string().uuid().optional(),
 });
 
@@ -45,6 +57,10 @@ export const approveSchema = z.object({
 export const publishSchema = z.object({
   idempotencyKey: z.string().min(1),
   correlationId: z.string().uuid().optional(),
+});
+
+export const affiliateLinkSchema = z.object({
+  affiliateUrl: z.string().url(),
 });
 
 export const telegramCallbackSchema = z.object({

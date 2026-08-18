@@ -45,17 +45,23 @@ const envSchema = z.object({
   REQUIRE_HUMAN_APPROVAL: booleanString.default("true"),
 
   TELEGRAM_BOT_TOKEN: z.string().min(1),
+  TELEGRAM_BOT_API_BASE: z.string().url().default("https://api.telegram.org"),
   TELEGRAM_APPROVAL_CHAT_ID: z.string(),
   TELEGRAM_PUBLIC_CHANNEL_ID: z.string(),
   TELEGRAM_PUBLIC_CHANNEL_USERNAME: z.string().default(""),
+  TELEGRAM_CHANNEL_HARDWARE_ID: z.string().default(""),
+  TELEGRAM_CHANNEL_HOME_KITCHEN_ID: z.string().default(""),
+  TELEGRAM_CHANNEL_APPLIANCES_ID: z.string().default(""),
+  TELEGRAM_CHANNEL_BEAUTY_ID: z.string().default(""),
+  TELEGRAM_CHANNEL_ELECTRONICS_ID: z.string().default(""),
   TELEGRAM_ADMIN_USER_IDS: z.string().default(""),
   TELEGRAM_WEBHOOK_SECRET: z.string().default(""),
+  TELEGRAM_POLLING_ENABLED: booleanString.default("true"),
+  TELEGRAM_RICH_TEXT_ENABLED: booleanString.default("true"),
   TELEGRAM_PARSE_MODE: z.enum(["HTML", "MarkdownV2"]).default("HTML"),
   TELEGRAM_DISABLE_NOTIFICATION: booleanString.default("false"),
   TELEGRAM_PROTECT_CONTENT: booleanString.default("false"),
-  TELEGRAM_MESSAGE_FOOTER: z
-    .string()
-    .default("Preco sujeito a alteracao. Link de afiliado."),
+  TELEGRAM_MESSAGE_FOOTER: z.string().default("Preço sujeito a alteração."),
   TELEGRAM_MAX_CAPTION_LENGTH: z.coerce.number().default(1024),
 
   AFFILIATE_DISCLOSURE_TEXT: z.string().default(""),
@@ -83,9 +89,42 @@ const envSchema = z.object({
   READINESS_PATH: z.string().default("/ready"),
   METRICS_ENABLED: booleanString.default("true"),
   METRICS_PORT: z.coerce.number().default(9090),
+  DEFAULT_HTTP_TIMEOUT_MS: z.coerce.number().default(30000),
+  HTTP_RETRY_MAX: z.coerce.number().default(4),
+  HTTP_RETRY_BASE_MS: z.coerce.number().default(1000),
 
   SOURCE_MERCADOLIVRE_ENABLED: booleanString.default("false"),
   SOURCE_MERCADOLIVRE_MAX_PAGES_PER_RUN: z.coerce.number().default(3),
+  MERCADOLIVRE_CLIENT_ID: z.string().default(""),
+  MERCADOLIVRE_CLIENT_SECRET: z.string().default(""),
+  MERCADOLIVRE_REDIRECT_URI: z.string().default(""),
+  MERCADOLIVRE_API_BASE_URL: z
+    .string()
+    .url()
+    .default("https://api.mercadolibre.com"),
+  MERCADOLIVRE_AUTH_BASE_URL: z
+    .string()
+    .url()
+    .default("https://auth.mercadolivre.com.br"),
+  MERCADOLIVRE_AFFILIATE_AUTOMATION_ENABLED: booleanString.default("false"),
+  MERCADOLIVRE_AFFILIATE_PORTAL_URL: z
+    .string()
+    .url()
+    .default(
+      "https://www.mercadolivre.com.br/afiliados/hub?is_affiliate=true#menu-user",
+    ),
+  MERCADOLIVRE_AFFILIATE_SESSION_NAME: z
+    .string()
+    .default("mercadolivre-affiliate"),
+  SOURCE_SHOPEE_ENABLED: booleanString.default("false"),
+  SHOPEE_AFFILIATE_API_URL: z.string().default(""),
+  SHOPEE_APP_ID: z.string().default(""),
+  SHOPEE_SECRET: z.string().default(""),
+  SOURCE_ALIEXPRESS_ENABLED: booleanString.default("false"),
+  ALIEXPRESS_AFFILIATE_API_URL: z.string().default(""),
+  ALIEXPRESS_APP_KEY: z.string().default(""),
+  ALIEXPRESS_APP_SECRET: z.string().default(""),
+  ALIEXPRESS_TRACKING_ID: z.string().default(""),
 });
 
 export type Env = z.infer<typeof envSchema>;

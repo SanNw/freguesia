@@ -1,0 +1,19 @@
+# =============================================================================
+# Caddyfile — Desenvolvimento Local (com subdomínios) V2
+# =============================================================================
+{
+	# O OAuth do Mercado Livre exige callback HTTPS.
+}
+
+http://n8n.localhost {
+	reverse_proxy http://n8n:5678 {
+		transport http {
+			dial_timeout 5s
+		}
+	}
+}
+
+https://worker.localhost {
+	tls internal
+	reverse_proxy http://worker:3001
+}

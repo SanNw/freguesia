@@ -1,4 +1,4 @@
-import { chromium, type Browser } from "playwright";
+import { chromium, type Browser, type BrowserContextOptions } from "playwright";
 
 const MAX_CONCURRENCY = Number(process.env.PLAYWRIGHT_MAX_CONCURRENCY || "1");
 
@@ -16,7 +16,7 @@ export class BrowserPool {
     return this.browser;
   }
 
-  async acquire() {
+  async acquire(options: BrowserContextOptions = {}) {
     if (this.activeCount >= this.maxConcurrency) {
       throw new Error("Browser concurrency limit reached");
     }
@@ -25,6 +25,7 @@ export class BrowserPool {
     const context = await browser.newContext({
       locale: process.env.PLAYWRIGHT_LOCALE || "pt-BR",
       timezoneId: process.env.PLAYWRIGHT_TIMEZONE_ID || "America/Sao_Paulo",
+      ...options,
     });
     return context;
   }

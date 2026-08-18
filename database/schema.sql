@@ -77,6 +77,7 @@ CREATE INDEX IF NOT EXISTS idx_products_normalized_title ON products USING gin(t
 -- source_products: mapeamento source_id + external_product_id -> product_id
 -- ---------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS source_products (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   source_id UUID NOT NULL REFERENCES sources(id),
   external_product_id TEXT NOT NULL,
   product_id UUID NOT NULL REFERENCES products(id),
@@ -124,6 +125,9 @@ CREATE TABLE IF NOT EXISTS offers (
   affiliate_url TEXT,
   affiliate_provider TEXT,
   image_url TEXT,
+  additional_image_urls JSONB NOT NULL DEFAULT '[]',
+  coupon_code TEXT,
+  coupon_description TEXT,
   proposed_caption TEXT,
   rejection_reason TEXT,
   expires_at TIMESTAMPTZ,
@@ -156,8 +160,8 @@ CREATE INDEX IF NOT EXISTS idx_offer_price_history_offer
 -- ---------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS product_matches (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  left_source_product_id UUID NOT NULL REFERENCES source_products(product_id),
-  right_source_product_id UUID NOT NULL REFERENCES source_products(product_id),
+  left_source_product_id UUID NOT NULL REFERENCES source_products(id),
+  right_source_product_id UUID NOT NULL REFERENCES source_products(id),
   score NUMERIC(3,2) NOT NULL CHECK (score >= 0 AND score <= 1),
   method TEXT NOT NULL,
   evidence JSONB NOT NULL DEFAULT '{}',
@@ -188,6 +192,7 @@ CREATE TABLE IF NOT EXISTS approvals (
   notes TEXT,
   payload_before JSONB NOT NULL,
   payload_after JSONB,
+  idempotency_key TEXT NOT NULL UNIQUE,
   decided_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
@@ -248,3 +253,25 @@ CREATE TABLE IF NOT EXISTS dead_letters (
 
 CREATE INDEX IF NOT EXISTS idx_dead_letters_entity
   ON dead_letters(entity_type, entity_id);
+
+-- OAuth credentials for official source integrations.
+CREATE TABLE IF NOT EXISTS integration_credentials (
+  provider TEXT PRIMARY KEY,
+  access_token TEXT NOT NULL,
+  refresh_token TEXT,
+  token_type TEXT NOT NULL DEFAULT 'bearer',
+  scope TEXT,
+  external_user_id TEXT,
+  expires_at TIMESTAMPTZ NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS oauth_states (
+  provider TEXT NOT NULL,
+  state_hash TEXT NOT NULL,
+  code_verifier TEXT NOT NULL,
+  expires_at TIMESTAMPTZ NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  PRIMARY KEY (provider, state_hash)
+);

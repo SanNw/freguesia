@@ -38,6 +38,10 @@ export function validateOffer(extracted: ExtractedProduct): {
     return { valid: false, reason: "DISCOUNT_TOO_HIGH_REVIEW" };
   }
 
+  if (!extracted.imageUrl) {
+    return { valid: false, reason: "IMAGE_REQUIRED" };
+  }
+
   let score = 0;
   score += Math.min(discount, 35);
   score += extracted.availability === "in_stock" ? 10 : 0;

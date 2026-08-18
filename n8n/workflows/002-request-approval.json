@@ -1,25 +1,27 @@
 {
+  "id": "85e429ae-90be-4641-996c-27353cf48e61",
   "name": "WF-002 - Solicitar Aprovacao",
   "active": false,
   "nodes": [
     {
+      "parameters": {},
+      "id": "manual-trigger",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [0, 0]
+    },
+    {
       "parameters": {
         "method": "POST",
-        "url": "https://api.telegram.org/bot{{ $env.TELEGRAM_BOT_TOKEN }}/sendPhoto",
-        "sendBody": true,
-        "bodyParameters": {
+        "url": "={{ $env.WORKER_INTERNAL_BASE_URL }}/v1/offers/{{ $json.offerId }}/request-approval",
+        "authentication": "none",
+        "sendHeaders": true,
+        "headerParameters": {
           "parameters": [
             {
-              "name": "chat_id",
-              "value": "{{ $env.TELEGRAM_APPROVAL_CHAT_ID }}"
-            },
-            {
-              "name": "photo",
-              "value": "={{ $json.imageUrl }}"
-            },
-            {
-              "name": "caption",
-              "value": "={{ $json.caption }}"
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.WORKER_SERVICE_TOKEN }}"
             }
           ]
         },
@@ -28,16 +30,20 @@
         }
       },
       "id": "send-photo",
-      "name": "Send Approval Photo",
+      "name": "Request Worker Approval",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        0,
+        240,
         0
       ]
     }
   ],
-  "connections": {},
+  "connections": {
+    "Manual Trigger": {
+      "main": [[{ "node": "Request Worker Approval", "type": "main", "index": 0 }]]
+    }
+  },
   "settings": {
     "executionOrder": "v1"
   }

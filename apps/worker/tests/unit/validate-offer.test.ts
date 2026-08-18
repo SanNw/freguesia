@@ -14,6 +14,27 @@ const { validateOffer } =
   await import("../../src/application/validate-offer.js");
 
 describe("validateOffer", () => {
+  it("requires an image for an otherwise valid promotion", () => {
+    const result = validateOffer({
+      source: "manual",
+      externalId: "image-required",
+      canonicalUrl: "https://example.com/product",
+      title: "Produto com desconto",
+      currentPriceCents: 4990,
+      previousPriceCents: 7990,
+      currency: "BRL",
+      availability: "in_stock",
+      imageUrl: null,
+      seller: null,
+      rating: null,
+      reviewCount: null,
+      capturedAt: new Date().toISOString(),
+      rawEvidence: {},
+    });
+    expect(result.valid).toBe(false);
+    expect(result.reason).toBe("IMAGE_REQUIRED");
+  });
+
   it("accepts a valid offer with discount", () => {
     const result = validateOffer({
       source: "manual",

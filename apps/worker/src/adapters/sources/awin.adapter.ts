@@ -4,6 +4,7 @@ import type { ExtractedProduct } from "../../domain/offer.js";
 import type { PriceSnapshot, ProductRef } from "../../domain/price.js";
 import type { AffiliateLinkResult } from "../../domain/affiliate-link.js";
 import { AppError } from "../../shared/errors.js";
+import { resilientFetch } from "../../shared/http-client.js";
 
 const AWIN_BASE_URL = process.env.AWIN_BASE_URL || "https://api.awin.com";
 const AWIN_API_TOKEN = process.env.AWIN_API_TOKEN;
@@ -58,7 +59,8 @@ export class AwinAdapter implements SourceAdapter {
 
     const url = this.buildUrl("/promotions", params);
 
-    const resp = await fetch(url, {
+    const resp = await resilientFetch(url, {
+      source: this.source,
       headers: this.headers,
     });
 
@@ -101,7 +103,8 @@ export class AwinAdapter implements SourceAdapter {
       id,
     });
 
-    const resp = await fetch(offerUrl, {
+    const resp = await resilientFetch(offerUrl, {
+      source: this.source,
       headers: this.headers,
     });
 
@@ -197,9 +200,10 @@ export class AwinAdapter implements SourceAdapter {
     const id = extractIdFromUrl(url);
 
     try {
-      const resp = await fetch(
+      const resp = await resilientFetch(
         `${AWIN_BASE_URL}/publishers/${AWIN_PUBLISHER_ID}/linkbuilder/generate`,
         {
+          source: this.source,
           method: "POST",
           headers: {
             ...this.headers,
@@ -246,26 +250,48 @@ export class AwinAdapter implements SourceAdapter {
   }
 
   async healthCheck() {
-    if (!AWIN_API_TOKEN) {
+    if (!AWIN_API_TOKEN || !AWIN_PUBLISHER_ID) {
       return {
         healthy: false,
-        details: { reason: "API token not configured" },
+        details: { reason: "API token or publisher ID not configured" },
       };
     }
 
     try {
-      const resp = await fetch(
-        this.buildUrl("/accounts", { type: "publisher" }),
-        {
+      const [accountsResp, programmesResp] = await Promise.all([
+        resilientFetch(`${AWIN_BASE_URL}/accounts`, {
+          source: this.source,
           headers: this.headers,
-        },
+        }),
+        resilientFetch(
+          this.buildUrl(`/publishers/${AWIN_PUBLISHER_ID}/programmes`, {
+            relationship: "joined",
+          }),
+          { source: this.source, headers: this.headers },
+        ),
+      ]);
+      const accountsBody = (await accountsResp.json()) as {
+        accounts?: Array<{ accountId?: number; accountType?: string }>;
+      };
+      const programmes = programmesResp.ok
+        ? ((await programmesResp.json()) as unknown[])
+        : [];
+      const configuredPublisherFound = (accountsBody.accounts ?? []).some(
+        (account) =>
+          String(account.accountId) === AWIN_PUBLISHER_ID &&
+          account.accountType === "publisher",
       );
 
       return {
-        healthy: resp.ok,
+        healthy:
+          accountsResp.ok &&
+          programmesResp.ok &&
+          configuredPublisherFound &&
+          programmes.length > 0,
         details: {
-          status: resp.status,
           source: this.source,
+          configuredPublisherFound,
+          joinedProgrammeCount: programmes.length,
         },
       };
     } catch (e) {
@@ -277,7 +303,6 @@ export class AwinAdapter implements SourceAdapter {
     }
   }
 }
-
 function extractIdFromUrl(url: URL): string {
   const id = url.searchParams.get("id") || url.searchParams.get("promotionId");
   if (id) return id;

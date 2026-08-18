@@ -9,8 +9,8 @@
     "advertiserId": "999",
     "advertiserName": "Loja Awin",
     "currency": "BRL",
-    "price": 2999.00,
-    "originalPrice": 3499.00,
+    "price": 2999.0,
+    "originalPrice": 3499.0,
     "imageUrl": "https://awin.example.com/image.jpg"
   }
 ]

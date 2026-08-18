@@ -7,6 +7,10 @@ import { registerHealthRoutes } from "./http/routes/health.js";
 import { registerDiscoveryRoutes } from "./http/routes/discovery.js";
 import { registerOfferRoutes } from "./http/routes/offers.js";
 import { registerTelegramRoutes } from "./http/routes/telegram.js";
+import { registerMercadoLivreRoutes } from "./http/routes/mercadolivre.js";
+import { registerMaintenanceRoutes } from "./http/routes/maintenance.js";
+import { registerShopeeRoutes } from "./http/routes/shopee.js";
+import { registerAliExpressRoutes } from "./http/routes/aliexpress.js";
 import { AppError } from "./shared/errors.js";
 
 export async function buildApp(logger: Logger) {
@@ -44,6 +48,10 @@ export async function buildApp(logger: Logger) {
   registerDiscoveryRoutes(app, logger);
   registerOfferRoutes(app, logger);
   registerTelegramRoutes(app, logger);
+  registerMercadoLivreRoutes(app, logger);
+  registerMaintenanceRoutes(app, logger);
+  registerShopeeRoutes(app);
+  registerAliExpressRoutes(app);
 
   return app;
 }

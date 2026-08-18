@@ -1,0 +1,245 @@
+# Contexto operacional do projeto Freguesia
+
+Este arquivo e a fonte de contexto rapido para qualquer IA que trabalhe neste repositorio.
+Antes de diagnosticar, planejar ou alterar o projeto, leia este arquivo e confirme o estado real com testes e ferramentas. Atualize-o sempre que uma mudanca relevante for concluida.
+
+Ultima atualizacao: 2026-08-18 (America/Sao_Paulo)
+
+## Objetivo
+
+Encontrar promocoes, normalizar e validar ofertas, solicitar aprovacao humana pelo Telegram e publicar ofertas aprovadas no canal publico.
+
+Fluxo desejado:
+
+1. n8n agenda uma rodada de descoberta.
+2. Worker coleta ofertas em uma fonte configurada.
+3. Worker persiste produto e oferta no PostgreSQL.
+4. Oferta valida recebe link de afiliado, imagem, legenda e pontuacao.
+5. Bot envia a oferta ao canal de aprovacao com botoes.
+6. Telegram envia o callback ao webhook do n8n.
+7. Worker valida o administrador e aprova, rejeita ou agenda a oferta.
+8. Oferta aprovada e publicada no canal publico.
+
+## Regras obrigatorias de curadoria
+
+- Sempre revalidar o produto antes da publicacao.
+- Nunca publicar o mesmo produto mais de uma vez no mesmo dia, considerando `America/Sao_Paulo`.
+- Quando houver mais de uma oferta para o mesmo produto, publicar apenas a melhor promocao.
+- A melhor promocao prioriza maior desconto, depois menor preco, depois maior score.
+- Toda oferta enviada para aprovacao ou publicacao deve ter imagem valida.
+- O link de afiliado deve estar presente e visivel na publicacao.
+- Quando houver cupom, exibir codigo e descricao em um paragrafo proprio e destacado.
+- Nunca colar paragrafos: titulo, preco, desconto, cupom, loja, link e avisos devem ser separados por uma linha em branco.
+- A publicacao termina somente com `Preço sujeito a alteração.`; nao exibir aviso de link de afiliado nem texto sobre comissao.
+- Estas regras devem ser garantidas no Worker e no banco, nao apenas nos workflows do n8n.
+
+## Evolucao planejada, nao prioritaria agora
+
+- Manter um unico canal de aprovacao.
+- Classificar produtos por nicho.
+- Resolver o canal publico de destino a partir do nicho, com configuracao persistida e fallback seguro.
+- Rich Markdown implementado via `sendRichMessage`, com `rich_message.markdown`.
+- O endpoint oficial configurado reconheceu `sendRichMessage` no teste de capacidade.
+- Publicacao e aprovacao usam Rich Markdown com imagem embutida e fallback automatico para `sendPhoto`.
+- A estrutura aceita uma lista de imagens e esta pronta para collage/slideshow quando as fontes fornecerem imagens adicionais.
+- Uma imagem gera midia simples; duas ou mais imagens geram automaticamente um bloco `<tg-slideshow>` no Rich Markdown, limitado a 10 imagens unicas.
+- Teste real de `sendRichMessage` concluido no canal de aprovacao sem acionar o fallback; mensagem RichText criada com sucesso.
+
+## Estado confirmado
+
+- Mercado Livre: o scraper experimental continua desativado. O adaptador oficial usa OAuth 2.0 + PKCE, renovacao automatica do refresh token, busca no catalogo por `/products/search`, rankings por `/highlights` e anuncios/precos por `/products/{productId}/items`. Os endpoints gerais `/sites/MLB/search`, `/items/{id}` e `/items/{id}/sale_price` responderam 403 para itens de terceiros e nao sao usados. A descoberta cria ofertas em `needs_affiliate_link`; como nao foi localizada API publica oficial do Programa de Afiliados, o link continua sendo gerado no Portal do Afiliado e informado ao Worker antes da aprovacao.
+- Entrada manual Amazon disponivel pelo comando `/amazon` no Telegram para administradores. O comando recebe dados gerados/conferidos via SiteStripe, cria a oferta e envia para aprovacao sem scraping.
+- Formato `/amazon`: campos obrigatorios `Titulo`, `Preco atual`, `Link afiliado` e `Imagem`; opcionais `Preco anterior`, `Imagens extras`, `Cupom`, `Descricao do cupom` e `Categoria`. Enviar em conversa privada com `@freguesiapromobot`.
+- Awin: token e Publisher ID validos e associados a uma conta publisher, mas existem 0 programas `joined`; ha uma solicitacao pendente para `Jequiti BR`. A fonte permanece desativada ate pelo menos um anunciante aprovar a parceria.
+- Lomadee foi escolhida como a primeira plataforma de afiliados. A chave `lmd_prod_*` esta configurada no `.env` e validada na API oficial; produtos e canais respondem HTTP 200. A conta possui dois canais ativos chamados `Mobile`; como o ID antigo nao corresponde aos IDs atuais, o adaptador usa o primeiro canal ativo como fallback.
+- Adaptador Lomadee atualizado para a API oficial atual: produtos, canais, campanhas/cupons e encurtador `/affiliate/shortener/url`.
+- Descoberta Lomadee agora persiste produto, preco e oferta, gera link afiliado, aplica validacao/score e solicita aprovacao automaticamente.
+- Coleta real controlada concluida: 3 produtos descobertos, 2 ofertas elegiveis enviadas para aprovacao, 1 ignorada e 0 falhas.
+- Usuario aprovou as duas primeiras ofertas reais da Lomadee; ambas foram publicadas no canal publico e registradas no banco. As legendas terminam uma unica vez com `Preço sujeito a alteração.`.
+- WF-001 ativo configurado para `sourceSlug: lomadee`, limite 5 por hora e timeout de 120 segundos.
+- Curadoria Lomadee busca um conjunto maior (ate 5x o limite), ordena por maior desconto e depois menor preco, remove titulos muito semelhantes e continua procurando ate preencher o limite com links afiliados validos.
+- Campanhas/cupons sao paginados em ate 5 paginas por rodada; somente cupons ativos sao associados aos produtos da mesma organizacao.
+- A imagem principal e baixada parcialmente antes da aprovacao e precisa responder com MIME `image/*` em ate 5 segundos.
+- A resposta da descoberta informa contadores e motivos de descarte (`duplicate_today`, desconto insuficiente, imagem inacessivel e falha de link afiliado).
+- Produtos com maior sinal de procura recebem prioridade usando `likes`, avaliacao do item, avaliacao da loja e campanha em destaque. A API nao informa vendas globais; esses sinais funcionam como proxy de popularidade e nunca substituem desconto minimo, estoque, imagem ou link afiliado.
+- Teste real da nova curadoria: 24 candidatos analisados, 16 abaixo do desconto minimo, 6 sem link afiliado liberado, 2 duplicados do dia, 0 falhas internas e nenhuma oferta inadequada enviada.
+- MCP do n8n conectado e com ferramentas de leitura e alteracao habilitadas.
+- Instancia n8n acessivel em `http://n8n.localhost`.
+- PostgreSQL, n8n e Worker estao em execucao no Docker.
+- Worker responde `/health` e `/ready`; o banco esta conectado.
+- Bot Telegram configurado: `@freguesiapromobot`.
+- Canal de aprovacao acessivel: `Freguesia - APROVAR/DESAPROVAR`.
+- Canal publico acessivel: `Freguesia`.
+- Bot e administrador nos dois canais e pode publicar e editar mensagens.
+- Worker usa long polling do Telegram neste ambiente local; nao depende de URL publica para receber os botoes.
+- Token do bot, IDs dos canais, lista de administradores e token interno do Worker estao configurados no `.env`.
+- Nao registrar valores secretos neste arquivo.
+
+## Verificacoes aprovadas
+
+- Worker: 88 testes aprovados no ultimo conjunto completo; 1 teste preexistente da Lomadee excedeu o timeout de 5 segundos ao simular erro HTTP. Os 3 novos testes do adaptador Mercado Livre foram aprovados.
+- Worker: lint, typecheck e build aprovados.
+- Product matching: 9 testes e build aprovados.
+- Workflows ativos WF-001, WF-003, WF-005 e WF-006 passam na validacao do n8n.
+- Expressoes de Authorization dos workflows ativos foram corrigidas e publicadas.
+- `DATABASE_URL` do Worker no Docker foi corrigida para usar o host `postgres`.
+- Comparacao por titulo do pacote product-matching foi corrigida.
+- Retry e circuit breaker das fontes nao carregam mais toda a configuracao da aplicacao durante os testes.
+- Ofertas manuais elegiveis sao enviadas automaticamente ao canal de aprovacao.
+- O callback de aprovacao publica imediatamente no canal publico com idempotencia.
+- Ofertas sem imagem sao bloqueadas antes da aprovacao e da publicacao.
+- A legenda publicada inclui o link de afiliado.
+- Cupons sao persistidos em `coupon_code` e `coupon_description` e exibidos em bloco destacado.
+- As legendas sao montadas por secoes unidas com `\n\n`, garantindo uma linha em branco entre os paragrafos.
+- Migracao de cupom aplicada ao PostgreSQL e Worker reconstruido em 2026-08-17.
+- Teste real de cupom + tres imagens concluido no canal de aprovacao via RichText/slideshow (mensagem 5, oferta `63a3bfa6-3f31-4d6d-a15b-33e5e7b44622`).
+- Guardas de publicacao implementadas: imagem obrigatoria, produto em estoque, oferta nao expirada, bloqueio de repeticao diaria e selecao da melhor promocao candidata.
+- Teste ponta a ponta concluido: oferta criada, enviada para aprovacao, aprovada e publicada; existe 1 publicacao registrada no banco.
+- Validacao manual confirmada pelo usuario: a oferta apareceu no canal de aprovacao, o bot aceitou o clique em Aprovar e a mensagem chegou ao canal publico.
+
+## Workflows ativos
+
+- WF-001 - Descobrir Ofertas: agenda chamada para `POST /v1/discovery-runs`.
+- WF-003 - Callback Telegram: recebe webhook e encaminha para `POST /v1/telegram/callback`.
+- WF-005 - Monitoramento: verifica `/health` e `/ready` a cada 5 minutos.
+- WF-006 - Limpeza: estruturalmente valido, mas ainda possui apenas uma acao placeholder sem limpeza real.
+
+## Bloqueios para publicar promocoes
+
+### 1. Descoberta ainda nao executa coleta
+
+`POST /v1/discovery-runs` apenas cria um UUID, registra `accepted` e retorna HTTP 202. Nao instancia adaptadores, nao coleta produtos, nao cria ofertas e nao atualiza o status da rodada.
+
+Consequencia confirmada no banco:
+
+- produtos: 0
+- ofertas: 0
+- publicacoes: 0
+
+### 2. Fontes reais nao estao prontas
+
+- Awin sem `AWIN_API_TOKEN` e `AWIN_PUBLISHER_ID`.
+- Lomadee escolhida e preparada, ainda sem `LOMADEE_API_KEY` e `LOMADEE_CHANNEL_ID`.
+- Mercado Livre aparece habilitado, mas o adaptador e experimental e depende de sessao Playwright/autenticacao.
+- WF-001 atualmente envia `sourceSlug: manual`, que nao descobre ofertas automaticamente.
+
+E necessario escolher e configurar pelo menos uma fonte real ou criar ofertas manuais para testar o restante do fluxo.
+
+### 3. Solicitacao de aprovacao para descoberta automatica
+
+O caminho de oferta manual ja chama automaticamente `requestApproval()`. A futura coleta automatica ainda precisa chamar a mesma aplicacao depois de persistir uma oferta elegivel.
+
+O workflow WF-002 - Solicitar Aprovacao esta inativo e invalido: possui apenas um node desconectado, sem trigger, e expressoes do Telegram ainda incorretas. Ha logica duplicada, pois o Worker ja possui `requestApproval()` e deve ser a fonte preferencial para envio e persistencia de estado.
+
+### 4. Webhook publico e opcional no ambiente atual
+
+O bot opera por long polling no Worker porque o ambiente local nao possui URL HTTPS publica. Nao configurar webhook ao mesmo tempo em que `TELEGRAM_POLLING_ENABLED=true`.
+
+Antes de registrar:
+
+- confirmar que a URL HTTPS publica chega ao n8n;
+- definir e validar um segredo de webhook;
+- preencher `TELEGRAM_WEBHOOK_SECRET`;
+- validar o header `X-Telegram-Bot-Api-Secret-Token` no webhook ou no Worker.
+
+Atualmente `TELEGRAM_WEBHOOK_SECRET` esta vazio e a rota do Worker nao valida esse segredo.
+
+### 5. Publicacao apos aprovacao concluida
+
+O callback `offer:approve:*` muda o status para `approved` e chama `publishOffer()` imediatamente com chave idempotente baseada no callback do Telegram.
+
+O workflow WF-004 permanece inativo e invalido, mas nao e necessario no modo atual porque a publicacao ocorre no Worker.
+
+E necessario escolher uma estrategia:
+
+- publicacao imediata no proprio callback apos aprovacao; ou
+- callback dispara WF-004/uma fila, que chama `POST /v1/offers/:offerId/publish` com chave de idempotencia.
+
+### 6. Oferta precisa estar completa
+
+`publishOffer()` exige:
+
+- status `approved` ou `scheduled`;
+- `affiliateUrl` preenchida;
+- ID valido e chave de idempotencia;
+- bot com permissao no canal publico.
+
+As permissoes do bot ja foram confirmadas. A geracao/persistencia automatica do link de afiliado ainda precisa fazer parte do pipeline de descoberta.
+
+## Proxima sequencia recomendada
+
+1. Implementar uma fonte funcional ou criar uma rota/fixture de oferta manual para teste ponta a ponta.
+2. Fazer a discovery persistir produto e oferta e executar validacao, score e link de afiliado.
+3. Encadear automaticamente `request-approval` para ofertas elegiveis.
+4. Quando houver dominio HTTPS publico, escolher entre webhook protegido ou long polling; nunca manter ambos ativos.
+5. Implementar limpeza real no WF-006 e tratamento de erro/retry nos workflows.
+6. Substituir ou arquivar WF-002 e WF-004, pois suas funcoes agora estao no Worker.
+
+## Cuidados
+
+- O repositorio possui alteracoes locais em andamento; nao reverter mudancas que nao foram feitas pela IA atual.
+- Nao expor `.env`, tokens, IDs administrativos ou credenciais em logs e respostas.
+- Validar workflows com o MCP antes e depois de publica-los.
+- Confirmar a versao ativa do workflow, nao apenas o rascunho.
+- Rodar testes, typecheck, lint e build apos mudancas no Worker.
+- Atualizar este arquivo ao concluir cada etapa relevante.
+
+## MCP oficial do Mercado Livre
+
+- Servidor configurado no Codex: `https://mcp.mercadolibre.com/mcp`.
+- OAuth do MCP concluido e ferramentas de busca/leitura da documentacao oficial testadas com sucesso.
+- O MCP e documental e nao fornece ao Worker um access token reutilizavel para `api.mercadolibre.com`.
+- O Worker possui fluxo OAuth proprio em `/v1/integrations/mercadolivre/oauth/connect` e callback HTTPS local em `https://worker.localhost/v1/integrations/mercadolivre/oauth/callback`.
+- As credenciais sao persistidas no PostgreSQL, o access token e renovado somente proximo da expiracao e o refresh token de uso unico e substituido de forma atomica.
+- Estado atual do Worker: codigo implantado, migracao aplicada, health check aprovado, OAuth concluido, credencial valida persistida e `SOURCE_MERCADOLIVRE_ENABLED=true`.
+- Coleta real por categoria `MLB1055` concluida: 14 candidatos promocionais descobertos, 3 ofertas criadas aguardando link afiliado, 1 descartada por desconto abaixo do minimo e 0 falhas. Ofertas: Galaxy A17 5G com 48,02%, Galaxy A17 com 44,12% e Moto G06 com 26,83% de desconto.
+- Endpoint para completar a etapa assistida: `POST /v1/offers/{offerId}/affiliate-link` com `affiliateUrl`; o Worker valida o dominio, atualiza a legenda e solicita aprovacao no Telegram.
+- A geracao de links do Mercado Livre roda localmente no Windows porque o portal recusa o Chromium headless do container. A tarefa agendada `Freguesia Mercado Livre Affiliate Queue` verifica a fila a cada 5 minutos, abre o navegador visivel somente quando existem ofertas em `needs_affiliate_link`, gera os links em lote e os devolve ao Worker. A sessao fica em `apps/worker/data/auth/mercadolivre-affiliate.json`; se expirar, o processo pausa e exige novo login, sem contornar CAPTCHA ou verificacoes.
+- Playwright atualizado para 1.62.1 (Chrome for Testing 151). O Worker tambem fica acessivel apenas no loopback `127.0.0.1:3001` para comunicacao segura com o processador local.
+- O workflow ativo `WF-001 - Descobrir Ofertas` executa a cada hora e dispara Lomadee e Mercado Livre (`MLB1055`, limite 5) em paralelo. O erro 400 das execucoes anteriores foi corrigido aceitando `limit` numerico enviado como texto pelo n8n. Teste real apos a correcao: Mercado Livre encontrou 13 itens, criou 5 ofertas, 0 falhas; o processador local gerou os cinco links e enviou as ofertas para aprovacao.
+- Inicializacao automatica no Windows configurada pela entrada `Freguesia Startup.cmd` na pasta Startup do usuario. No login, `scripts/start-freguesia.ps1` inicia o Docker Desktop se necessario, aguarda o engine e executa `docker compose up -d`. A tarefa `Freguesia Mercado Livre Affiliate Queue` permanece agendada a cada 5 minutos.
+- `WF-006 - Limpeza` implementado e corrigido de execucao horaria para diaria, as 03:15. O Worker marca ofertas vencidas nao publicadas como `expired`, remove estados OAuth ja expirados e apaga apenas screenshots/traces temporarios com mais de 7 dias. Publicacoes, produtos, precos e eventos de auditoria sao preservados. Primeiro teste: 1 oferta expirada, 2 estados OAuth antigos removidos e nenhum arquivo temporario removido.
+- Roteamento por nicho implementado mantendo um unico canal de aprovacao. Destinos configurados: Hardware e Informatica, Casa e Cozinha, Eletrodomesticos, Cosmeticos e Beleza e Eletronicos; o canal publico anterior funciona como Ofertas Gerais/fallback. A mensagem de aprovacao mostra `Destino: ...`, e a publicacao registra o canal efetivamente usado. O bot foi verificado como administrador com permissao de postagem nos cinco canais.
+- Limites dos nichos: Eletronicos recebe aparelhos completos (celulares, tablets, notebooks, PCs completos, TVs, audio, relogios, cameras, consoles); Hardware recebe componentes, upgrades, perifericos e rede (CPU, GPU, placa-mae, RAM, SSD, gabinetes, fontes, monitores, teclados, mouses, impressoras e roteadores). Beleza tem prioridade para aparelhos de uso pessoal como secador/chapinha; Eletrodomesticos cobre aparelhos de casa e cozinha; Casa e Cozinha cobre itens nao eletricos, moveis, cama/banho e organizacao. Classificacao desconhecida cai em Ofertas Gerais.
+- Base da Shopee preparada enquanto a Affiliate Open API aguarda liberacao: variaveis `SOURCE_SHOPEE_ENABLED`, `SHOPEE_AFFILIATE_API_URL`, `SHOPEE_APP_ID` e `SHOPEE_SECRET`; adaptador, diagnostico `/v1/integrations/shopee/status`, entrada de discovery e workflow `WF-007 - Descobrir Ofertas Shopee`. Tudo permanece desativado e sem chamadas externas ate receber credenciais e documentacao oficial; o workflow foi importado no n8n como inativo.
+- Mercado Livre ampliado no `WF-001` para seis categorias oficiais, com no maximo 1 oferta valida por categoria/hora: celulares `MLB1055`, informatica `MLB1648`, eletronicos `MLB1000`, eletrodomesticos `MLB5726`, casa `MLB1574` e beleza `MLB1246`. Teste real das cinco novas categorias: 5 candidatos por categoria, 1 oferta criada em cada, 0 falhas; links gerados e ofertas enviadas para aprovacao. Os IDs de categoria tambem funcionam como fallback da classificacao quando o titulo nao revela o nicho.
+- Apos uma oferta ser aprovada e publicada com sucesso, a mensagem correspondente e apagada do canal unico de aprovacao. Se a publicacao falhar, a mensagem permanece para nova tentativa.
+- O titulo fixo `🔥 OFERTA NA FREGUESIA` foi substituido por chamadas deterministicas baseadas no produto, nicho e percentual de desconto. Descontos muito altos destacam o percentual; os demais usam linguagem propria de Eletronicos, Hardware, Beleza, Eletrodomesticos, Casa ou Geral. O nome do produto aparece na chamada e a mesma oferta sempre recebe o mesmo titulo.
+- O bloco de preco agora destaca o desconto como subtitulo (`💥 NN% DE DESCONTO`), mostra o preco atual como titulo e, quando ha preco anterior, calcula e exibe `💰 Você economiza R$ ...`.
+- Base da AliExpress preparada para a Affiliate API oficial: variaveis `SOURCE_ALIEXPRESS_ENABLED`, `ALIEXPRESS_AFFILIATE_API_URL`, `ALIEXPRESS_APP_KEY`, `ALIEXPRESS_APP_SECRET` e `ALIEXPRESS_TRACKING_ID`; adaptador, diagnostico `/v1/integrations/aliexpress/status`, entrada de discovery e workflow `WF-008 - Descobrir Ofertas AliExpress`. O workflow foi importado no n8n como inativo e a fonte permanece desativada, sem chamadas externas, ate o cadastro no portal de afiliados fornecer as credenciais e o contrato oficial da API. Testes confirmaram status `disabled` e discovery `awaiting_api_access`, sem criar ofertas ou registrar falhas.
+- O aplicativo AliExpress foi aprovado com status `Online`, a assinatura da Affiliate API foi implementada e o Tracking ID oficial `default` foi validado. Teste real com a busca por projetor: 4 produtos elegiveis descobertos, 1 oferta criada, link afiliado gerado, aprovacao enviada ao Telegram e 0 falhas. O workflow horario `WF-008 - Descobrir Ofertas AliExpress` esta publicado e ativo no n8n.
+- O pipeline de ofertas agora suporta reputacao, origem do envio e impostos na legenda. AliExpress prioriza envio do Brasil, avaliacao minima de 4,3 e volume minimo de vendas; produtos internacionais recebem aviso explicito. Imposto confirmado pela plataforma exibe o valor e se ja esta incluido; sem valor oficial, a mensagem informa que os impostos podem ser calculados no checkout, sem inventar estimativas. Cupons continuam destacados quando a fonte fornece codigo ou campanha, em AliExpress, Mercado Livre, Shopee, Lomadee e entradas manuais.
+- Links afiliados ficam escondidos no texto clicavel `Comprar com desconto`, usando ancora HTML compativel com `TELEGRAM_PARSE_MODE=HTML` e sem dupla formatacao na publicacao. Legendas antigas em Markdown sao normalizadas antes de publicar. A geracao usa primeiro o encurtador oficial da AliExpress; teste confirmou reducao de 1065 para 42 caracteres.
+- A coleta AliExpress solicita a galeria e o video tanto na busca quanto no endpoint de detalhes. Midias adicionais sao deduplicadas, limitadas a nove e enviadas com a imagem principal no slideshow Rich Text; o fallback continua usando a foto principal. Teste real armazenou cinco imagens adicionais. Videos entram automaticamente quando a API os fornecer para o produto; os produtos testados nao retornaram video.
+- O Rich Text usa o campo nativo `footer` com a chamada `Conheça os outros nossos canais de promoção`, deixando `canais de promoção` clicavel para `https://t.me/addlist/hrnEPhgLIMoxNjVh`. No fallback de foto comum, o mesmo rodape e anexado ao fim da legenda, sem duplicacao.
+- Parcelamento sem juros faz parte do modelo comum da oferta. Quando a plataforma confirmar quantidade, valor da parcela e taxa zero, a legenda mostra `N x de R$ ... sem juros`; quando a API nao fornecer a condicao, o bot omite o dado em vez de estimar. Mercado Livre ja coleta esses campos quando presentes na resposta oficial; AliExpress e demais fontes ficam preparadas para usa-los quando retornados.
+- A busca AliExpress valida relevancia antes de criar a oferta: todos os termos significativos da consulta precisam aparecer no titulo. Isso impede casos como `mouse gamer` retornar um baralho que apenas mencionava uma edicao `Mouse`. Termos de tarot, baralho, cartas e oraculo tambem tem prioridade explicita para Ofertas Gerais, evitando roteamento por palavras ambiguas. O anuncio incorreto foi removido e rejeitado; novo teste de `mouse gamer` retornou um mouse Scyrox V8S real, com 3 candidatos, 1 oferta enviada e 0 falhas.
+- A prioridade de envio nacional na AliExpress passou de bonus de ordenacao para regra forte: se houver ao menos um candidato elegivel enviado do Brasil, apenas os nacionais seguem para selecao naquela busca. Produtos internacionais so entram quando nenhuma opcao nacional valida estiver disponivel. A legenda continua identificando explicitamente `Envio nacional` ou `Produto internacional` e impostos nunca sao estimados sem dado oficial.
+- Estado ao encerrar em 2026-08-17: todos os servicos do Docker Compose foram parados a pedido do usuario (`caddy`, `worker`, `n8n` e `postgres`). A inicializacao automatica do Windows continua configurada por `Freguesia Startup.cmd` e `scripts/start-freguesia.ps1`; os servicos voltam no proximo login do Windows por meio de `docker compose up -d`. Se o computador permanecer ligado sem novo login, o bot deve ser iniciado manualmente.
+- Tarefa unica agendada no Codex para 2026-08-18 as 09:00 (America/Sao_Paulo), ID `auditar-documentar-e-publicar-freguesia`. Ela deve auditar e corrigir codigo/arquitetura, validar testes, lint, typecheck e build, criar um manual didatico completo em portugues para reconstruir o bot, atualizar este context, revisar segredos/Git, criar commit e enviar ao GitHub sem force push ou amend. Em caso de bloqueio de autenticacao ou remoto, deve manter o commit local e relatar o motivo.
+- Em 2026-08-18, a inicializacao automatica nao subiu o Compose no login. Os servicos foram iniciados manualmente com sucesso; PostgreSQL e Worker ficaram `healthy`, n8n respondeu ao health check e Caddy ficou ativo. E necessario investigar o motivo da falha do startup automatico na auditoria agendada.
+- A tarefa do manual foi ampliada: o documento nao deve tratar a arquitetura apenas como bot de promocoes. Deve ensinar coleta, adaptadores, normalizacao, validacao, scoring, deduplicacao, filas, aprovacao humana, roteamento, publicacao, idempotencia, auditoria, observabilidade, agendamento e recuperacao como padroes reutilizaveis em monitoramento, noticias, alertas, atendimento, moderacao, ETL, marketplaces, conteudo e outros agentes. O manual deve ser autocontido e replicavel tanto por iniciantes quanto por IAs, com pre-condicoes, entradas/saidas, invariantes, arvore de arquivos, comandos, criterios de sucesso, testes de aceitacao, pontos de extensao, trade-offs e uma secao especifica `Como uma IA pode replicar esta arquitetura`.
+
+## Auditoria de 2026-08-18
+
+Esta secao representa o estado mais recente e prevalece sobre os bloqueios historicos descritos anteriormente.
+
+- Auditoria integral executada sobre Worker, banco, Docker, n8n, Telegram, fontes, afiliados, midias, agendamentos e startup.
+- Webhook Telegram endurecido: o n8n encaminha `X-Telegram-Bot-Api-Secret-Token`, o Worker exige comparacao em tempo constante, valida allowlist administrativa e confirma que o callback veio do canal de aprovacao. O workflow permanece desnecessario enquanto long polling estiver ativo.
+- Rotas de inicio e status OAuth do Mercado Livre agora exigem token interno; somente o callback OAuth permanece publico e protegido por state + PKCE.
+- Comparacao do token interno passou a usar tempo constante.
+- Decisoes de aprovacao agora sao registradas com chave idempotente; schema e migracao compativel foram atualizados e aplicados.
+- Verificacao de cooldown corrigida: intervalo SQL passou a ser parametrizado e a leitura de `current_price_cents` nao produz mais `NaN`.
+- Limites configurados de publicacao por hora, por dia e intervalo minimo passaram a ser aplicados antes do envio.
+- Identificador curto de oferta no callback agora aceita exatamente oito caracteres hexadecimais e rejeita prefixos ambiguos.
+- Pedidos de aprovacao exigem link afiliado e estado permitido.
+- Inicializacao no Windows passou a capturar corretamente stdout/stderr do Docker e registrar sucesso sem gerar `NativeCommandError` enganoso. A evidencia do log anterior indica que o Compose havia iniciado, apesar da mensagem de erro do PowerShell.
+- Docker ganhou `.dockerignore`; contexto de build caiu para aproximadamente 166 KB. A imagem final roda como usuario `node`, com diretorios de dados gravaveis, e o Worker reconstruido ficou healthy.
+- Inicializacao do banco n8n deixou de usar senha fixa e comandos destrutivos `DROP`; usuario, senha e banco agora vem das variaveis do ambiente e a criacao e idempotente.
+- Arquivos locais de logs, diagnostico, screenshots e ferramentas foram adicionados ao `.gitignore`; `.env` e sessoes de autenticacao continuam ignorados.
+- Workflow de monitoramento versionado foi alinhado como ativo. Todos os JSONs de workflow passaram em parse local e `docker compose config --quiet` foi aprovado.
+- Teste Lomadee que excedia cinco segundos passou a controlar retry no ambiente de teste e agora conclui em milissegundos.
+- Worker: 128 testes, lint, typecheck, build e format check aprovados apos as correcoes.
+- Product matching: 9 testes e build aprovados.
+- Manual autocontido criado em `docs/MANUAL-ARQUITETURA-REPLICAVEL.md`, incluindo a secao `Como uma IA pode replicar esta arquitetura`.
+- Risco residual documentado: a janela entre envio ao Telegram e persistencia da publicacao exige outbox/lease para garantia exatamente-uma-vez em escala horizontal. No ambiente atual existe uma unica instancia e as guardas reduzem o risco, mas nao eliminam falha no intervalo de rede.

@@ -28,7 +28,7 @@ export function compareOffers(
     rightIds.gtin &&
     normalizeIdentifier(leftIds.gtin) === normalizeIdentifier(rightIds.gtin)
   ) {
-    return { score: 0.99, method: "gtin", status: "matched" };
+    return { score: 0.99, method: "gtin", status: "matched", evidence: {} };
   }
 
   if (
@@ -36,7 +36,7 @@ export function compareOffers(
     rightIds.ean &&
     normalizeIdentifier(leftIds.ean) === normalizeIdentifier(rightIds.ean)
   ) {
-    return { score: 0.99, method: "gtin", status: "matched" };
+    return { score: 0.99, method: "gtin", status: "matched", evidence: {} };
   }
 
   if (
@@ -48,7 +48,7 @@ export function compareOffers(
     normalizeIdentifier(left.identifiers.mpn) ===
       normalizeIdentifier(right.identifiers.mpn)
   ) {
-    return { score: 0.96, method: "brand_mpn", status: "matched" };
+    return { score: 0.96, method: "brand_mpn", status: "matched", evidence: {} };
   }
 
   if (
@@ -56,7 +56,7 @@ export function compareOffers(
     rightIds.asin &&
     normalizeIdentifier(leftIds.asin) === normalizeIdentifier(rightIds.asin)
   ) {
-    return { score: 0.95, method: "asin", status: "matched" };
+    return { score: 0.95, method: "asin", status: "matched", evidence: {} };
   }
 
   const titleScore = compareTwoStrings(
@@ -64,36 +64,13 @@ export function compareOffers(
     normalizeTitle(right.title),
   );
 
-  const identifierScore =
-    leftIds.gtin && rightIds.gtin && normalizeIdentifier(leftIds.gtin) === normalizeIdentifier(rightIds.gtin)
-      ? 1
-      : left.brand &&
-          right.brand &&
-          left.identifiers.mpn &&
-          right.identifiers.mpn &&
-          normalizeIdentifier(left.brand) === normalizeIdentifier(right.brand) &&
-          normalizeIdentifier(left.identifiers.mpn) ===
-            normalizeIdentifier(right.identifiers.mpn)
-        ? 0.96
-        : leftIds.asin &&
-            rightIds.asin &&
-            normalizeIdentifier(leftIds.asin) === normalizeIdentifier(rightIds.asin)
-          ? 0.95
-          : 0;
-
-  const score =
-    0.4 * identifierScore +
-    0.2 *
-      (normalizeIdentifier(left.brand) === normalizeIdentifier(right.brand)
-        ? 1
-        : 0) +
-    0.1 * titleScore;
+  const score = titleScore;
 
   if (score >= 0.92) {
-    return { score, method: "title_similarity", status: "matched" };
+    return { score, method: "title_similarity", status: "matched", evidence: {} };
   }
   if (score >= 0.75) {
-    return { score, method: "title_similarity", status: "review" };
+    return { score, method: "title_similarity", status: "review", evidence: {} };
   }
-  return { score, method: "title_similarity", status: "different" };
+  return { score, method: "title_similarity", status: "different", evidence: {} };
 }

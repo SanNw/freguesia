@@ -6,9 +6,13 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-freguesia}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-me}
       POSTGRES_DB: ${POSTGRES_DB:-freguesia}
+      N8N_DB_NAME: ${DB_POSTGRESDB_DATABASE:-n8n}
+      N8N_DB_USER: ${DB_POSTGRESDB_USER:-n8n}
+      N8N_DB_PASSWORD: ${DB_POSTGRESDB_PASSWORD:-change-me}
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      - ./database/init-n8n-db.sh:/docker-entrypoint-initdb.d/02-init-n8n-db.sh:ro
     networks: [internal]
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-freguesia}"]
@@ -22,40 +26,18 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-    environment:
-      N8N_HOST: ${N8N_HOST:-n8n.example.com}
-      N8N_PORT: ${N8N_PORT:-5678}
-      N8N_PROTOCOL: ${N8N_PROTOCOL:-https}
-      N8N_EDITOR_BASE_URL: ${N8N_EDITOR_BASE_URL:-https://n8n.example.com}
-      WEBHOOK_URL: ${WEBHOOK_URL:-https://n8n.example.com/}
-      N8N_ENCRYPTION_KEY: ${N8N_ENCRYPTION_KEY}
-      GENERIC_TIMEZONE: ${GENERIC_TIMEZONE:-America/Sao_Paulo}
-      TZ: ${TZ:-America/Sao_Paulo}
-      N8N_DIAGNOSTICS_ENABLED: ${N8N_DIAGNOSTICS_ENABLED:-false}
-      N8N_PERSONALIZATION_ENABLED: ${N8N_PERSONALIZATION_ENABLED:-false}
-      N8N_HIRING_BANNER_ENABLED: ${N8N_HIRING_BANNER_ENABLED:-false}
-      N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS: ${N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS:-true}
-      N8N_LOG_LEVEL: ${N8N_LOG_LEVEL:-info}
-      N8N_LOG_OUTPUT: ${N8N_LOG_OUTPUT:-console}
-      EXECUTIONS_DATA_SAVE_ON_SUCCESS: ${EXECUTIONS_DATA_SAVE_ON_SUCCESS:-none}
-      EXECUTIONS_DATA_SAVE_ON_ERROR: ${EXECUTIONS_DATA_SAVE_ON_ERROR:-all}
-      EXECUTIONS_DATA_SAVE_MANUAL_EXECUTIONS: ${EXECUTIONS_DATA_SAVE_MANUAL_EXECUTIONS:-true}
-      EXECUTIONS_DATA_PRUNE: ${EXECUTIONS_DATA_PRUNE:-true}
-      EXECUTIONS_DATA_MAX_AGE: ${EXECUTIONS_DATA_MAX_AGE:-336}
-      N8N_DEFAULT_BINARY_DATA_MODE: ${N8N_DEFAULT_BINARY_DATA_MODE:-filesystem}
-      N8N_BINARY_DATA_STORAGE_PATH: ${N8N_BINARY_DATA_STORAGE_PATH:-/home/node/.n8n/binaryData}
-      DB_TYPE: postgresdb
-      DB_POSTGRESDB_HOST: postgres
-      DB_POSTGRESDB_PORT: 5432
-      DB_POSTGRESDB_DATABASE: ${DB_POSTGRESDB_DATABASE:-n8n}
-      DB_POSTGRESDB_USER: ${DB_POSTGRESDB_USER:-n8n}
-      DB_POSTGRESDB_PASSWORD: ${DB_POSTGRESDB_PASSWORD:-change-me}
+    env_file:
+      - ./.env
     volumes:
       - n8n_data:/home/node/.n8n
-      - ./n8n/workflows:/home/node/.n8n/workflows:ro
+      - ./n8n/workflows:/home/node/.n8n/workflows
+    environment:
+      N8N_WORKFLOW_FOLDER: /home/node/.n8n/workflows
+      N8N_BLOCK_ENV_ACCESS_IN_NODE: "false"
+      N8N_PROXY_HOPS: "1"
     networks: [internal]
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:5678/healthz || exit 1"]
+      test: ["CMD-SHELL", "node -e \"require('http').get('http://localhost:5678/healthz',r=>{process.exit(r.statusCode===200?0:1)}).on('error',()=>process.exit(1))\""]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -67,6 +49,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    env_file:
+      - ./.env
     environment:
       NODE_ENV: ${NODE_ENV:-development}
       APP_ENV: ${APP_ENV:-development}
@@ -99,11 +83,13 @@ services:
       - browser_auth:/app/data/auth
       - worker_traces:/app/data/traces
       - worker_screenshots:/app/data/screenshots
+    ports:
+      - "127.0.0.1:3001:3001"
     networks: [internal]
     security_opt:
       - no-new-privileges:true
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:3001/health || exit 1"]
+      test: ["CMD-SHELL", "node -e \"require('http').get('http://localhost:3001/health',r=>{process.exit(r.statusCode===200?0:1)}).on('error',()=>process.exit(1))\""]
       interval: 15s
       timeout: 5s
       retries: 3
@@ -115,7 +101,7 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - ./infra/Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./infra/Caddyfile.dev:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
       - caddy_config:/config
     networks: [internal]

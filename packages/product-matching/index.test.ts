@@ -18,21 +18,23 @@ const baseOffer: NormalizedOffer = {
   price: {
     currentCents: 1000,
     currency: "BRL",
+    installmentValueCents: null,
   },
-  shipping: { confirmed: false },
+  shipping: { confirmed: false, currency: "BRL" },
   tax: { confirmed: false },
   coupon: { autoApplied: false },
   availability: { inStock: true },
   urls: {
     canonical: "https://example.com/product",
     affiliate: "https://example.com/affiliate",
+    additionalImages: [],
   },
-  seller: { name: "Test Store" },
+  seller: { name: "Test Store", officialStore: false },
   validity: {
     fetchedAt: new Date().toISOString(),
     lastVerifiedAt: new Date().toISOString(),
   },
-  tracking: { attributionVerified: false },
+  tracking: { attributionVerified: false, campaign: "test" },
   rawHash: "hash",
 };
 

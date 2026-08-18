@@ -14,16 +14,16 @@ export class ApprovalRepository {
   }): Promise<void> {
     await db.withTransaction(async (client) => {
       const existing = await client.query(
-        `SELECT id FROM approvals WHERE offer_id = $1 AND decision = $2 AND idempotency_key IS NOT NULL`,
-        [input.offerId, input.decision],
+        `SELECT id FROM approvals WHERE idempotency_key = $1`,
+        [input.idempotencyKey],
       );
       if (existing.rows.length > 0) {
         return;
       }
       await client.query(
         `INSERT INTO approvals (id, offer_id, decision, actor_telegram_user_id, actor_username,
-          notes, payload_before, payload_after)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+          notes, payload_before, payload_after, idempotency_key)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
         [
           input.id,
           input.offerId,
@@ -33,6 +33,7 @@ export class ApprovalRepository {
           input.notes,
           JSON.stringify(input.payloadBefore),
           input.payloadAfter ? JSON.stringify(input.payloadAfter) : null,
+          input.idempotencyKey,
         ],
       );
     });
@@ -48,6 +49,29 @@ export class ApprovalRepository {
 }
 
 export class PublicationRepository {
+  async getRateLimitSnapshot(): Promise<{
+    lastPublishedAt: string | null;
+    hourly: number;
+    daily: number;
+  }> {
+    const rows = await db.query<{
+      last_published_at: string | null;
+      hourly: string;
+      daily: string;
+    }>(
+      `SELECT MAX(published_at) AS last_published_at,
+        COUNT(*) FILTER (WHERE published_at >= NOW() - INTERVAL '1 hour') AS hourly,
+        COUNT(*) FILTER (WHERE (published_at AT TIME ZONE 'America/Sao_Paulo')::date =
+          (NOW() AT TIME ZONE 'America/Sao_Paulo')::date) AS daily
+       FROM publications WHERE status = 'published'`,
+    );
+    return {
+      lastPublishedAt: rows[0]?.last_published_at ?? null,
+      hourly: Number(rows[0]?.hourly ?? 0),
+      daily: Number(rows[0]?.daily ?? 0),
+    };
+  }
+
   async insert(input: {
     id: string;
     offerId: string;
@@ -83,6 +107,21 @@ export class PublicationRepository {
     const rows = await db.query(
       `SELECT 1 FROM publications WHERE idempotency_key = $1`,
       [key],
+    );
+    return rows.length > 0;
+  }
+
+  async existsForProductToday(productId: string): Promise<boolean> {
+    const rows = await db.query(
+      `SELECT 1
+       FROM publications p
+       JOIN offers o ON o.id = p.offer_id
+       WHERE o.product_id = $1
+         AND p.status = 'published'
+         AND (p.published_at AT TIME ZONE 'America/Sao_Paulo')::date =
+             (NOW() AT TIME ZONE 'America/Sao_Paulo')::date
+       LIMIT 1`,
+      [productId],
     );
     return rows.length > 0;
   }

@@ -1,16 +1,51 @@
-import { describe, it, expect, vi, beforeAll, afterAll } from "vitest";
+import {
+  describe,
+  it,
+  expect,
+  vi,
+  beforeAll,
+  beforeEach,
+  afterAll,
+} from "vitest";
 import { LomadeeAdapter } from "../../../src/adapters/sources/lomadee.adapter.js";
 import { AppError } from "../../../src/shared/errors.js";
-import lomadeeProduct from "../../fixtures/lomadee-product.json";
 
 // Mock fetch
 const mockFetch = vi.fn();
 vi.stubGlobal("fetch", mockFetch);
 
 describe("LomadeeAdapter - Integration", () => {
+  const apiProduct = {
+    data: [
+      {
+        id: "12345",
+        organizationId: "org-1",
+        name: "Smartphone Teste 256GB Preto",
+        url: "https://example.com/p/12345",
+        available: true,
+        images: [{ url: "https://example.com/image.jpg" }],
+        options: [
+          {
+            id: "sku-1",
+            name: "Smartphone Teste 256GB Preto",
+            available: true,
+            seller: "Loja Teste",
+            pricing: [{ price: 1999.9, listPrice: 2499.9 }],
+            stocks: [{ value: 5 }],
+          },
+        ],
+      },
+    ],
+  };
+
   beforeAll(() => {
     process.env.LOMADEE_API_KEY = "test-key";
     process.env.LOMADEE_CHANNEL_ID = "test-channel";
+    process.env.HTTP_RETRY_MAX = "1";
+  });
+
+  beforeEach(() => {
+    mockFetch.mockReset();
   });
 
   afterAll(() => {
@@ -18,10 +53,15 @@ describe("LomadeeAdapter - Integration", () => {
   });
 
   it("discovers products from API", async () => {
-    mockFetch.mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve(lomadeeProduct),
-    });
+    mockFetch
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(apiProduct),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ data: [] }),
+      });
 
     const adapter = new LomadeeAdapter();
     const products = await adapter.discover({ limit: 1 });
@@ -33,12 +73,17 @@ describe("LomadeeAdapter - Integration", () => {
   });
 
   it("extracts product data from API", async () => {
-    mockFetch.mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve(lomadeeProduct.products[0]),
-    });
-
     const adapter = new LomadeeAdapter();
+    mockFetch
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(apiProduct),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ data: [] }),
+      });
+    await adapter.discover({ limit: 1 });
     const url = new URL("https://example.com/p/12345");
     const extracted = await adapter.extract({ url });
 
@@ -75,12 +120,27 @@ describe("LomadeeAdapter - Integration", () => {
   });
 
   it("creates affiliate link", async () => {
-    mockFetch.mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve({ link: "https://short.lomadee.com/123" }),
-    });
-
     const adapter = new LomadeeAdapter();
+    mockFetch
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(apiProduct),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ data: [] }),
+      });
+    await adapter.discover({ limit: 1 });
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () =>
+        Promise.resolve([
+          {
+            id: "test-channel",
+            shortUrls: ["https://short.lomadee.com/123"],
+          },
+        ]),
+    });
     const url = new URL("https://example.com/p/12345");
     const result = await adapter.createAffiliateLink(url);
 

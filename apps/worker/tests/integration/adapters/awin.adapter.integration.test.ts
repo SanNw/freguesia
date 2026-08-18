@@ -29,7 +29,9 @@ describe("AwinAdapter - Integration", () => {
     expect(products).toHaveLength(1);
     expect(products[0].externalId).toBe("promo123");
     expect(products[0].title).toBe("Awin Smartphone Teste 512GB");
-    expect(products[0].canonicalUrl).toBe("https://awin.example.com/p/promo123");
+    expect(products[0].canonicalUrl).toBe(
+      "https://awin.example.com/p/promo123",
+    );
   });
 
   it("extracts promotion data from API", async () => {
@@ -65,7 +67,8 @@ describe("AwinAdapter - Integration", () => {
   it("creates affiliate link", async () => {
     mockFetch.mockResolvedValue({
       ok: true,
-      json: () => Promise.resolve({ generatedLink: "https://awin.tracker.com/123" }),
+      json: () =>
+        Promise.resolve({ generatedLink: "https://awin.tracker.com/123" }),
     });
 
     const adapter = new AwinAdapter();

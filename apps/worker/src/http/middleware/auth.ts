@@ -16,6 +16,11 @@ export function serviceTokenAuth(
     return;
   }
 
+  if (request.url.startsWith("/v1/integrations/mercadolivre/oauth/callback")) {
+    done();
+    return;
+  }
+
   const auth = request.headers.authorization;
   if (!auth || !auth.startsWith("Bearer ")) {
     done(
@@ -29,11 +34,13 @@ export function serviceTokenAuth(
     return;
   }
 
-  const token = auth.slice(7);
-  if (token !== env.WORKER_SERVICE_TOKEN) {
+  const token = Buffer.from(auth.slice(7));
+  const expected = Buffer.from(env.WORKER_SERVICE_TOKEN);
+  if (token.length !== expected.length || !timingSafeEqual(token, expected)) {
     done(new AppError("UNAUTHORIZED", "Invalid service token", false, 401));
     return;
   }
 
   done();
 }
+import { timingSafeEqual } from "node:crypto";

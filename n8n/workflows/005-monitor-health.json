@@ -1,6 +1,7 @@
 {
+  "id": "64a53f38-d9a4-4900-a2b3-d342d69c80bd",
   "name": "WF-005 - Monitoramento",
-  "active": false,
+  "active": true,
   "nodes": [
     {
       "parameters": {

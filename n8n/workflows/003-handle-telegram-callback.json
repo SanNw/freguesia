@@ -1,4 +1,5 @@
 {
+  "id": "5fcb552b-c6c6-41d5-b9ef-bde2ce642aef",
   "name": "WF-003 - Callback Telegram",
   "active": false,
   "nodes": [
@@ -21,12 +22,17 @@
       "parameters": {
         "method": "POST",
         "url": "={{ $env.WORKER_INTERNAL_BASE_URL }}/v1/telegram/callback",
+        "authentication": "none",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             {
               "name": "Authorization",
-              "value": "Bearer {{ $env.WORKER_SERVICE_TOKEN }}"
+              "value": "=Bearer {{ $env.WORKER_SERVICE_TOKEN }}"
+            },
+            {
+              "name": "X-Telegram-Bot-Api-Secret-Token",
+              "value": "={{ $json.headers['x-telegram-bot-api-secret-token'] || '' }}"
             }
           ]
         },

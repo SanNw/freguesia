@@ -1,6 +1,7 @@
 {
+  "id": "ff85ccbd-d8d7-4a69-954e-600974f62c54",
   "name": "WF-006 - Limpeza",
-  "active": false,
+  "active": true,
   "nodes": [
     {
       "parameters": {
@@ -8,7 +9,7 @@
           "interval": [
             {
               "field": "cronExpression",
-              "expression": "0 0 * * * *"
+              "expression": "0 15 3 * * *"
             }
           ]
         }
@@ -21,9 +22,48 @@
         0,
         0
       ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.WORKER_INTERNAL_BASE_URL }}/v1/maintenance/cleanup",
+        "authentication": "none",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.WORKER_SERVICE_TOKEN }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "cleanup-worker",
+      "name": "Run Worker Cleanup",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        220,
+        0
+      ]
     }
   ],
-  "connections": {},
+  "connections": {
+    "Daily Cleanup": {
+      "main": [
+        [
+          {
+            "node": "Run Worker Cleanup",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
   "settings": {
     "executionOrder": "v1"
   }

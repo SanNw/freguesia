@@ -1,5 +1,6 @@
 # Dependencies
 node_modules/
+.cache/
 .pnp
 .pnp.js
 
@@ -25,6 +26,13 @@ apps/worker/data/traces/
 # Logs
 *.log
 logs/
+*_logs.txt
+*_check.txt
+*-debug.png
+.omo/
+.opencode-test/
+.playwright-mcp/
+thoughts/
 
 # OS
 .DS_Store

@@ -12,6 +12,11 @@ import { formatBRL } from "../domain/price.js";
 import { env } from "../config/env.js";
 import type { Logger } from "../config/logger.js";
 import { AppError } from "../shared/errors.js";
+import { buildOfferHeadline } from "../domain/offer-headline.js";
+import {
+  buildOfferCommerceDetails,
+  type ShippingOrigin,
+} from "../domain/offer-commerce-details.js";
 
 export interface CreateManualOfferInput {
   title: string;
@@ -20,11 +25,23 @@ export interface CreateManualOfferInput {
   previousPriceCents?: number | null;
   currency?: string;
   imageUrl?: string | null;
+  additionalImages?: string[];
+  couponCode?: string | null;
+  couponDescription?: string | null;
   affiliateUrl?: string | null;
   store?: string;
   category?: string | null;
   brand?: string | null;
   availability?: string;
+  shippingOrigin?: ShippingOrigin;
+  rating?: number | null;
+  reviewCount?: number | null;
+  taxAmountCents?: number | null;
+  taxIncluded?: boolean | null;
+  taxConfirmed?: boolean;
+  installmentCount?: number | null;
+  installmentValueCents?: number | null;
+  interestFree?: boolean;
 }
 
 export interface CreateManualOfferResult {
@@ -35,11 +52,8 @@ export interface CreateManualOfferResult {
   rejectionReason?: string;
 }
 
-async function getOrCreateSource(
-  client: import("pg").PoolClient,
-  store: string,
-) {
-  const rows = await client.query<{ id: string }>(
+async function getOrCreateSource(store: string) {
+  const rows = await db.query<{ id: string }>(
     `INSERT INTO sources (slug, name, store, type, adapter_version, enabled)
      VALUES ($1, $2, $3, 'manual', '0.1.0', TRUE)
      ON CONFLICT (slug) DO UPDATE SET updated_at = NOW()
@@ -50,43 +64,53 @@ async function getOrCreateSource(
       store,
     ],
   );
-  return rows.rows[0].id;
+  return rows[0].id;
 }
 
-function buildCaption(
+export function buildCaption(
   input: CreateManualOfferInput,
   discountPercent: number | null,
 ): string {
-  const lines: string[] = [];
-  lines.push("\u{1F525} OFERTA NA FREGUESIA");
-  lines.push("");
-  lines.push(input.title);
-  lines.push("");
+  const paragraphs: string[] = [
+    `# ${buildOfferHeadline(input.title, input.category, discountPercent)}`,
+    `**${input.title}**`,
+  ];
+  const priceLines: string[] = [];
+  if (discountPercent && discountPercent > 0) {
+    priceLines.push(`## \u{1F4A5} ${Math.round(discountPercent)}% DE DESCONTO`);
+  }
   if (
     input.previousPriceCents &&
     input.previousPriceCents > input.currentPriceCents
   ) {
-    lines.push(
-      `De ${formatBRL(input.previousPriceCents)} por ${formatBRL(input.currentPriceCents)}`,
+    const savings = input.previousPriceCents - input.currentPriceCents;
+    priceLines.push(
+      `~~De ${formatBRL(input.previousPriceCents)}~~\n# Por ${formatBRL(input.currentPriceCents)}\n\u{1F4B0} Você economiza **${formatBRL(savings)}**`,
     );
   } else {
-    lines.push(`${formatBRL(input.currentPriceCents)}`);
+    priceLines.push(`# ${formatBRL(input.currentPriceCents)}`);
   }
-  if (discountPercent && discountPercent > 0) {
-    lines.push(`${Math.round(discountPercent)}% de desconto`);
+  paragraphs.push(priceLines.join("\n"));
+
+  const commerceDetails = buildOfferCommerceDetails(input);
+  if (commerceDetails.length > 0) {
+    paragraphs.push(commerceDetails.join("\n"));
   }
+
+  if (input.couponCode) {
+    const couponLines = [
+      "## \u{1F3AB} CUPOM",
+      `Use o cupom: \`${input.couponCode}\``,
+    ];
+    if (input.couponDescription) couponLines.push(input.couponDescription);
+    paragraphs.push(couponLines.join("\n"));
+  }
+
   if (input.store) {
-    lines.push(`Loja: ${input.store}`);
+    paragraphs.push(`**Loja:** ${input.store}`);
   }
-  lines.push("");
-  lines.push("\u{1F6CD}Comprar com desconto");
-  lines.push("");
-  lines.push(env.TELEGRAM_MESSAGE_FOOTER);
-  if (env.AFFILIATE_DISCLOSURE_TEXT) {
-    lines.push("");
-    lines.push(env.AFFILIATE_DISCLOSURE_TEXT);
-  }
-  return lines.join("\n");
+
+  return paragraphs.filter(Boolean).join("\n\n");
 }
 
 export async function createManualOffer(
@@ -110,8 +134,8 @@ export async function createManualOffer(
     availability: availability as
       "in_stock" | "out_of_stock" | "preorder" | "unknown",
     seller: null,
-    rating: null,
-    reviewCount: null,
+    rating: input.rating ?? null,
+    reviewCount: input.reviewCount ?? null,
     capturedAt: now,
     rawEvidence: {},
   };
@@ -147,8 +171,8 @@ export async function createManualOffer(
     previousPriceCents: input.previousPriceCents ?? null,
     sourceReliability: 15,
     availability,
-    rating: null,
-    reviewCount: null,
+    rating: input.rating ?? null,
+    reviewCount: input.reviewCount ?? null,
     nicheMatch: 5,
     hasPreviousPriceEvidence: !!input.previousPriceCents,
     titleComplete: input.title.length >= 5,
@@ -165,9 +189,9 @@ export async function createManualOffer(
 
   const caption = buildCaption(input, discountPercent);
 
-  return await db.withTransaction(async (client) => {
-    const sourceId = await getOrCreateSource(client, store);
+  const sourceId = await getOrCreateSource(store);
 
+  return await db.withTransaction(async (client) => {
     const product = await productRepository.upsert({
       sourceId,
       externalId: extracted.externalId,
@@ -194,9 +218,10 @@ export async function createManualOffer(
     await client.query(
       `INSERT INTO offers (
         id, product_id, source_observation_id, status, score, discount_percent,
-        affiliate_url, affiliate_provider, image_url, proposed_caption, idempotency_key, expires_at
+        affiliate_url, affiliate_provider, image_url, additional_image_urls,
+        coupon_code, coupon_description, proposed_caption, idempotency_key, expires_at
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW() + INTERVAL '30 minutes')`,
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, NOW() + INTERVAL '30 minutes')`,
       [
         offerId,
         product.id,
@@ -207,6 +232,9 @@ export async function createManualOffer(
         input.affiliateUrl ?? null,
         input.affiliateUrl ? "manual" : null,
         input.imageUrl ?? null,
+        JSON.stringify(input.additionalImages ?? []),
+        input.couponCode ?? null,
+        input.couponDescription ?? null,
         caption,
         idempotencyKey,
       ],

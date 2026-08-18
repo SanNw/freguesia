@@ -1,22 +1,32 @@
 {
+  "id": "36f18b11-67c3-4632-a97f-e5e20dc5baf4",
   "name": "WF-004 - Publicar Oferta",
   "active": false,
   "nodes": [
     {
+      "parameters": {},
+      "id": "manual-trigger",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [0, 0]
+    },
+    {
       "parameters": {
         "method": "POST",
         "url": "={{ $env.WORKER_INTERNAL_BASE_URL }}/v1/offers/{{ $json.offerId }}/publish",
+        "authentication": "none",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             {
               "name": "Authorization",
-              "value": "Bearer {{ $env.WORKER_SERVICE_TOKEN }}"
+              "value": "=Bearer {{ $env.WORKER_SERVICE_TOKEN }}"
             }
           ]
         },
         "sendBody": true,
-        "bodyJson": "{\"idempotencyKey\":\"{{ $json.idempotencyKey }}\"}",
+        "bodyJson": "={{ JSON.stringify({ idempotencyKey: $json.idempotencyKey }) }}",
         "options": {
           "timeout": 30000
         }
@@ -26,12 +36,16 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        0,
+        240,
         0
       ]
     }
   ],
-  "connections": {},
+  "connections": {
+    "Manual Trigger": {
+      "main": [[{ "node": "Publish Offer", "type": "main", "index": 0 }]]
+    }
+  },
   "settings": {
     "executionOrder": "v1"
   }
