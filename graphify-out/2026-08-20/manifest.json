@@ -174,9 +174,9 @@
     "semantic_hash": ""
   },
   "apps/worker/src/adapters/sources/shopee.adapter.ts": {
-    "mtime": 1787232013.0337977,
-    "seen": 1787232133.3216136,
-    "ast_hash": "5424556dd5a388521e82fc9e3cf8fcaf",
+    "mtime": 1787237112.0945854,
+    "seen": 1787237318.0778618,
+    "ast_hash": "60288bd3f1590d485e69e541e9337ccb",
     "semantic_hash": ""
   },
   "apps/worker/src/adapters/sources/source-adapter.ts": {
@@ -282,10 +282,10 @@
     "semantic_hash": ""
   },
   "apps/worker/src/application/run-shopee-discovery.ts": {
-    "mtime": 1787014590.0916402,
-    "seen": 1787230877.7953162,
-    "ast_hash": "08b4f6eb16716052afd343c998910f7b",
-    "semantic_hash": "08b4f6eb16716052afd343c998910f7b"
+    "mtime": 1787237165.6552956,
+    "seen": 1787237318.0814445,
+    "ast_hash": "0a1a0753bf10c6fae063be678973f67b",
+    "semantic_hash": ""
   },
   "apps/worker/src/application/score.ts": {
     "mtime": 1786821191.8722546,
@@ -378,10 +378,10 @@
     "semantic_hash": "5cad87535ef3e7cc311bee5e30e446f1"
   },
   "apps/worker/src/http/routes/discovery.ts": {
-    "mtime": 1787018122.2496817,
-    "seen": 1787230877.7953281,
-    "ast_hash": "533be93a9d7a2824dfcd1cb9cc288d16",
-    "semantic_hash": "533be93a9d7a2824dfcd1cb9cc288d16"
+    "mtime": 1787237165.6562881,
+    "seen": 1787237318.0845308,
+    "ast_hash": "90fc218d626617d648af58ce8ca2ae9c",
+    "semantic_hash": ""
   },
   "apps/worker/src/http/routes/health.ts": {
     "mtime": 1786887107.0449598,
@@ -564,10 +564,10 @@
     "semantic_hash": "72a17a76e92f2fdd3d30d676a94cc4bd"
   },
   "apps/worker/tests/unit/shopee.adapter.test.ts": {
-    "mtime": 1787055290.546056,
-    "seen": 1787230877.795352,
-    "ast_hash": "c77aff3ef540849ba87c95a10f01e46b",
-    "semantic_hash": "c77aff3ef540849ba87c95a10f01e46b"
+    "mtime": 1787237112.0955844,
+    "seen": 1787237318.0899148,
+    "ast_hash": "dd5eb86c6cce92bd4f7e5234070a1661",
+    "semantic_hash": ""
   },
   "apps/worker/tests/unit/url.test.ts": {
     "mtime": 1786887107.238957,
