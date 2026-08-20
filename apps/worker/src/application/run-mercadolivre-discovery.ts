@@ -1,5 +1,4 @@
 import type { Logger } from "../config/logger.js";
-import { env } from "../config/env.js";
 import { db } from "../adapters/persistence/db.js";
 import { productRepository } from "../adapters/persistence/product-repository.js";
 import { priceObservationRepository } from "../adapters/persistence/price-observation-repository.js";
@@ -7,7 +6,7 @@ import { offerRepository } from "../adapters/persistence/offer-repository.js";
 import { MercadoLivreAdapter } from "../adapters/sources/mercadolivre.adapter.js";
 import { validateOffer } from "./validate-offer.js";
 import { scoreOffer } from "./score.js";
-import { generateIdempotencyKey } from "./offer-helpers.js";
+import { generateIdempotencyKey, isUnchangedPrice } from "./offer-helpers.js";
 import { buildCaption } from "./create-manual-offer.js";
 
 export interface MercadoLivreDiscoveryInput {
@@ -31,15 +30,6 @@ export interface MercadoLivreDiscoveryResult {
 function recordSkip(result: MercadoLivreDiscoveryResult, reason: string): void {
   result.skipped += 1;
   result.skippedReasons[reason] = (result.skippedReasons[reason] ?? 0) + 1;
-}
-
-function localDate(value: string): string {
-  return new Intl.DateTimeFormat("en-CA", {
-    timeZone: env.TZ,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(new Date(value));
 }
 
 async function isImageReachable(imageUrl: string): Promise<boolean> {
@@ -101,23 +91,18 @@ export async function runMercadoLivreDiscovery(
   for (const candidate of candidates) {
     if (result.created >= input.limit) break;
     try {
-      const duplicate = await offerRepository.findDuplicateBySourceAndExternal(
-        "mercadolivre",
-        candidate.externalId,
-      );
-      if (
-        duplicate &&
-        localDate(duplicate.createdAt) ===
-          localDate(new Date().toISOString()) &&
-        !["failed", "rejected", "expired"].includes(duplicate.status)
-      ) {
-        recordSkip(result, "duplicate_today");
-        continue;
-      }
-
       const extracted = await adapter.extract({
         url: new URL(candidate.canonicalUrl),
       });
+      const lastSeenPrice =
+        await offerRepository.findLastSeenPriceBySourceAndExternal(
+          "mercadolivre",
+          candidate.externalId,
+        );
+      if (isUnchangedPrice(lastSeenPrice, extracted.currentPriceCents)) {
+        recordSkip(result, "unchanged_price");
+        continue;
+      }
       const validation = validateOffer(extracted);
       if (
         !validation.valid &&

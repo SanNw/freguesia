@@ -9,7 +9,7 @@ import {
   isUrlValid,
 } from "./offer-helpers.js";
 import { formatBRL } from "../domain/price.js";
-import { env } from "../config/env.js";
+import { offerEnv as env } from "../config/runtime.js";
 import type { Logger } from "../config/logger.js";
 import { AppError } from "../shared/errors.js";
 import { buildOfferHeadline } from "../domain/offer-headline.js";

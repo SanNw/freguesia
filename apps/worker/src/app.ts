@@ -1,7 +1,7 @@
 import Fastify from "fastify";
 import cors from "@fastify/cors";
 import type { Logger } from "./config/logger.js";
-import { env } from "./config/env.js";
+import { appEnv as env } from "./config/runtime.js";
 import { serviceTokenAuth } from "./http/middleware/auth.js";
 import { registerHealthRoutes } from "./http/routes/health.js";
 import { registerDiscoveryRoutes } from "./http/routes/discovery.js";

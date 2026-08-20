@@ -6,7 +6,7 @@ import {
   workflowEventRepository,
 } from "../adapters/persistence/repositories.js";
 import { TelegramGateway } from "../adapters/telegram/telegram-gateway.js";
-import { env } from "../config/env.js";
+import { publicationEnv as env } from "../config/runtime.js";
 import { AppError } from "../shared/errors.js";
 import {
   classifyProductNiche,

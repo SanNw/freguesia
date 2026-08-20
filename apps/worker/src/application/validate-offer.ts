@@ -1,6 +1,6 @@
 import type { ExtractedProduct } from "../domain/offer.js";
 import { calculateDiscountPercent, validatePrice } from "../domain/price.js";
-import { env } from "../config/env.js";
+import { offerEnv as env } from "../config/runtime.js";
 
 export function validateOffer(extracted: ExtractedProduct): {
   valid: boolean;

@@ -1,5 +1,5 @@
 import type { Logger } from "../../config/logger.js";
-import { env } from "../../config/env.js";
+import { telegramEnv as env } from "../../config/runtime.js";
 import { handleTelegramCallback } from "../../application/handle-telegram-callback.js";
 import { telegramCallbackSchema } from "../../http/schemas/index.js";
 import { handleAmazonMessage } from "../../application/handle-amazon-message.js";

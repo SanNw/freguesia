@@ -1,5 +1,5 @@
 import { Pool, type PoolClient } from "pg";
-import { env } from "../../config/env.js";
+import { databaseEnv as env } from "../../config/runtime.js";
 
 export class Database {
   private pool: Pool;

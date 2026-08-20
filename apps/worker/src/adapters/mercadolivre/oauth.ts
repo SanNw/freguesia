@@ -1,5 +1,5 @@
 import { createHash, randomBytes } from "node:crypto";
-import { env } from "../../config/env.js";
+import { mercadoLivreEnv as env } from "../../config/runtime.js";
 import { AppError } from "../../shared/errors.js";
 import { resilientFetch } from "../../shared/http-client.js";
 import { integrationCredentialRepository } from "../persistence/integration-credential-repository.js";

@@ -3,7 +3,7 @@ import type {
   FastifyRequest,
   DoneFuncWithErrOrRes,
 } from "fastify";
-import { env } from "../../config/env.js";
+import { appEnv as env } from "../../config/runtime.js";
 import { AppError } from "../../shared/errors.js";
 
 export function serviceTokenAuth(

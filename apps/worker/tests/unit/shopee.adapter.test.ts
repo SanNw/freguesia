@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("../../src/config/env.js", () => ({
@@ -9,26 +10,32 @@ vi.mock("../../src/config/env.js", () => ({
   },
 }));
 
-const { shopeeReadiness } =
+const { shopeeAuthorization, shopeeReadiness } =
   await import("../../src/adapters/sources/shopee.adapter.js");
 
-describe("Shopee adapter readiness", () => {
-  it("stays disabled before API approval", () => {
-    expect(shopeeReadiness({ enabled: false, appId: "", secret: "" })).toEqual({
-      ready: false,
-      reason: "disabled",
-    });
+describe("Shopee adapter", () => {
+  it("reports configuration readiness", () => {
+    expect(
+      shopeeReadiness({ enabled: false, apiUrl: "", appId: "", secret: "" }),
+    ).toEqual({ ready: false, reason: "disabled" });
+    expect(
+      shopeeReadiness({
+        enabled: true,
+        apiUrl: "https://example.com/graphql",
+        appId: "app",
+        secret: "secret",
+      }),
+    ).toEqual({ ready: true, reason: "ready" });
   });
 
-  it("reports missing credentials after activation", () => {
-    expect(
-      shopeeReadiness({ enabled: true, appId: "", secret: "" }).reason,
-    ).toBe("credentials_missing");
-  });
-
-  it("waits for the official contract when credentials exist", () => {
-    expect(
-      shopeeReadiness({ enabled: true, appId: "app", secret: "secret" }).reason,
-    ).toBe("api_contract_pending");
+  it("signs the exact request payload with SHA-256", () => {
+    const payload = JSON.stringify({ query: "{ productOfferV2 { nodes { itemId } } }" });
+    const timestamp = 1_577_836_800;
+    const signature = createHash("sha256")
+      .update(`123456${timestamp}${payload}demo`)
+      .digest("hex");
+    expect(shopeeAuthorization("123456", "demo", payload, timestamp)).toBe(
+      `SHA256 Credential=123456, Timestamp=${timestamp}, Signature=${signature}`,
+    );
   });
 });

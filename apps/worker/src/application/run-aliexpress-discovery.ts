@@ -1,5 +1,5 @@
 import type { Logger } from "../config/logger.js";
-import { env } from "../config/env.js";
+import { discoveryEnv as env } from "../config/runtime.js";
 import { db } from "../adapters/persistence/db.js";
 import { productRepository } from "../adapters/persistence/product-repository.js";
 import { priceObservationRepository } from "../adapters/persistence/price-observation-repository.js";

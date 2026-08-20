@@ -8,8 +8,8 @@
         "rule": {
           "interval": [
             {
-              "field": "hours",
-              "hoursInterval": 1
+              "field": "minutes",
+              "minutesInterval": 20
             }
           ]
         }

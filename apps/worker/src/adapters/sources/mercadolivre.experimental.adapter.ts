@@ -6,7 +6,7 @@ import type { AffiliateLinkResult } from "../../domain/affiliate-link.js";
 import { browserPool } from "../browser/browser-pool.js";
 import { detectCaptcha, detectBlocked } from "../browser/captcha-detector.js";
 import { validateExternalUrl } from "../../shared/url.js";
-import { env } from "../../config/env.js";
+import { mercadoLivreEnv as env } from "../../config/runtime.js";
 import { AppError } from "../../shared/errors.js";
 
 const ML_ALLOWED_DOMAINS = [

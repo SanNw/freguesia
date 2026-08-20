@@ -1,4 +1,4 @@
-import { env } from "../config/env.js";
+import { telegramEnv as env } from "../config/runtime.js";
 
 export type ProductNiche =
   | "hardware"

@@ -2,7 +2,7 @@ import { createHmac } from "node:crypto";
 import type { ExtractedProduct } from "../../domain/offer.js";
 import type { PriceSnapshot, ProductRef } from "../../domain/price.js";
 import type { AffiliateLinkResult } from "../../domain/affiliate-link.js";
-import { env } from "../../config/env.js";
+import { marketplaceEnv as env } from "../../config/runtime.js";
 import { AppError } from "../../shared/errors.js";
 import { resilientFetch } from "../../shared/http-client.js";
 import type {

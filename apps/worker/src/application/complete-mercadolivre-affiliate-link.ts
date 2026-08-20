@@ -1,5 +1,5 @@
 import type { Logger } from "../config/logger.js";
-import { env } from "../config/env.js";
+import { mercadoLivreEnv as env } from "../config/runtime.js";
 import { offerRepository } from "../adapters/persistence/offer-repository.js";
 import { validateAffiliateUrl } from "../domain/affiliate-link.js";
 import { AppError } from "../shared/errors.js";

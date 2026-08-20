@@ -3,7 +3,7 @@ import { offerRepository } from "../adapters/persistence/offer-repository.js";
 import { productRepository } from "../adapters/persistence/product-repository.js";
 import { workflowEventRepository } from "../adapters/persistence/repositories.js";
 import { TelegramGateway } from "../adapters/telegram/telegram-gateway.js";
-import { env } from "../config/env.js";
+import { telegramEnv as env } from "../config/runtime.js";
 import { AppError } from "../shared/errors.js";
 import {
   classifyProductNiche,

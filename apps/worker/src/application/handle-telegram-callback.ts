@@ -6,7 +6,7 @@ import {
 } from "../adapters/telegram/telegram-gateway.js";
 import { AppError } from "../shared/errors.js";
 import { publishOffer } from "./publish-offer.js";
-import { env } from "../config/env.js";
+import { telegramEnv as env } from "../config/runtime.js";
 import { approvalRepository } from "../adapters/persistence/repositories.js";
 
 export interface TelegramCallbackInput {

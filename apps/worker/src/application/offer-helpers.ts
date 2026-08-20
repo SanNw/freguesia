@@ -25,3 +25,10 @@ export function isUrlValid(url?: string | null): boolean {
     return false;
   }
 }
+
+export function isUnchangedPrice(
+  lastSeenPriceCents: number | null,
+  currentPriceCents: number,
+): boolean {
+  return lastSeenPriceCents !== null && lastSeenPriceCents === currentPriceCents;
+}

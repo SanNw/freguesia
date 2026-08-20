@@ -97,10 +97,12 @@ export class OfferRepository {
         affiliate_url, affiliate_provider, image_url, additional_image_urls,
         coupon_code, coupon_description, proposed_caption,
         rejection_reason, expires_at, idempotency_key, created_at, updated_at
-       FROM offers WHERE id::text LIKE $1 || '%' LIMIT 2`,
+       FROM offers WHERE id::text LIKE $1 || '%' 
+       ORDER BY created_at DESC 
+       LIMIT 1`,
       [shortId],
     );
-    if (rows.length !== 1) return null;
+    if (rows.length === 0) return null;
     return this.mapRow(rows[0]);
   }
 
@@ -192,6 +194,24 @@ export class OfferRepository {
     );
     if (rows.length === 0) return null;
     return this.mapRow(rows[0]);
+  }
+
+  async findLastSeenPriceBySourceAndExternal(
+    source: string,
+    externalId: string,
+  ): Promise<number | null> {
+    const rows = await db.query<{ current_price_cents: string | number }>(
+      `SELECT po.current_price_cents
+       FROM offers o
+       JOIN products p ON p.id = o.product_id
+       JOIN sources s ON s.id = p.source_id
+       JOIN price_observations po ON po.id = o.source_observation_id
+       WHERE s.slug = $1 AND p.external_id = $2
+       ORDER BY o.created_at DESC
+       LIMIT 1`,
+      [source, externalId],
+    );
+    return rows[0] ? Number(rows[0].current_price_cents) : null;
   }
 
   async findRecentPublishedOffer(

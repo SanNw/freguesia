@@ -55,7 +55,17 @@ export function registerDiscoveryRoutes(app: FastifyInstance, logger: Logger) {
     }
 
     if (parsed.data.sourceSlug === "shopee") {
-      reply.send({ runId, ...(await runShopeeDiscovery(logger)) });
+      reply.send({
+        runId,
+        ...(await runShopeeDiscovery(
+          {
+            query: parsed.data.query,
+            limit: parsed.data.limit,
+            correlationId: parsed.data.correlationId ?? runId,
+          },
+          logger,
+        )),
+      });
       return;
     }
 

@@ -1,4 +1,4 @@
-import { env } from "../../config/env.js";
+import { mercadoLivreEnv as env } from "../../config/runtime.js";
 import type { AffiliateLinkResult } from "../../domain/affiliate-link.js";
 import { browserPool } from "../browser/browser-pool.js";
 import { detectBlocked, detectCaptcha } from "../browser/captcha-detector.js";

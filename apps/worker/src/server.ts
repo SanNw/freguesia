@@ -1,6 +1,6 @@
 import "dotenv/config";
 import { createLogger } from "./config/logger.js";
-import { env } from "./config/env.js";
+import { appEnv as env } from "./config/runtime.js";
 import { buildApp } from "./app.js";
 import { db } from "./adapters/persistence/db.js";
 import { browserPool } from "./adapters/browser/browser-pool.js";

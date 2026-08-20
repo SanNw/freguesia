@@ -3,7 +3,7 @@ import type { Logger } from "../../config/logger.js";
 import { telegramCallbackSchema } from "../schemas/index.js";
 import { AppError } from "../../shared/errors.js";
 import { handleTelegramCallback } from "../../application/handle-telegram-callback.js";
-import { env } from "../../config/env.js";
+import { telegramEnv as env } from "../../config/runtime.js";
 
 function validWebhookSecret(value: string | string[] | undefined): boolean {
   if (!env.TELEGRAM_WEBHOOK_SECRET) return false;

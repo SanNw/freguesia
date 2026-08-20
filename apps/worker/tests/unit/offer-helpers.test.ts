@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   generateExternalId,
   generateIdempotencyKey,
+  isUnchangedPrice,
   isUrlValid,
 } from "../../src/application/offer-helpers.js";
 
@@ -23,6 +24,14 @@ describe("generateExternalId", () => {
   it("produces only hex characters", () => {
     const id = generateExternalId("https://example.com/product");
     expect(id).toMatch(/^[0-9a-f]+$/);
+  });
+});
+
+describe("isUnchangedPrice", () => {
+  it("skips a product only when its last observed price is unchanged", () => {
+    expect(isUnchangedPrice(4990, 4990)).toBe(true);
+    expect(isUnchangedPrice(5990, 4990)).toBe(false);
+    expect(isUnchangedPrice(null, 4990)).toBe(false);
   });
 });
 

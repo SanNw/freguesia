@@ -1,4 +1,4 @@
-import { env } from "../../config/env.js";
+import { telegramEnv as env } from "../../config/runtime.js";
 import type { Logger } from "../../config/logger.js";
 import { CHANNELS_LIST_LINK } from "../../domain/channels-footer.js";
 
