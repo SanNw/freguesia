@@ -1,7 +1,7 @@
 {
   "id": "a18c5eb2-dc75-4aa9-95f2-ff87c9a04a35",
   "name": "WF-007 - Descobrir Ofertas Shopee",
-  "active": false,
+  "active": true,
   "nodes": [
     {
       "parameters": {
