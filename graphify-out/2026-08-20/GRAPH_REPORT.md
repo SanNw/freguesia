@@ -1,22 +1,22 @@
 # Graph Report - freguesia  (2026-08-20)
 
 ## Corpus Check
-- 156 files · ~52,475 words
+- 156 files · ~52,602 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 738 nodes · 1532 edges · 50 communities (41 shown, 9 thin omitted)
+- 738 nodes · 1572 edges · 52 communities (43 shown, 9 thin omitted)
 - Extraction: 97% EXTRACTED · 3% INFERRED · 0% AMBIGUOUS · INFERRED: 47 edges (avg confidence: 0.82)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `e5aba5af`
+- Built from commit: `71c513e4`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
 ## Community Hubs (Navigation)
-- SourceAdapter
-- aliexpress.adapter.ts
+- mercadolivre.experimental.adapter.ts
+- offers.ts
 - create-manual-offer.ts
 - AppError
 - scripts
@@ -30,10 +30,10 @@
 - oauth.ts
 - compilerOptions
 - OfferRepository
-- .discover
+- aliexpress.adapter.ts
 - command
 - product-matching/tsconfig.json
-- MercadoLivreAdapter
+- DiscoveryInput
 - Database
 - contracts/package.json
 - eslint-config/package.json
@@ -46,14 +46,15 @@
 - export-n8n-workflows.sh
 - import-n8n-workflows.sh
 - restore.sh
-- resilientFetch
-- offers.ts
-- ShopeeAdapter
-- request-approval.ts
+- AffiliateLinkResult
+- app.ts
+- shopee.adapter.ts
+- FeedAdapter
 - publish-offer.ts
 - Q: Por que Env conecta aprovação, adaptadores, persistência, OAuth, automação e Telegram?
+- url.ts
 - mercadolivre.adapter.ts
-- handle-amazon-message.ts
+- telegram-gateway.ts
 - requestApproval
 - product-niche.ts
 - handle-telegram-callback.ts
@@ -62,14 +63,14 @@
 ## God Nodes (most connected - your core abstractions)
 1. `AppError` - 26 edges
 2. `OfferRepository` - 24 edges
-3. `Logger` - 22 edges
-4. `requestApproval()` - 20 edges
-5. `resilientFetch()` - 19 edges
-6. `runLomadeeDiscovery()` - 18 edges
-7. `SourceAdapter` - 18 edges
-8. `compilerOptions` - 18 edges
-9. `db` - 17 edges
-10. `runAliExpressDiscovery()` - 17 edges
+3. `Logger` - 24 edges
+4. `SourceAdapter` - 22 edges
+5. `requestApproval()` - 20 edges
+6. `AffiliateLinkResult` - 20 edges
+7. `ExtractedProduct` - 20 edges
+8. `PriceSnapshot` - 19 edges
+9. `ProductRef` - 19 edges
+10. `resilientFetch()` - 19 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `Private Docker service network` --implements--> `Freguesia threat model and security controls`  [INFERRED]
@@ -91,23 +92,23 @@
 - **Offer discovery through human approval and publication** — freguesia_n8n_orchestration, freguesia_worker_domain_service, freguesia_postgresql_source_of_truth, freguesia_telegram_human_approval [EXTRACTED 1.00]
 - **Automated dependency maintenance and security verification** — github_dependabot_dependabot_configuration, github_workflows_security_dependency_audit, github_workflows_docker_build_worker_image_security, docs_security_supply_chain_security [INFERRED 0.95]
 
-## Communities (50 total, 9 thin omitted)
+## Communities (52 total, 9 thin omitted)
 
-### Community 0 - "SourceAdapter"
-Cohesion: 0.13
-Nodes (5): FeedAdapter, ManualAdapter, SourceAdapter, AffiliateLinkResult, ExtractedProduct
+### Community 0 - "mercadolivre.experimental.adapter.ts"
+Cohesion: 0.17
+Nodes (7): FeedConfig, ManualAdapter, ML_ALLOWED_DOMAINS, SourceAdapter, ExtractedProduct, PriceSnapshot, ProductRef
 
-### Community 1 - "aliexpress.adapter.ts"
-Cohesion: 0.16
-Nodes (14): AliExpressReadinessReason, AliProduct, isAliExpressQueryMatch(), normalizeSearchText(), FeedConfig, ProductOfferResponse, ShopeeProductOffer, ShopeeReadinessReason (+6 more)
+### Community 1 - "offers.ts"
+Cohesion: 0.22
+Nodes (11): ApprovalRepository, completeMercadoLivreAffiliateLink(), generateAffiliateLinkForOffer(), registerOfferRoutes(), affiliateLinkSchema, approveSchema, createDiscoveryRunSchema, createManualOfferSchema (+3 more)
 
 ### Community 2 - "create-manual-offer.ts"
 Cohesion: 0.07
 Nodes (52): db, IntegrationCredential, PriceObservationRepository, PriceObservationRow, ProductRepository, ProductRow, buildCaption(), createManualOffer() (+44 more)
 
 ### Community 3 - "AppError"
-Cohesion: 0.16
-Nodes (12): Circuit, circuits, CircuitState, getCircuit(), positiveInteger(), withCircuitBreaker(), AppError, ErrorCode (+4 more)
+Cohesion: 0.17
+Nodes (11): Circuit, circuits, CircuitState, getCircuit(), positiveInteger(), withCircuitBreaker(), AppError, ErrorCode (+3 more)
 
 ### Community 4 - "scripts"
 Cohesion: 0.04
@@ -118,8 +119,8 @@ Cohesion: 0.06
 Nodes (42): Graphify-first codebase navigation workflow, Private Docker service network, Docker Compose runtime stack, Decision to separate n8n, Worker, and PostgreSQL responsibilities, Preservation of publications, audit events, and price history, Data retention and deletion policy, Offer lifecycle state machine, Replicable architecture and operations manual (+34 more)
 
 ### Community 6 - "lomadee.adapter.ts"
-Cohesion: 0.19
-Nodes (11): LomadeeAdapter, LomadeeCampaign, LomadeeProduct, LomadeeProductOption, metadataNumber(), promotionRank(), selectOption(), titleSimilarity() (+3 more)
+Cohesion: 0.17
+Nodes (12): LomadeeAdapter, LomadeeCampaign, LomadeeProduct, LomadeeProductOption, metadataNumber(), promotionRank(), selectOption(), titleSimilarity() (+4 more)
 
 ### Community 7 - "offer.ts"
 Cohesion: 0.06
@@ -130,8 +131,8 @@ Cohesion: 0.08
 Nodes (25): compilerOptions, declaration, esModuleInterop, forceConsistentCasingInFileNames, lib, module, moduleResolution, noFallthroughCasesInSwitch (+17 more)
 
 ### Community 9 - "affiliate-link-generator.ts"
-Cohesion: 0.08
-Nodes (20): main(), main(), BrowserPool, MAX_CONCURRENCY, CAPTCHA_SIGNALS, detectBlocked(), detectCaptcha(), lockPath (+12 more)
+Cohesion: 0.10
+Nodes (15): main(), main(), BrowserPool, MAX_CONCURRENCY, CAPTCHA_SIGNALS, detectBlocked(), detectCaptcha(), lockPath (+7 more)
 
 ### Community 10 - "dependencies"
 Cohesion: 0.10
@@ -149,9 +150,13 @@ Nodes (12): assertConfigured(), base64Url(), completeMercadoLivreAuthorization()
 Cohesion: 0.11
 Nodes (17): compilerOptions, declaration, esModuleInterop, forceConsistentCasingInFileNames, lib, module, moduleResolution, noFallthroughCasesInSwitch (+9 more)
 
-### Community 15 - ".discover"
-Cohesion: 0.24
-Nodes (11): AliExpressAdapter, aliExpressReadiness(), asCents(), asNumber(), asText(), generatedPromotionLink(), origin(), preferNationalCandidates() (+3 more)
+### Community 14 - "OfferRepository"
+Cohesion: 0.21
+Nodes (3): OfferRepository, Offer, calculatePriceDropPercent()
+
+### Community 15 - "aliexpress.adapter.ts"
+Cohesion: 0.19
+Nodes (16): AliExpressAdapter, aliExpressReadiness(), AliExpressReadinessReason, AliProduct, asCents(), asNumber(), asText(), generatedPromotionLink() (+8 more)
 
 ### Community 16 - "command"
 Cohesion: 0.15
@@ -161,9 +166,9 @@ Nodes (12): mcp, n8n-mcp, command, enabled, type, $schema, Bypass, -ExecutionPol
 Cohesion: 0.18
 Nodes (10): compilerOptions, baseUrl, outDir, paths, extends, include, @freguesia/product-matching, ./index.ts (+2 more)
 
-### Community 18 - "MercadoLivreAdapter"
-Cohesion: 0.18
-Nodes (4): cents(), itemIdFromUrl(), MercadoLivreAdapter, mockFetch
+### Community 18 - "DiscoveryInput"
+Cohesion: 0.22
+Nodes (3): MercadoLivreAdapter, DiscoveryInput, mockFetch
 
 ### Community 20 - "contracts/package.json"
 Cohesion: 0.33
@@ -181,73 +186,73 @@ Nodes (3): Source, SourceId, sourceSchema
 Cohesion: 0.50
 Nodes (3): CreateDiscoveryRunRequest, CreateDiscoveryRunResponse, errorResponse
 
-### Community 36 - "resilientFetch"
-Cohesion: 0.38
-Nodes (3): AwinAdapter, extractIdFromUrl(), resilientFetch()
-
-### Community 39 - "offers.ts"
-Cohesion: 0.10
-Nodes (27): TelegramPoller, buildApp(), completeMercadoLivreAffiliateLink(), generateAffiliateLinkForOffer(), removeOldFiles(), runMaintenanceCleanup(), createLogger(), Logger (+19 more)
-
-### Community 40 - "ShopeeAdapter"
+### Community 36 - "AffiliateLinkResult"
 Cohesion: 0.26
-Nodes (5): cents(), previousPrice(), ShopeeAdapter, shopeeAuthorization(), shopeeReadiness()
+Nodes (5): AwinAdapter, extractIdFromUrl(), AffiliateLinkResult, positiveInteger(), resilientFetch()
 
-### Community 41 - "request-approval.ts"
-Cohesion: 0.29
-Nodes (7): TelegramEditMessageInput, TelegramRichMessageInput, TelegramSendPhotoInput, appendChannelsFooter(), CHANNELS_FOOTER, CHANNELS_FOOTER_TEXT, CHANNELS_LIST_LINK
+### Community 39 - "app.ts"
+Cohesion: 0.17
+Nodes (13): TelegramPoller, buildApp(), removeOldFiles(), runMaintenanceCleanup(), createLogger(), Logger, appEnv, serviceTokenAuth() (+5 more)
+
+### Community 40 - "shopee.adapter.ts"
+Cohesion: 0.20
+Nodes (9): cents(), previousPrice(), ProductOfferResponse, ShopeeAdapter, shopeeAuthorization(), ShopeeProductOffer, shopeeReadiness(), ShopeeReadinessReason (+1 more)
 
 ### Community 42 - "publish-offer.ts"
-Cohesion: 0.22
-Nodes (4): PublicationRepository, WorkflowEventRepository, buildPublicationCaption(), buildAffiliateCaptionLink()
+Cohesion: 0.19
+Nodes (7): PublicationRepository, WorkflowEventRepository, buildPublicationCaption(), buildAffiliateCaptionLink(), appendChannelsFooter(), CHANNELS_FOOTER, CHANNELS_FOOTER_TEXT
 
 ### Community 43 - "Q: Por que Env conecta aprovação, adaptadores, persistência, OAuth, automação e Telegram?"
 Cohesion: 0.40
 Nodes (4): Answer, Outcome, Q: Por que Env conecta aprovação, adaptadores, persistência, OAuth, automação e Telegram?, Source Nodes
 
-### Community 45 - "mercadolivre.adapter.ts"
-Cohesion: 0.22
-Nodes (9): CatalogItem, CatalogItemsResponse, CatalogProduct, CatalogSearchResponse, SearchResult, ML_ALLOWED_DOMAINS, DiscoveredProduct, DiscoveryInput (+1 more)
+### Community 44 - "url.ts"
+Cohesion: 0.57
+Nodes (5): isAllowedDomain(), isPrivateOrLoopback(), normalizeUrl(), PRIVATE_IP_PATTERNS, validateExternalUrl()
 
-### Community 46 - "handle-amazon-message.ts"
-Cohesion: 0.36
-Nodes (7): adminUserIds(), isAdmin(), field(), normalizeLabel(), parseAmazonCommand(), parsePrice(), handleAmazonMessage()
+### Community 45 - "mercadolivre.adapter.ts"
+Cohesion: 0.17
+Nodes (10): CatalogItem, CatalogItemsResponse, CatalogProduct, CatalogSearchResponse, cents(), itemIdFromUrl(), SearchResult, mercadoLivreEnv (+2 more)
+
+### Community 46 - "telegram-gateway.ts"
+Cohesion: 0.22
+Nodes (11): adminUserIds(), isAdmin(), TelegramEditMessageInput, TelegramRichMessageInput, TelegramSendPhotoInput, field(), normalizeLabel(), parseAmazonCommand() (+3 more)
 
 ### Community 47 - "requestApproval"
-Cohesion: 0.19
-Nodes (5): TelegramGateway, handleTelegramCallback(), publishOffer(), requestApproval(), productNicheLabel()
+Cohesion: 0.23
+Nodes (4): TelegramGateway, publishOffer(), requestApproval(), productNicheChannel()
 
 ### Community 48 - "product-niche.ts"
 Cohesion: 0.22
-Nodes (9): buildOfferHeadline(), cleanProductName(), stableIndex(), classifyProductNiche(), GENERAL_ONLY_TERMS, normalize(), ProductNiche, productNicheChannel() (+1 more)
+Nodes (9): buildOfferHeadline(), cleanProductName(), stableIndex(), classifyProductNiche(), GENERAL_ONLY_TERMS, normalize(), ProductNiche, productNicheLabel() (+1 more)
 
 ### Community 49 - "handle-telegram-callback.ts"
-Cohesion: 0.25
-Nodes (5): ApprovalRepository, AmazonTelegramMessage, TelegramCallbackInput, telegramEnv, telegramCallbackSchema
+Cohesion: 0.27
+Nodes (7): AmazonTelegramMessage, handleTelegramCallback(), TelegramCallbackInput, telegramEnv, registerTelegramRoutes(), validWebhookSecret(), telegramCallbackSchema
 
 ### Community 50 - "runtime.ts"
-Cohesion: 0.22
-Nodes (7): booleanString, Env, envSchema, databaseEnv, discoveryEnv, offerEnv, publicationEnv
+Cohesion: 0.20
+Nodes (8): booleanString, Env, envSchema, databaseEnv, discoveryEnv, marketplaceEnv, offerEnv, publicationEnv
 
 ## Knowledge Gaps
-- **225 isolated node(s):** `TokenResponse`, `AliProduct`, `AliExpressReadinessReason`, `SearchResult`, `CatalogProduct` (+220 more)
+- **224 isolated node(s):** `name`, `version`, `private`, `type`, `description` (+219 more)
   These have ≤1 connection - possible missing edges or undocumented components.
 - **9 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `AppError` connect `AppError` to `aliexpress.adapter.ts`, `create-manual-offer.ts`, `lomadee.adapter.ts`, `offers.ts`, `request-approval.ts`, `publish-offer.ts`, `oauth.ts`, `mercadolivre.adapter.ts`, `handle-telegram-callback.ts`?**
-  _High betweenness centrality (0.031) - this node is a cross-community bridge._
-- **Why does `OfferRepository` connect `OfferRepository` to `create-manual-offer.ts`, `offers.ts`, `request-approval.ts`, `publish-offer.ts`, `handle-telegram-callback.ts`?**
-  _High betweenness centrality (0.024) - this node is a cross-community bridge._
-- **Why does `SourceAdapter` connect `SourceAdapter` to `aliexpress.adapter.ts`, `AppError`, `resilientFetch`, `lomadee.adapter.ts`, `mercadolivre.adapter.ts`?**
-  _High betweenness centrality (0.019) - this node is a cross-community bridge._
+- **Why does `AppError` connect `AppError` to `mercadolivre.experimental.adapter.ts`, `offers.ts`, `create-manual-offer.ts`, `lomadee.adapter.ts`, `app.ts`, `shopee.adapter.ts`, `publish-offer.ts`, `oauth.ts`, `mercadolivre.adapter.ts`, `aliexpress.adapter.ts`, `handle-telegram-callback.ts`?**
+  _High betweenness centrality (0.030) - this node is a cross-community bridge._
+- **Why does `SourceAdapter` connect `mercadolivre.experimental.adapter.ts` to `AppError`, `AffiliateLinkResult`, `lomadee.adapter.ts`, `shopee.adapter.ts`, `FeedAdapter`, `affiliate-link-generator.ts`, `mercadolivre.adapter.ts`, `aliexpress.adapter.ts`, `DiscoveryInput`?**
+  _High betweenness centrality (0.022) - this node is a cross-community bridge._
+- **Why does `OfferRepository` connect `OfferRepository` to `offers.ts`, `create-manual-offer.ts`, `publish-offer.ts`, `mercadolivre.adapter.ts`, `handle-telegram-callback.ts`?**
+  _High betweenness centrality (0.021) - this node is a cross-community bridge._
 - **Are the 4 inferred relationships involving `requestApproval()` (e.g. with `.buildApprovalKeyboard()` and `.buildOfferRichMarkdown()`) actually correct?**
   _`requestApproval()` has 4 INFERRED edges - model-reasoned connections that need verification._
-- **What connects `TokenResponse`, `AliProduct`, `AliExpressReadinessReason` to the rest of the system?**
-  _225 weakly-connected nodes found - possible documentation gaps or missing edges._
-- **Should `SourceAdapter` be split into smaller, more focused modules?**
-  _Cohesion score 0.12631578947368421 - nodes in this community are weakly interconnected._
+- **What connects `name`, `version`, `private` to the rest of the system?**
+  _224 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `create-manual-offer.ts` be split into smaller, more focused modules?**
-  _Cohesion score 0.07043167802661474 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.07075624797143784 - nodes in this community are weakly interconnected._
+- **Should `scripts` be split into smaller, more focused modules?**
+  _Cohesion score 0.043478260869565216 - nodes in this community are weakly interconnected._

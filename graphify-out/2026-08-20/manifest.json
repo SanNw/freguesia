@@ -2,7 +2,7 @@
   ".codex/hooks.json": {
     "mtime": 1787230289.2242455,
     "seen": 1787237481.2327998,
-    "ast_hash": "0fb2db421b99a9f93ac9965c8b21fd9d",
+    "ast_hash": "",
     "semantic_hash": ""
   },
   "app.py": {
@@ -464,13 +464,13 @@
   "apps/worker/tests/fixtures/awin-promotion.json": {
     "mtime": 1787055290.370547,
     "seen": 1787237481.248117,
-    "ast_hash": "3cb32ed97d5e948c1842ec2663f9a2be",
+    "ast_hash": "",
     "semantic_hash": ""
   },
   "apps/worker/tests/fixtures/lomadee-product.json": {
     "mtime": 1787055290.376545,
     "seen": 1787237481.248119,
-    "ast_hash": "45c6a967ff840205a65427f853ff0758",
+    "ast_hash": "",
     "semantic_hash": ""
   },
   "apps/worker/tests/integration/adapters/awin.adapter.integration.test.ts": {
@@ -602,13 +602,13 @@
   "database/schema.sql": {
     "mtime": 1787055048.9755933,
     "seen": 1787237481.2521439,
-    "ast_hash": "f611b0193a7ec3dc139ccd30d5e25b73",
+    "ast_hash": "",
     "semantic_hash": ""
   },
   "database/seeds/001-sources.sql": {
     "mtime": 1786821423.3905725,
     "seen": 1787237481.2521462,
-    "ast_hash": "c6006f81f42c5a698a85a821b608f423",
+    "ast_hash": "",
     "semantic_hash": ""
   },
   "n8n/workflows/001-discover-offers.json": {
@@ -620,115 +620,115 @@
   "n8n/workflows/002-request-approval.json": {
     "mtime": 1787055809.5745094,
     "seen": 1787237481.252148,
-    "ast_hash": "72ac91843e4b8f71d5aa072068b66b68",
+    "ast_hash": "",
     "semantic_hash": ""
   },
   "n8n/workflows/003-handle-telegram-callback.json": {
     "mtime": 1787055092.1368122,
     "seen": 1787237481.25215,
-    "ast_hash": "de5c2f7fffd92a7ab85dd408a9b0b1de",
+    "ast_hash": "",
     "semantic_hash": ""
   },
   "n8n/workflows/004-publish-offer.json": {
     "mtime": 1787055809.5755088,
     "seen": 1787237481.2521513,
-    "ast_hash": "7ca7f0e2b413d34209c7c314c5dfef92",
+    "ast_hash": "",
     "semantic_hash": ""
   },
   "n8n/workflows/005-monitor-health.json": {
     "mtime": 1787055092.1368122,
     "seen": 1787237481.2521532,
-    "ast_hash": "eb3e96efd64e2677111cf7380ab13e8e",
+    "ast_hash": "",
     "semantic_hash": ""
   },
   "n8n/workflows/006-cleanup.json": {
     "mtime": 1787012923.1096277,
     "seen": 1787237481.2521548,
-    "ast_hash": "35ab3a1496c0c066bfd4336338f3bccd",
+    "ast_hash": "",
     "semantic_hash": ""
   },
   "n8n/workflows/007-shopee-discovery.json": {
     "mtime": 1787014713.2687242,
     "seen": 1787237481.2521563,
-    "ast_hash": "106586f87bf51be554359bf827c719b6",
+    "ast_hash": "",
     "semantic_hash": ""
   },
   "n8n/workflows/008-aliexpress-discovery.json": {
     "mtime": 1787018763.0623426,
     "seen": 1787237481.2521577,
-    "ast_hash": "a41aceb38da4008ab696627b5e2acec1",
+    "ast_hash": "",
     "semantic_hash": ""
   },
   "n8n/workflows/Awin - Collect Offers.json": {
     "mtime": 1786907638.2227771,
     "seen": 1787237481.252159,
-    "ast_hash": "3b2b19279ddf5e4ddb9cc17c7199ec16",
+    "ast_hash": "",
     "semantic_hash": ""
   },
   "n8n/workflows/INT-00 Normalize Offer.json": {
     "mtime": 1786907336.157412,
     "seen": 1787237481.252161,
-    "ast_hash": "4743c3c63b21451f7c7cd9d96f82d309",
+    "ast_hash": "",
     "semantic_hash": ""
   },
   "n8n/workflows/INT-01 Validate Affiliate URL.json": {
     "mtime": 1786907352.99376,
     "seen": 1787237481.2521625,
-    "ast_hash": "eb278f3d2582d0df9da86c02b49b0d21",
+    "ast_hash": "",
     "semantic_hash": ""
   },
   "n8n/workflows/INT-02 Upsert Product and Offer.json": {
     "mtime": 1786907369.0039897,
     "seen": 1787237481.252164,
-    "ast_hash": "bad323bc26f11cbe14753a0954518e8e",
+    "ast_hash": "",
     "semantic_hash": ""
   },
   "n8n/workflows/INT-03 Match Product Identity.json": {
     "mtime": 1786907387.4319322,
     "seen": 1787237481.2521653,
-    "ast_hash": "a8e55a5e1f76b84f3f7ce84b1f45669b",
+    "ast_hash": "",
     "semantic_hash": ""
   },
   "n8n/workflows/INT-04 Compare Offers.json": {
     "mtime": 1786907410.7352736,
     "seen": 1787237481.252167,
-    "ast_hash": "59db63d7688886b217dd105bac4ff851",
+    "ast_hash": "",
     "semantic_hash": ""
   },
   "n8n/workflows/INT-05 Queue for Review.json": {
     "mtime": 1786907448.5405347,
     "seen": 1787237481.2521687,
-    "ast_hash": "e7b966ad30839189daf772a6267a5144",
+    "ast_hash": "",
     "semantic_hash": ""
   },
   "n8n/workflows/INT-06 Publish Telegram.json": {
     "mtime": 1786907483.559235,
     "seen": 1787237481.25217,
-    "ast_hash": "dd37d6b9ebdc7aea03c38114575f91ac",
+    "ast_hash": "",
     "semantic_hash": ""
   },
   "n8n/workflows/INT-07 Record Click Reference.json": {
     "mtime": 1786907510.230714,
     "seen": 1787237481.2521715,
-    "ast_hash": "c602e32c8e262b6de2fd71fdc11fc529",
+    "ast_hash": "",
     "semantic_hash": ""
   },
   "n8n/workflows/INT-08 Refresh Stale Offer.json": {
     "mtime": 1786907525.3978598,
     "seen": 1787237481.252173,
-    "ast_hash": "3b1e078fd71fc03881286b77fc5dedc1",
+    "ast_hash": "",
     "semantic_hash": ""
   },
   "n8n/workflows/INT-09 Dead-letter Handler.json": {
     "mtime": 1786907551.7518048,
     "seen": 1787237481.2521749,
-    "ast_hash": "b22924c2c1c9dfd718636d8fce841bed",
+    "ast_hash": "",
     "semantic_hash": ""
   },
   "n8n/workflows/Lomadee - Collect Offers.json": {
     "mtime": 1786907618.5322394,
     "seen": 1787237481.2521763,
-    "ast_hash": "05d8dd63df335d26162733575f84666a",
+    "ast_hash": "",
     "semantic_hash": ""
   },
   "opencode.json": {
@@ -888,10 +888,10 @@
     "semantic_hash": "4dd054cd1b8d497ea42d55e33f10c7ca"
   },
   "README.md": {
-    "mtime": 1787056336.370422,
-    "seen": 1787230877.7954006,
-    "ast_hash": "d4707dc43a64f8db547204d171eac0ed",
-    "semantic_hash": "d4707dc43a64f8db547204d171eac0ed"
+    "mtime": 1787237791.4044702,
+    "seen": 1787237803.10138,
+    "ast_hash": "8c8b3f89b2d80ff9f3562660d8fe4255",
+    "semantic_hash": ""
   },
   "SECURITY.md": {
     "mtime": 1786820083.7893934,
@@ -969,6 +969,12 @@
     "mtime": 1787232013.0097983,
     "seen": 1787232133.3235648,
     "ast_hash": "5775959bf6cd200f276a245e11011bf3",
+    "semantic_hash": ""
+  },
+  ".github/workflows/graphify-pages.yml": {
+    "mtime": 1787237867.2695892,
+    "seen": 1787237877.0856478,
+    "ast_hash": "64fe2978c34465e8cd2753dd48d24f3f",
     "semantic_hash": ""
   }
 }

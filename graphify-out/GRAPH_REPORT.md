@@ -1,16 +1,16 @@
 # Graph Report - freguesia  (2026-08-20)
 
 ## Corpus Check
-- 156 files · ~52,602 words
+- 156 files · ~52,605 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 738 nodes · 1572 edges · 52 communities (43 shown, 9 thin omitted)
+- 737 nodes · 1572 edges · 51 communities (42 shown, 9 thin omitted)
 - Extraction: 97% EXTRACTED · 3% INFERRED · 0% AMBIGUOUS · INFERRED: 47 edges (avg confidence: 0.82)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `71c513e4`
+- Built from commit: `470421d5`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -65,9 +65,9 @@
 2. `OfferRepository` - 24 edges
 3. `Logger` - 24 edges
 4. `SourceAdapter` - 22 edges
-5. `requestApproval()` - 20 edges
+5. `ExtractedProduct` - 20 edges
 6. `AffiliateLinkResult` - 20 edges
-7. `ExtractedProduct` - 20 edges
+7. `requestApproval()` - 20 edges
 8. `PriceSnapshot` - 19 edges
 9. `ProductRef` - 19 edges
 10. `resilientFetch()` - 19 edges
@@ -92,7 +92,7 @@
 - **Offer discovery through human approval and publication** — freguesia_n8n_orchestration, freguesia_worker_domain_service, freguesia_postgresql_source_of_truth, freguesia_telegram_human_approval [EXTRACTED 1.00]
 - **Automated dependency maintenance and security verification** — github_dependabot_dependabot_configuration, github_workflows_security_dependency_audit, github_workflows_docker_build_worker_image_security, docs_security_supply_chain_security [INFERRED 0.95]
 
-## Communities (52 total, 9 thin omitted)
+## Communities (51 total, 9 thin omitted)
 
 ### Community 0 - "mercadolivre.experimental.adapter.ts"
 Cohesion: 0.17
@@ -235,7 +235,7 @@ Cohesion: 0.20
 Nodes (8): booleanString, Env, envSchema, databaseEnv, discoveryEnv, marketplaceEnv, offerEnv, publicationEnv
 
 ## Knowledge Gaps
-- **224 isolated node(s):** `name`, `version`, `private`, `type`, `description` (+219 more)
+- **224 isolated node(s):** `FeedConfig`, `TokenResponse`, `AliExpressReadinessReason`, `AliProduct`, `IntegrationCredential` (+219 more)
   These have ≤1 connection - possible missing edges or undocumented components.
 - **9 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
@@ -248,11 +248,11 @@ _Questions this graph is uniquely positioned to answer:_
   _High betweenness centrality (0.022) - this node is a cross-community bridge._
 - **Why does `OfferRepository` connect `OfferRepository` to `offers.ts`, `create-manual-offer.ts`, `publish-offer.ts`, `mercadolivre.adapter.ts`, `handle-telegram-callback.ts`?**
   _High betweenness centrality (0.021) - this node is a cross-community bridge._
-- **Are the 4 inferred relationships involving `requestApproval()` (e.g. with `.buildApprovalKeyboard()` and `.buildOfferRichMarkdown()`) actually correct?**
-  _`requestApproval()` has 4 INFERRED edges - model-reasoned connections that need verification._
-- **What connects `name`, `version`, `private` to the rest of the system?**
+- **What connects `FeedConfig`, `TokenResponse`, `AliExpressReadinessReason` to the rest of the system?**
   _224 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `create-manual-offer.ts` be split into smaller, more focused modules?**
   _Cohesion score 0.07075624797143784 - nodes in this community are weakly interconnected._
 - **Should `scripts` be split into smaller, more focused modules?**
   _Cohesion score 0.043478260869565216 - nodes in this community are weakly interconnected._
+- **Should `Freguesia Worker domain and browser automation service` be split into smaller, more focused modules?**
+  _Cohesion score 0.0627177700348432 - nodes in this community are weakly interconnected._
