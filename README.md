@@ -64,6 +64,14 @@ npm run typecheck
 
 Ver [Freguesia.md](./Freguesia.md) para a especificação técnica completa.
 
+## Mapa interativo do projeto
+
+Explore a [árvore de arquivos e relações](https://sannw.github.io/freguesia/) gerada pelo Graphify. O mapa ajuda pessoas e agentes de IA a navegar pela estrutura do projeto sem precisar ler todo o repositório.
+
+- [Abrir árvore interativa](https://sannw.github.io/freguesia/)
+- [Abrir grafo completo](https://sannw.github.io/freguesia/graph.html)
+- [Consultar relatório do grafo](./graphify-out/GRAPH_REPORT.md)
+
 ## Documentação
 
 - [Manual de Arquitetura Replicável](./docs/MANUAL-ARQUITETURA-REPLICAVEL.md)

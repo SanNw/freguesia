@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Freguesia — graphify tree viewer</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #f9f9f9;
+      color: #333;
+    }
+    h1 {
+      margin: 20px 0 0 24px;
+      font-size: 2.2rem;
+      font-weight: bold;
+      color: #1e3a56;
+    }
+    .controls {
+      margin: 20px 0 15px 24px;
+    }
+    button {
+      margin-right: 10px;
+      padding: 8px 18px;
+      background: #007bff;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: background 0.2s ease-in-out;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    button:hover {
+      background: #0056b3;
+    }
+    button:active {
+      background: #004085;
+    }
+    #tree-container {
+      width: calc(100vw - 48px); /* Adjust for body margin/padding */
+      height: 85vh;
+      overflow: auto;
+      border-radius: 8px;
+      background: #fff;
+      margin-left: 24px;
+      margin-right: 24px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      border: 1px solid #ddd;
+    }
+    svg {
+      background: #fff;
+      border-radius: 8px;
+      display: block; /* Important for D3 */
+    }
+    .node circle {
+      stroke-width: 2.5px;
+    }
+    .node text { /* Base style for the <text> container */
+      font: 13px 'Segoe UI', sans-serif;
+      paint-order: stroke fill; /* Ensures text is readable over lines */
+      stroke: #fff; /* White halo */
+      stroke-width: 3px; /* Halo thickness */
+      stroke-linejoin: round;
+      stroke-opacity: 0.85; /* Halo opacity */
+    }
+    .link {
+      fill: none;
+      stroke-opacity: 0.7;
+      stroke-width: 2px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Freguesia — Knowledge Graph</h1>
+  <div class="controls">
+    <button onclick="expandAll()">Expand All</button>
+    <button onclick="collapseAll()">Collapse All</button>
+    <button onclick="resetView()">Reset View</button>
+  </div>
+  <div id="tree-container">
+    <svg id="tree-svg" width="6000" height="8000"></svg>
+  </div>
+
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script>
+    const initialJsonData = {"name":"Freguesia","total_count":642,"children":[{"name":".github","total_count":6,"children":[{"name":"dependabot.yml","total_count":1,"children":[{"name":"Dependabot dependency update configuration","total_count":1,"children":[]}]},{"name":"pull_request_template.md","total_count":1,"children":[{"name":"Pull request architecture, security, data, and quality gate","total_count":1,"children":[]}]},{"name":"workflows","total_count":4,"children":[{"name":"ci.yml","total_count":2,"children":[{"name":"PostgreSQL 17 test service","total_count":1,"children":[]},{"name":"Worker tests, workflow validation, and Compose validation","total_count":1,"children":[]}]},{"name":"docker-build.yml","total_count":1,"children":[{"name":"Worker container build and Trivy image scan","total_count":1,"children":[]}]},{"name":"security.yml","total_count":1,"children":[{"name":"Scheduled npm dependency security audit","total_count":1,"children":[]}]}]}]},{"name":"AGENTS.md","total_count":1,"children":[{"name":"Graphify-first codebase navigation workflow","total_count":1,"children":[]}]},{"name":"app.py","total_count":4,"children":[{"name":"buscar_produto_por_url()","total_count":1,"children":[]},{"name":"conectar_mercado_livre()","total_count":1,"children":[]},{"name":"create_code_challenge()","total_count":1,"children":[]},{"name":"inicio()","total_count":1,"children":[]}]},{"name":"apps","total_count":502,"children":[{"name":"worker","total_count":502,"children":[{"name":"package.json","total_count":62,"children":[{"name":"@eslint/js","total_count":1,"children":[]},{"name":"@eslint/js","total_count":1,"children":[]},{"name":"@fastify/cors","total_count":1,"children":[]},{"name":"@fastify/cors","total_count":1,"children":[]},{"name":"@types/node","total_count":1,"children":[]},{"name":"@types/node","total_count":1,"children":[]},{"name":"@types/pg","total_count":1,"children":[]},{"name":"@types/pg","total_count":1,"children":[]},{"name":"@vitest/coverage-v8","total_count":1,"children":[]},{"name":"@vitest/coverage-v8","total_count":1,"children":[]},{"name":"auth:mercadolivre","total_count":1,"children":[]},{"name":"auth:mercadolivre-affiliate","total_count":1,"children":[]},{"name":"build","total_count":1,"children":[]},{"name":"db:migrate","total_count":1,"children":[]},{"name":"db:seed","total_count":1,"children":[]},{"name":"dependencies","total_count":1,"children":[]},{"name":"description","total_count":1,"children":[]},{"name":"dev","total_count":1,"children":[]},{"name":"devDependencies","total_count":1,"children":[]},{"name":"dotenv","total_count":1,"children":[]},{"name":"dotenv","total_count":1,"children":[]},{"name":"engines","total_count":1,"children":[]},{"name":"eslint","total_count":1,"children":[]},{"name":"eslint","total_count":1,"children":[]},{"name":"fastify","total_count":1,"children":[]},{"name":"fastify","total_count":1,"children":[]},{"name":"format","total_count":1,"children":[]},{"name":"format:check","total_count":1,"children":[]},{"name":"lint","total_count":1,"children":[]},{"name":"name","total_count":1,"children":[]},{"name":"node","total_count":1,"children":[]},{"name":"pg","total_count":1,"children":[]},{"name":"pg","total_count":1,"children":[]},{"name":"pino","total_count":1,"children":[]},{"name":"pino","total_count":1,"children":[]},{"name":"pino-pretty","total_count":1,"children":[]},{"name":"pino-pretty","total_count":1,"children":[]},{"name":"playwright","total_count":1,"children":[]},{"name":"playwright","total_count":1,"children":[]},{"name":"prettier","total_count":1,"children":[]},{"name":"prettier","total_count":1,"children":[]},{"name":"private","total_count":1,"children":[]},{"name":"process:mercadolivre-affiliate-queue","total_count":1,"children":[]},{"name":"scripts","total_count":1,"children":[]},{"name":"start","total_count":1,"children":[]},{"name":"test","total_count":1,"children":[]},{"name":"test:coverage","total_count":1,"children":[]},{"name":"test:e2e","total_count":1,"children":[]},{"name":"test:watch","total_count":1,"children":[]},{"name":"tsx","total_count":1,"children":[]},{"name":"tsx","total_count":1,"children":[]},{"name":"type","total_count":1,"children":[]},{"name":"typecheck","total_count":1,"children":[]},{"name":"typescript","total_count":1,"children":[]},{"name":"typescript","total_count":1,"children":[]},{"name":"typescript-eslint","total_count":1,"children":[]},{"name":"typescript-eslint","total_count":1,"children":[]},{"name":"version","total_count":1,"children":[]},{"name":"vitest","total_count":1,"children":[]},{"name":"vitest","total_count":1,"children":[]},{"name":"zod","total_count":1,"children":[]},{"name":"zod","total_count":1,"children":[]}]},{"name":"src","total_count":394,"children":[{"name":"adapters","total_count":218,"children":[{"name":"affiliate","total_count":2,"children":[{"name":"affiliate-generator.ts","total_count":2,"children":[{"name":".generate()","total_count":1,"children":[]},{"name":"AffiliateGenerator","total_count":1,"children":[]}]}]},{"name":"browser","total_count":21,"children":[{"name":"auth-mercadolivre-affiliate.ts","total_count":1,"children":[{"name":"main()","total_count":1,"children":[]}]},{"name":"auth-mercadolivre.ts","total_count":1,"children":[{"name":"main()","total_count":1,"children":[]}]},{"name":"browser-pool.ts","total_count":6,"children":[{"name":".acquire()","total_count":1,"children":[]},{"name":".close()","total_count":1,"children":[]},{"name":".getBrowser()","total_count":1,"children":[]},{"name":".release()","total_count":1,"children":[]},{"name":"BrowserPool","total_count":1,"children":[]},{"name":"MAX_CONCURRENCY","total_count":1,"children":[]}]},{"name":"captcha-detector.ts","total_count":3,"children":[{"name":"CAPTCHA_SIGNALS","total_count":1,"children":[]},{"name":"detectBlocked()","total_count":1,"children":[]},{"name":"detectCaptcha()","total_count":1,"children":[]}]},{"name":"process-mercadolivre-affiliate-queue.ts","total_count":3,"children":[{"name":"lockPath","total_count":1,"children":[]},{"name":"main()","total_count":1,"children":[]},{"name":"workerRequest()","total_count":1,"children":[]}]},{"name":"session-store.ts","total_count":7,"children":[{"name":".constructor()","total_count":1,"children":[]},{"name":".delete()","total_count":1,"children":[]},{"name":".exists()","total_count":1,"children":[]},{"name":".load()","total_count":1,"children":[]},{"name":".pathFor()","total_count":1,"children":[]},{"name":".save()","total_count":1,"children":[]},{"name":"SessionStore","total_count":1,"children":[]}]}]},{"name":"mercadolivre","total_count":11,"children":[{"name":"affiliate-link-generator.ts","total_count":3,"children":[{"name":"findGeneratedLink()","total_count":1,"children":[]},{"name":"generateMercadoLivreAffiliateLink()","total_count":1,"children":[]},{"name":"isGeneratedLink()","total_count":1,"children":[]}]},{"name":"oauth.ts","total_count":8,"children":[{"name":"assertConfigured()","total_count":1,"children":[]},{"name":"base64Url()","total_count":1,"children":[]},{"name":"completeMercadoLivreAuthorization()","total_count":1,"children":[]},{"name":"createMercadoLivreAuthorizationUrl()","total_count":1,"children":[]},{"name":"getMercadoLivreAccessToken()","total_count":1,"children":[]},{"name":"requestToken()","total_count":1,"children":[]},{"name":"saveToken()","total_count":1,"children":[]},{"name":"TokenResponse","total_count":1,"children":[]}]}]},{"name":"persistence","total_count":49,"children":[{"name":"db.ts","total_count":7,"children":[{"name":".close()","total_count":1,"children":[]},{"name":".constructor()","total_count":1,"children":[]},{"name":".healthCheck()","total_count":1,"children":[]},{"name":".query()","total_count":1,"children":[]},{"name":".withTransaction()","total_count":1,"children":[]},{"name":"Database","total_count":1,"children":[]},{"name":"db","total_count":1,"children":[]}]},{"name":"integration-credential-repository.ts","total_count":4,"children":[{"name":".get()","total_count":1,"children":[]},{"name":".save()","total_count":1,"children":[]},{"name":"IntegrationCredential","total_count":1,"children":[]},{"name":"IntegrationCredentialRepository","total_count":1,"children":[]}]},{"name":"migrate.ts","total_count":1,"children":[{"name":"main()","total_count":1,"children":[]}]},{"name":"oauth-state-repository.ts","total_count":4,"children":[{"name":".consume()","total_count":1,"children":[]},{"name":".save()","total_count":1,"children":[]},{"name":"hashState()","total_count":1,"children":[]},{"name":"OauthStateRepository","total_count":1,"children":[]}]},{"name":"offer-repository.ts","total_count":14,"children":[{"name":".completeAffiliateLink()","total_count":1,"children":[]},{"name":".findDuplicateBySourceAndExternal()","total_count":1,"children":[]},{"name":".findLastSeenPriceBySourceAndExternal()","total_count":1,"children":[]},{"name":".findRecentPublishedOffer()","total_count":1,"children":[]},{"name":".getAffiliateCompletionData()","total_count":1,"children":[]},{"name":".getByIdShort()","total_count":1,"children":[]},{"name":".getOffer()","total_count":1,"children":[]},{"name":".insertOffer()","total_count":1,"children":[]},{"name":".isBestPromotionForProduct()","total_count":1,"children":[]},{"name":".listOffers()","total_count":1,"children":[]},{"name":".mapRow()","total_count":1,"children":[]},{"name":".updateAffiliateUrl()","total_count":1,"children":[]},{"name":".updateStatus()","total_count":1,"children":[]},{"name":"OfferRepository","total_count":1,"children":[]}]},{"name":"price-observation-repository.ts","total_count":4,"children":[{"name":".getLatestForProduct()","total_count":1,"children":[]},{"name":".insert()","total_count":1,"children":[]},{"name":"PriceObservationRepository","total_count":1,"children":[]},{"name":"PriceObservationRow","total_count":1,"children":[]}]},{"name":"product-repository.ts","total_count":4,"children":[{"name":".getById()","total_count":1,"children":[]},{"name":".upsert()","total_count":1,"children":[]},{"name":"ProductRepository","total_count":1,"children":[]},{"name":"ProductRow","total_count":1,"children":[]}]},{"name":"repositories.ts","total_count":10,"children":[{"name":".existsByIdempotencyKey()","total_count":1,"children":[]},{"name":".existsForProductToday()","total_count":1,"children":[]},{"name":".getApprovalsForOffer()","total_count":1,"children":[]},{"name":".getRateLimitSnapshot()","total_count":1,"children":[]},{"name":".insert()","total_count":1,"children":[]},{"name":".record()","total_count":1,"children":[]},{"name":".recordApproval()","total_count":1,"children":[]},{"name":"ApprovalRepository","total_count":1,"children":[]},{"name":"PublicationRepository","total_count":1,"children":[]},{"name":"WorkflowEventRepository","total_count":1,"children":[]}]},{"name":"seed.ts","total_count":1,"children":[{"name":"main()","total_count":1,"children":[]}]}]},{"name":"sources","total_count":113,"children":[{"name":"aliexpress.adapter.ts","total_count":22,"children":[{"name":".api()","total_count":1,"children":[]},{"name":".createAffiliateLink()","total_count":1,"children":[]},{"name":".discover()","total_count":1,"children":[]},{"name":".extract()","total_count":1,"children":[]},{"name":".healthCheck()","total_count":1,"children":[]},{"name":".readiness()","total_count":1,"children":[]},{"name":".revalidate()","total_count":1,"children":[]},{"name":"AliExpressAdapter","total_count":1,"children":[]},{"name":"aliExpressReadiness()","total_count":1,"children":[]},{"name":"AliExpressReadinessReason","total_count":1,"children":[]},{"name":"AliProduct","total_count":1,"children":[]},{"name":"asCents()","total_count":1,"children":[]},{"name":"asNumber()","total_count":1,"children":[]},{"name":"asText()","total_count":1,"children":[]},{"name":"generatedPromotionLink()","total_count":1,"children":[]},{"name":"isAliExpressQueryMatch()","total_count":1,"children":[]},{"name":"normalizeSearchText()","total_count":1,"children":[]},{"name":"origin()","total_count":1,"children":[]},{"name":"preferNationalCandidates()","total_count":1,"children":[]},{"name":"productsFrom()","total_count":1,"children":[]},{"name":"rating()","total_count":1,"children":[]},{"name":"urlList()","total_count":1,"children":[]}]},{"name":"awin.adapter.ts","total_count":9,"children":[{"name":".buildUrl()","total_count":1,"children":[]},{"name":".createAffiliateLink()","total_count":1,"children":[]},{"name":".discover()","total_count":1,"children":[]},{"name":".extract()","total_count":1,"children":[]},{"name":".headers()","total_count":1,"children":[]},{"name":".healthCheck()","total_count":1,"children":[]},{"name":".revalidate()","total_count":1,"children":[]},{"name":"AwinAdapter","total_count":1,"children":[]},{"name":"extractIdFromUrl()","total_count":1,"children":[]}]},{"name":"feed.adapter.ts","total_count":9,"children":[{"name":".constructor()","total_count":1,"children":[]},{"name":".createAffiliateLink()","total_count":1,"children":[]},{"name":".discover()","total_count":1,"children":[]},{"name":".extract()","total_count":1,"children":[]},{"name":".healthCheck()","total_count":1,"children":[]},{"name":".parseJson()","total_count":1,"children":[]},{"name":".revalidate()","total_count":1,"children":[]},{"name":"FeedAdapter","total_count":1,"children":[]},{"name":"FeedConfig","total_count":1,"children":[]}]},{"name":"lomadee.adapter.ts","total_count":19,"children":[{"name":".createAffiliateLink()","total_count":1,"children":[]},{"name":".discover()","total_count":1,"children":[]},{"name":".extract()","total_count":1,"children":[]},{"name":".getJson()","total_count":1,"children":[]},{"name":".headers()","total_count":1,"children":[]},{"name":".healthCheck()","total_count":1,"children":[]},{"name":".loadCampaigns()","total_count":1,"children":[]},{"name":".revalidate()","total_count":1,"children":[]},{"name":"LomadeeAdapter","total_count":1,"children":[]},{"name":"LomadeeCampaign","total_count":1,"children":[]},{"name":"LomadeeProduct","total_count":1,"children":[]},{"name":"LomadeeProductOption","total_count":1,"children":[]},{"name":"metadataNumber()","total_count":1,"children":[]},{"name":"promotionRank()","total_count":1,"children":[]},{"name":"selectOption()","total_count":1,"children":[]},{"name":"titleSimilarity()","total_count":1,"children":[]},{"name":"titleTokens()","total_count":1,"children":[]},{"name":"toCents()","total_count":1,"children":[]},{"name":"uniqueImageUrls()","total_count":1,"children":[]}]},{"name":"manual.adapter.ts","total_count":6,"children":[{"name":".createAffiliateLink()","total_count":1,"children":[]},{"name":".discover()","total_count":1,"children":[]},{"name":".extract()","total_count":1,"children":[]},{"name":".healthCheck()","total_count":1,"children":[]},{"name":".revalidate()","total_count":1,"children":[]},{"name":"ManualAdapter","total_count":1,"children":[]}]},{"name":"mercadolivre.adapter.ts","total_count":16,"children":[{"name":".api()","total_count":1,"children":[]},{"name":".createAffiliateLink()","total_count":1,"children":[]},{"name":".discover()","total_count":1,"children":[]},{"name":".extract()","total_count":1,"children":[]},{"name":".healthCheck()","total_count":1,"children":[]},{"name":".productsFromHighlights()","total_count":1,"children":[]},{"name":".revalidate()","total_count":1,"children":[]},{"name":".searchCatalogProducts()","total_count":1,"children":[]},{"name":"CatalogItem","total_count":1,"children":[]},{"name":"CatalogItemsResponse","total_count":1,"children":[]},{"name":"CatalogProduct","total_count":1,"children":[]},{"name":"CatalogSearchResponse","total_count":1,"children":[]},{"name":"cents()","total_count":1,"children":[]},{"name":"itemIdFromUrl()","total_count":1,"children":[]},{"name":"MercadoLivreAdapter","total_count":1,"children":[]},{"name":"SearchResult","total_count":1,"children":[]}]},{"name":"mercadolivre.experimental.adapter.ts","total_count":7,"children":[{"name":".createAffiliateLink()","total_count":1,"children":[]},{"name":".discover()","total_count":1,"children":[]},{"name":".extract()","total_count":1,"children":[]},{"name":".healthCheck()","total_count":1,"children":[]},{"name":".revalidate()","total_count":1,"children":[]},{"name":"MercadolivreExperimentalAdapter","total_count":1,"children":[]},{"name":"ML_ALLOWED_DOMAINS","total_count":1,"children":[]}]},{"name":"shopee.adapter.ts","total_count":15,"children":[{"name":".api()","total_count":1,"children":[]},{"name":".createAffiliateLink()","total_count":1,"children":[]},{"name":".discover()","total_count":1,"children":[]},{"name":".extract()","total_count":1,"children":[]},{"name":".healthCheck()","total_count":1,"children":[]},{"name":".readiness()","total_count":1,"children":[]},{"name":".revalidate()","total_count":1,"children":[]},{"name":"cents()","total_count":1,"children":[]},{"name":"previousPrice()","total_count":1,"children":[]},{"name":"ProductOfferResponse","total_count":1,"children":[]},{"name":"ShopeeAdapter","total_count":1,"children":[]},{"name":"shopeeAuthorization()","total_count":1,"children":[]},{"name":"ShopeeProductOffer","total_count":1,"children":[]},{"name":"shopeeReadiness()","total_count":1,"children":[]},{"name":"ShopeeReadinessReason","total_count":1,"children":[]}]},{"name":"source-adapter.ts","total_count":10,"children":[{"name":".createAffiliateLink()","total_count":1,"children":[]},{"name":".discover()","total_count":1,"children":[]},{"name":".extract()","total_count":1,"children":[]},{"name":".healthCheck()","total_count":1,"children":[]},{"name":".revalidate()","total_count":1,"children":[]},{"name":"AdapterHealth","total_count":1,"children":[]},{"name":"DiscoveredProduct","total_count":1,"children":[]},{"name":"DiscoveryInput","total_count":1,"children":[]},{"name":"ExtractedProductInput","total_count":1,"children":[]},{"name":"SourceAdapter","total_count":1,"children":[]}]}]},{"name":"telegram","total_count":22,"children":[{"name":"telegram-gateway.ts","total_count":17,"children":[{"name":".answerCallbackQuery()","total_count":1,"children":[]},{"name":".baseUrl()","total_count":1,"children":[]},{"name":".buildApprovalKeyboard()","total_count":1,"children":[]},{"name":".buildOfferRichMarkdown()","total_count":1,"children":[]},{"name":".buildPublicationKeyboard()","total_count":1,"children":[]},{"name":".constructor()","total_count":1,"children":[]},{"name":".deleteMessage()","total_count":1,"children":[]},{"name":".editMessageText()","total_count":1,"children":[]},{"name":".sendMessage()","total_count":1,"children":[]},{"name":".sendPhoto()","total_count":1,"children":[]},{"name":".sendRichMessage()","total_count":1,"children":[]},{"name":"adminUserIds()","total_count":1,"children":[]},{"name":"isAdmin()","total_count":1,"children":[]},{"name":"TelegramEditMessageInput","total_count":1,"children":[]},{"name":"TelegramGateway","total_count":1,"children":[]},{"name":"TelegramRichMessageInput","total_count":1,"children":[]},{"name":"TelegramSendPhotoInput","total_count":1,"children":[]}]},{"name":"telegram-poller.ts","total_count":5,"children":[{"name":".constructor()","total_count":1,"children":[]},{"name":".loop()","total_count":1,"children":[]},{"name":".start()","total_count":1,"children":[]},{"name":".stop()","total_count":1,"children":[]},{"name":"TelegramPoller","total_count":1,"children":[]}]}]}]},{"name":"app.ts","total_count":1,"children":[{"name":"buildApp()","total_count":1,"children":[]}]},{"name":"application","total_count":53,"children":[{"name":"amazon-command.ts","total_count":4,"children":[{"name":"field()","total_count":1,"children":[]},{"name":"normalizeLabel()","total_count":1,"children":[]},{"name":"parseAmazonCommand()","total_count":1,"children":[]},{"name":"parsePrice()","total_count":1,"children":[]}]},{"name":"complete-mercadolivre-affiliate-link.ts","total_count":1,"children":[{"name":"completeMercadoLivreAffiliateLink()","total_count":1,"children":[]}]},{"name":"create-manual-offer.ts","total_count":5,"children":[{"name":"buildCaption()","total_count":1,"children":[]},{"name":"createManualOffer()","total_count":1,"children":[]},{"name":"CreateManualOfferInput","total_count":1,"children":[]},{"name":"CreateManualOfferResult","total_count":1,"children":[]},{"name":"getOrCreateSource()","total_count":1,"children":[]}]},{"name":"generate-mercadolivre-affiliate-link.ts","total_count":1,"children":[{"name":"generateAffiliateLinkForOffer()","total_count":1,"children":[]}]},{"name":"handle-amazon-message.ts","total_count":2,"children":[{"name":"AmazonTelegramMessage","total_count":1,"children":[]},{"name":"handleAmazonMessage()","total_count":1,"children":[]}]},{"name":"handle-telegram-callback.ts","total_count":2,"children":[{"name":"handleTelegramCallback()","total_count":1,"children":[]},{"name":"TelegramCallbackInput","total_count":1,"children":[]}]},{"name":"offer-helpers.ts","total_count":4,"children":[{"name":"generateExternalId()","total_count":1,"children":[]},{"name":"generateIdempotencyKey()","total_count":1,"children":[]},{"name":"isUnchangedPrice()","total_count":1,"children":[]},{"name":"isUrlValid()","total_count":1,"children":[]}]},{"name":"publish-offer.ts","total_count":2,"children":[{"name":"buildPublicationCaption()","total_count":1,"children":[]},{"name":"publishOffer()","total_count":1,"children":[]}]},{"name":"request-approval.ts","total_count":1,"children":[{"name":"requestApproval()","total_count":1,"children":[]}]},{"name":"run-aliexpress-discovery.ts","total_count":7,"children":[{"name":"AliExpressDiscoveryInput","total_count":1,"children":[]},{"name":"evidenceNumber()","total_count":1,"children":[]},{"name":"evidenceString()","total_count":1,"children":[]},{"name":"imageReachable()","total_count":1,"children":[]},{"name":"localDate()","total_count":1,"children":[]},{"name":"runAliExpressDiscovery()","total_count":1,"children":[]},{"name":"sourceId()","total_count":1,"children":[]}]},{"name":"run-lomadee-discovery.ts","total_count":9,"children":[{"name":"evidenceNumber()","total_count":1,"children":[]},{"name":"evidenceString()","total_count":1,"children":[]},{"name":"getOrCreateLomadeeSource()","total_count":1,"children":[]},{"name":"isImageReachable()","total_count":1,"children":[]},{"name":"localDate()","total_count":1,"children":[]},{"name":"LomadeeDiscoveryInput","total_count":1,"children":[]},{"name":"LomadeeDiscoveryResult","total_count":1,"children":[]},{"name":"recordSkip()","total_count":1,"children":[]},{"name":"runLomadeeDiscovery()","total_count":1,"children":[]}]},{"name":"run-maintenance-cleanup.ts","total_count":2,"children":[{"name":"removeOldFiles()","total_count":1,"children":[]},{"name":"runMaintenanceCleanup()","total_count":1,"children":[]}]},{"name":"run-mercadolivre-discovery.ts","total_count":6,"children":[{"name":"getOrCreateSource()","total_count":1,"children":[]},{"name":"isImageReachable()","total_count":1,"children":[]},{"name":"MercadoLivreDiscoveryInput","total_count":1,"children":[]},{"name":"MercadoLivreDiscoveryResult","total_count":1,"children":[]},{"name":"recordSkip()","total_count":1,"children":[]},{"name":"runMercadoLivreDiscovery()","total_count":1,"children":[]}]},{"name":"run-shopee-discovery.ts","total_count":4,"children":[{"name":"imageReachable()","total_count":1,"children":[]},{"name":"runShopeeDiscovery()","total_count":1,"children":[]},{"name":"ShopeeDiscoveryInput","total_count":1,"children":[]},{"name":"sourceId()","total_count":1,"children":[]}]},{"name":"score.ts","total_count":2,"children":[{"name":"scoreOffer()","total_count":1,"children":[]},{"name":"ScoringInput","total_count":1,"children":[]}]},{"name":"validate-offer.ts","total_count":1,"children":[{"name":"validateOffer()","total_count":1,"children":[]}]}]},{"name":"config","total_count":14,"children":[{"name":"env.ts","total_count":4,"children":[{"name":"booleanString","total_count":1,"children":[]},{"name":"Env","total_count":1,"children":[]},{"name":"envSchema","total_count":1,"children":[]},{"name":"loadEnv()","total_count":1,"children":[]}]},{"name":"logger.ts","total_count":2,"children":[{"name":"createLogger()","total_count":1,"children":[]},{"name":"Logger","total_count":1,"children":[]}]},{"name":"runtime.ts","total_count":8,"children":[{"name":"appEnv","total_count":1,"children":[]},{"name":"databaseEnv","total_count":1,"children":[]},{"name":"discoveryEnv","total_count":1,"children":[]},{"name":"marketplaceEnv","total_count":1,"children":[]},{"name":"mercadoLivreEnv","total_count":1,"children":[]},{"name":"offerEnv","total_count":1,"children":[]},{"name":"publicationEnv","total_count":1,"children":[]},{"name":"telegramEnv","total_count":1,"children":[]}]}]},{"name":"domain","total_count":67,"children":[{"name":"affiliate-caption-link.ts","total_count":1,"children":[{"name":"buildAffiliateCaptionLink()","total_count":1,"children":[]}]},{"name":"affiliate-link.ts","total_count":3,"children":[{"name":"AffiliateLinkContext","total_count":1,"children":[]},{"name":"AffiliateLinkResult","total_count":1,"children":[]},{"name":"validateAffiliateUrl()","total_count":1,"children":[]}]},{"name":"channels-footer.ts","total_count":4,"children":[{"name":"appendChannelsFooter()","total_count":1,"children":[]},{"name":"CHANNELS_FOOTER","total_count":1,"children":[]},{"name":"CHANNELS_FOOTER_TEXT","total_count":1,"children":[]},{"name":"CHANNELS_LIST_LINK","total_count":1,"children":[]}]},{"name":"offer-commerce-details.ts","total_count":3,"children":[{"name":"buildOfferCommerceDetails()","total_count":1,"children":[]},{"name":"OfferCommerceDetailsInput","total_count":1,"children":[]},{"name":"ShippingOrigin","total_count":1,"children":[]}]},{"name":"offer-headline.ts","total_count":3,"children":[{"name":"buildOfferHeadline()","total_count":1,"children":[]},{"name":"cleanProductName()","total_count":1,"children":[]},{"name":"stableIndex()","total_count":1,"children":[]}]},{"name":"offer.ts","total_count":36,"children":[{"name":"AffiliateLink","total_count":1,"children":[]},{"name":"affiliateLinkSchema","total_count":1,"children":[]},{"name":"APPROVAL_DECISIONS","total_count":1,"children":[]},{"name":"ApprovalDecision","total_count":1,"children":[]},{"name":"Availability","total_count":1,"children":[]},{"name":"AvailabilityDetail","total_count":1,"children":[]},{"name":"availabilityDetailSchema","total_count":1,"children":[]},{"name":"Condition","total_count":1,"children":[]},{"name":"Coupon","total_count":1,"children":[]},{"name":"couponSchema","total_count":1,"children":[]},{"name":"ExtractedProduct","total_count":1,"children":[]},{"name":"extractedProductSchema","total_count":1,"children":[]},{"name":"Identifiers","total_count":1,"children":[]},{"name":"identifiersSchema","total_count":1,"children":[]},{"name":"MatchConfidence","total_count":1,"children":[]},{"name":"matchConfidenceSchema","total_count":1,"children":[]},{"name":"NormalizedOffer","total_count":1,"children":[]},{"name":"normalizedOfferSchema","total_count":1,"children":[]},{"name":"Offer","total_count":1,"children":[]},{"name":"OFFER_STATUS","total_count":1,"children":[]},{"name":"offerSchema","total_count":1,"children":[]},{"name":"OfferStatus","total_count":1,"children":[]},{"name":"SellerInfo","total_count":1,"children":[]},{"name":"sellerSchema","total_count":1,"children":[]},{"name":"Shipping","total_count":1,"children":[]},{"name":"shippingSchema","total_count":1,"children":[]},{"name":"SOURCE_TYPES","total_count":1,"children":[]},{"name":"SourceType","total_count":1,"children":[]},{"name":"Tax","total_count":1,"children":[]},{"name":"taxSchema","total_count":1,"children":[]},{"name":"Tracking","total_count":1,"children":[]},{"name":"trackingSchema","total_count":1,"children":[]},{"name":"Validity","total_count":1,"children":[]},{"name":"validitySchema","total_count":1,"children":[]},{"name":"Variant","total_count":1,"children":[]},{"name":"variantSchema","total_count":1,"children":[]}]},{"name":"price.ts","total_count":7,"children":[{"name":"calculateDiscountPercent()","total_count":1,"children":[]},{"name":"calculatePriceDropPercent()","total_count":1,"children":[]},{"name":"formatBRL()","total_count":1,"children":[]},{"name":"parseBRLPrice()","total_count":1,"children":[]},{"name":"PriceSnapshot","total_count":1,"children":[]},{"name":"ProductRef","total_count":1,"children":[]},{"name":"validatePrice()","total_count":1,"children":[]}]},{"name":"product-niche.ts","total_count":7,"children":[{"name":"classifyProductNiche()","total_count":1,"children":[]},{"name":"GENERAL_ONLY_TERMS","total_count":1,"children":[]},{"name":"normalize()","total_count":1,"children":[]},{"name":"ProductNiche","total_count":1,"children":[]},{"name":"productNicheChannel()","total_count":1,"children":[]},{"name":"productNicheLabel()","total_count":1,"children":[]},{"name":"RULES","total_count":1,"children":[]}]},{"name":"source.ts","total_count":3,"children":[{"name":"Source","total_count":1,"children":[]},{"name":"SourceId","total_count":1,"children":[]},{"name":"sourceSchema","total_count":1,"children":[]}]}]},{"name":"http","total_count":18,"children":[{"name":"middleware","total_count":1,"children":[{"name":"auth.ts","total_count":1,"children":[{"name":"serviceTokenAuth()","total_count":1,"children":[]}]}]},{"name":"routes","total_count":9,"children":[{"name":"aliexpress.ts","total_count":1,"children":[{"name":"registerAliExpressRoutes()","total_count":1,"children":[]}]},{"name":"discovery.ts","total_count":1,"children":[{"name":"registerDiscoveryRoutes()","total_count":1,"children":[]}]},{"name":"health.ts","total_count":1,"children":[{"name":"registerHealthRoutes()","total_count":1,"children":[]}]},{"name":"maintenance.ts","total_count":1,"children":[{"name":"registerMaintenanceRoutes()","total_count":1,"children":[]}]},{"name":"mercadolivre.ts","total_count":1,"children":[{"name":"registerMercadoLivreRoutes()","total_count":1,"children":[]}]},{"name":"offers.ts","total_count":1,"children":[{"name":"registerOfferRoutes()","total_count":1,"children":[]}]},{"name":"shopee.ts","total_count":1,"children":[{"name":"registerShopeeRoutes()","total_count":1,"children":[]}]},{"name":"telegram.ts","total_count":2,"children":[{"name":"registerTelegramRoutes()","total_count":1,"children":[]},{"name":"validWebhookSecret()","total_count":1,"children":[]}]}]},{"name":"schemas","total_count":8,"children":[{"name":"index.ts","total_count":8,"children":[{"name":"affiliateLinkSchema","total_count":1,"children":[]},{"name":"approveSchema","total_count":1,"children":[]},{"name":"createDiscoveryRunSchema","total_count":1,"children":[]},{"name":"createManualOfferSchema","total_count":1,"children":[]},{"name":"listOffersQuerySchema","total_count":1,"children":[]},{"name":"publishSchema","total_count":1,"children":[]},{"name":"revalidateSchema","total_count":1,"children":[]},{"name":"telegramCallbackSchema","total_count":1,"children":[]}]}]}]},{"name":"server.ts","total_count":1,"children":[{"name":"main()","total_count":1,"children":[]}]},{"name":"shared","total_count":22,"children":[{"name":"circuit-breaker.ts","total_count":6,"children":[{"name":"Circuit","total_count":1,"children":[]},{"name":"circuits","total_count":1,"children":[]},{"name":"CircuitState","total_count":1,"children":[]},{"name":"getCircuit()","total_count":1,"children":[]},{"name":"positiveInteger()","total_count":1,"children":[]},{"name":"withCircuitBreaker()","total_count":1,"children":[]}]},{"name":"errors.ts","total_count":4,"children":[{"name":".constructor()","total_count":1,"children":[]},{"name":".toJSON()","total_count":1,"children":[]},{"name":"AppError","total_count":1,"children":[]},{"name":"ErrorCode","total_count":1,"children":[]}]},{"name":"http-client.ts","total_count":3,"children":[{"name":"FetchOptions","total_count":1,"children":[]},{"name":"positiveInteger()","total_count":1,"children":[]},{"name":"resilientFetch()","total_count":1,"children":[]}]},{"name":"result.ts","total_count":4,"children":[{"name":"err()","total_count":1,"children":[]},{"name":"ok()","total_count":1,"children":[]},{"name":"Result","total_count":1,"children":[]},{"name":"unwrap()","total_count":1,"children":[]}]},{"name":"url.ts","total_count":5,"children":[{"name":"isAllowedDomain()","total_count":1,"children":[]},{"name":"isPrivateOrLoopback()","total_count":1,"children":[]},{"name":"normalizeUrl()","total_count":1,"children":[]},{"name":"PRIVATE_IP_PATTERNS","total_count":1,"children":[]},{"name":"validateExternalUrl()","total_count":1,"children":[]}]}]}]},{"name":"tests","total_count":19,"children":[{"name":"integration","total_count":2,"children":[{"name":"adapters","total_count":2,"children":[{"name":"awin.adapter.integration.test.ts","total_count":1,"children":[{"name":"mockFetch","total_count":1,"children":[]}]},{"name":"lomadee.adapter.integration.test.ts","total_count":1,"children":[{"name":"mockFetch","total_count":1,"children":[]}]}]}]},{"name":"unit","total_count":17,"children":[{"name":"mercadolivre.adapter.test.ts","total_count":2,"children":[{"name":"mockFetch","total_count":1,"children":[]},{"name":"response()","total_count":1,"children":[]}]},{"name":"affiliate-caption-link.test.ts","total_count":1,"children":[]},{"name":"affiliate-link.test.ts","total_count":1,"children":[]},{"name":"aliexpress.adapter.test.ts","total_count":1,"children":[]},{"name":"captcha-detector.test.ts","total_count":1,"children":[]},{"name":"channels-footer.test.ts","total_count":1,"children":[]},{"name":"handle-amazon-message.test.ts","total_count":1,"children":[]},{"name":"offer-commerce-details.test.ts","total_count":1,"children":[]},{"name":"offer-headline.test.ts","total_count":1,"children":[]},{"name":"offer-helpers.test.ts","total_count":1,"children":[]},{"name":"price.test.ts","total_count":1,"children":[]},{"name":"product-niche.test.ts","total_count":1,"children":[]},{"name":"score.test.ts","total_count":1,"children":[]},{"name":"shopee.adapter.test.ts","total_count":1,"children":[]},{"name":"url.test.ts","total_count":1,"children":[]},{"name":"validate-offer.test.ts","total_count":1,"children":[]}]}]},{"name":"tsconfig.json","total_count":25,"children":[{"name":"compilerOptions","total_count":1,"children":[]},{"name":"declaration","total_count":1,"children":[]},{"name":"dist","total_count":1,"children":[]},{"name":"ES2022","total_count":1,"children":[]},{"name":"esModuleInterop","total_count":1,"children":[]},{"name":"exclude","total_count":1,"children":[]},{"name":"forceConsistentCasingInFileNames","total_count":1,"children":[]},{"name":"include","total_count":1,"children":[]},{"name":"lib","total_count":1,"children":[]},{"name":"module","total_count":1,"children":[]},{"name":"moduleResolution","total_count":1,"children":[]},{"name":"node_modules","total_count":1,"children":[]},{"name":"noFallthroughCasesInSwitch","total_count":1,"children":[]},{"name":"noImplicitReturns","total_count":1,"children":[]},{"name":"noUnusedLocals","total_count":1,"children":[]},{"name":"noUnusedParameters","total_count":1,"children":[]},{"name":"outDir","total_count":1,"children":[]},{"name":"resolveJsonModule","total_count":1,"children":[]},{"name":"rootDir","total_count":1,"children":[]},{"name":"skipLibCheck","total_count":1,"children":[]},{"name":"sourceMap","total_count":1,"children":[]},{"name":"src/**/*.ts","total_count":1,"children":[]},{"name":"strict","total_count":1,"children":[]},{"name":"target","total_count":1,"children":[]},{"name":"tests","total_count":1,"children":[]}]},{"name":"eslint.config.js","total_count":1,"children":[]},{"name":"vitest.config.ts","total_count":1,"children":[]}]}]},{"name":"compose.yaml","total_count":2,"children":[{"name":"Docker Compose runtime stack","total_count":1,"children":[]},{"name":"Private Docker service network","total_count":1,"children":[]}]},{"name":"database","total_count":1,"children":[{"name":"init-n8n-db.sh","total_count":1,"children":[{"name":"init-n8n-db.sh script","total_count":1,"children":[]}]}]},{"name":"docs","total_count":15,"children":[{"name":"adr","total_count":1,"children":[{"name":"ADR-001-n8n-worker-separado.md","total_count":1,"children":[{"name":"Decision to separate n8n, Worker, and PostgreSQL responsibilities","total_count":1,"children":[]}]}]},{"name":"DATA_RETENTION.md","total_count":2,"children":[{"name":"Data retention and deletion policy","total_count":1,"children":[]},{"name":"Preservation of publications, audit events, and price history","total_count":1,"children":[]}]},{"name":"MANUAL-ARQUITETURA-REPLICAVEL.md","total_count":3,"children":[{"name":"Offer lifecycle state machine","total_count":1,"children":[]},{"name":"Replicable architecture and operations manual","total_count":1,"children":[]},{"name":"Transactional outbox and queue scaling pattern","total_count":1,"children":[]}]},{"name":"runbooks","total_count":4,"children":[{"name":"publication-failure.md","total_count":2,"children":[{"name":"Photo preview and text-only publication fallback","total_count":1,"children":[]},{"name":"Telegram publication failure investigation and recovery","total_count":1,"children":[]}]},{"name":"source-failure.md","total_count":2,"children":[{"name":"Per-source circuit breaker","total_count":1,"children":[]},{"name":"Source adapter failure investigation and recovery","total_count":1,"children":[]}]}]},{"name":"SECURITY.md","total_count":4,"children":[{"name":"Freguesia threat model and security controls","total_count":1,"children":[]},{"name":"Outbound URL allowlist and private IP blocking","total_count":1,"children":[]},{"name":"Pinned dependencies and CI security scanning","total_count":1,"children":[]},{"name":"Telegram callback administrator authorization","total_count":1,"children":[]}]},{"name":"sources","total_count":1,"children":[{"name":"README.md","total_count":1,"children":[{"name":"Source registry and enablement process","total_count":1,"children":[]}]}]}]},{"name":"Freguesia.md","total_count":8,"children":[{"name":"Freguesia offer curation and publication platform","total_count":1,"children":[]},{"name":"Freguesia Worker domain and browser automation service","total_count":1,"children":[]},{"name":"Idempotent offer publication","total_count":1,"children":[]},{"name":"Mandatory human approval during MVP","total_count":1,"children":[]},{"name":"n8n orchestration layer","total_count":1,"children":[]},{"name":"Official APIs and feeds before browser automation","total_count":1,"children":[]},{"name":"PostgreSQL source of truth","total_count":1,"children":[]},{"name":"Telegram human approval and publication interface","total_count":1,"children":[]}]},{"name":"graphify-out","total_count":5,"children":[{"name":"memory","total_count":5,"children":[{"name":"query_20260820_131130_por_que_env_conecta_aprova\u00e7\u00e3o__adaptadores__persis.md","total_count":5,"children":[{"name":"Answer","total_count":1,"children":[]},{"name":"Outcome","total_count":1,"children":[]},{"name":"Q: Por que Env conecta aprova\u00e7\u00e3o, adaptadores, persist\u00eancia, OAuth, automa\u00e7\u00e3o e Telegram?","total_count":1,"children":[]},{"name":"query_20260820_131130_por_que_env_conecta_aprova\u00e7\u00e3o__adaptadores__persis.md","total_count":1,"children":[]},{"name":"Source Nodes","total_count":1,"children":[]}]}]}]},{"name":"infra","total_count":1,"children":[{"name":"compose.override.yaml","total_count":1,"children":[{"name":"Local development Compose override","total_count":1,"children":[]}]}]},{"name":"Integra\u00e7\u00e3o de plataformas.md","total_count":5,"children":[{"name":"Affiliate platform integration guide","total_count":1,"children":[]},{"name":"Authorized affiliate APIs, feeds, and assisted entry","total_count":1,"children":[]},{"name":"Cross-store product identity matching","total_count":1,"children":[]},{"name":"Total known cost comparison with confidence scoring","total_count":1,"children":[]},{"name":"Unified normalized affiliate offer contract","total_count":1,"children":[]}]},{"name":"n8n","total_count":2,"children":[{"name":"README.md","total_count":2,"children":[{"name":"Discover, approve, callback, publish, monitor, and cleanup workflows","total_count":1,"children":[]},{"name":"Version-controlled n8n workflow catalog","total_count":1,"children":[]}]}]},{"name":"opencode.json","total_count":12,"children":[{"name":"$schema","total_count":1,"children":[]},{"name":"-ExecutionPolicy","total_count":1,"children":[]},{"name":"-File","total_count":1,"children":[]},{"name":"-NoProfile","total_count":1,"children":[]},{"name":"Bypass","total_count":1,"children":[]},{"name":"command","total_count":1,"children":[]},{"name":"enabled","total_count":1,"children":[]},{"name":"mcp","total_count":1,"children":[]},{"name":"n8n-mcp","total_count":1,"children":[]},{"name":"powershell.exe","total_count":1,"children":[]},{"name":"scripts/start-n8n-mcp.ps1","total_count":1,"children":[]},{"name":"type","total_count":1,"children":[]}]},{"name":"packages","total_count":51,"children":[{"name":"contracts","total_count":8,"children":[{"name":"package.json","total_count":5,"children":[{"name":"main","total_count":1,"children":[]},{"name":"name","total_count":1,"children":[]},{"name":"private","total_count":1,"children":[]},{"name":"type","total_count":1,"children":[]},{"name":"version","total_count":1,"children":[]}]},{"name":"src","total_count":3,"children":[{"name":"index.ts","total_count":3,"children":[{"name":"CreateDiscoveryRunRequest","total_count":1,"children":[]},{"name":"CreateDiscoveryRunResponse","total_count":1,"children":[]},{"name":"errorResponse","total_count":1,"children":[]}]}]}]},{"name":"eslint-config","total_count":6,"children":[{"name":"package.json","total_count":5,"children":[{"name":"main","total_count":1,"children":[]},{"name":"name","total_count":1,"children":[]},{"name":"private","total_count":1,"children":[]},{"name":"type","total_count":1,"children":[]},{"name":"version","total_count":1,"children":[]}]},{"name":"index.js","total_count":1,"children":[]}]},{"name":"product-matching","total_count":37,"children":[{"name":"index.test.ts","total_count":1,"children":[{"name":"baseOffer","total_count":1,"children":[]}]},{"name":"index.ts","total_count":3,"children":[{"name":"compareOffers()","total_count":1,"children":[]},{"name":"normalizeIdentifier()","total_count":1,"children":[]},{"name":"normalizeTitle()","total_count":1,"children":[]}]},{"name":"package.json","total_count":22,"children":[{"name":"@types/string-similarity","total_count":1,"children":[]},{"name":"@types/string-similarity","total_count":1,"children":[]},{"name":"build","total_count":1,"children":[]},{"name":"devDependencies","total_count":1,"children":[]},{"name":"main","total_count":1,"children":[]},{"name":"name","total_count":1,"children":[]},{"name":"private","total_count":1,"children":[]},{"name":"scripts","total_count":1,"children":[]},{"name":"string-similarity","total_count":1,"children":[]},{"name":"string-similarity","total_count":1,"children":[]},{"name":"test","total_count":1,"children":[]},{"name":"ts-node","total_count":1,"children":[]},{"name":"ts-node","total_count":1,"children":[]},{"name":"tsx","total_count":1,"children":[]},{"name":"tsx","total_count":1,"children":[]},{"name":"type","total_count":1,"children":[]},{"name":"types","total_count":1,"children":[]},{"name":"typescript","total_count":1,"children":[]},{"name":"typescript","total_count":1,"children":[]},{"name":"version","total_count":1,"children":[]},{"name":"vitest","total_count":1,"children":[]},{"name":"vitest","total_count":1,"children":[]}]},{"name":"tsconfig.json","total_count":10,"children":[{"name":"**/*.ts","total_count":1,"children":[]},{"name":"../../tsconfig.json","total_count":1,"children":[]},{"name":"./index.ts","total_count":1,"children":[]},{"name":"@freguesia/product-matching","total_count":1,"children":[]},{"name":"baseUrl","total_count":1,"children":[]},{"name":"compilerOptions","total_count":1,"children":[]},{"name":"extends","total_count":1,"children":[]},{"name":"include","total_count":1,"children":[]},{"name":"outDir","total_count":1,"children":[]},{"name":"paths","total_count":1,"children":[]}]},{"name":"vitest.config.ts","total_count":1,"children":[]}]}]},{"name":"README.md","total_count":1,"children":[{"name":"Freguesia project overview and operating instructions","total_count":1,"children":[]}]},{"name":"scripts","total_count":7,"children":[{"name":"backup.sh","total_count":1,"children":[{"name":"backup.sh script","total_count":1,"children":[]}]},{"name":"export-n8n-workflows.sh","total_count":1,"children":[{"name":"export-n8n-workflows.sh script","total_count":1,"children":[]}]},{"name":"import-n8n-workflows.sh","total_count":1,"children":[{"name":"import-n8n-workflows.sh script","total_count":1,"children":[]}]},{"name":"restore.sh","total_count":1,"children":[{"name":"restore.sh script","total_count":1,"children":[]}]},{"name":"start-freguesia.ps1","total_count":1,"children":[{"name":"Test-DockerReady()","total_count":1,"children":[]}]},{"name":"process-mercadolivre-affiliate-queue.ps1","total_count":1,"children":[]},{"name":"start-n8n-mcp.ps1","total_count":1,"children":[]}]},{"name":"SECURITY.md","total_count":1,"children":[{"name":"Repository security policy and vulnerability reporting","total_count":1,"children":[]}]},{"name":"tsconfig.json","total_count":17,"children":[{"name":"compilerOptions","total_count":1,"children":[]},{"name":"declaration","total_count":1,"children":[]},{"name":"ES2022","total_count":1,"children":[]},{"name":"esModuleInterop","total_count":1,"children":[]},{"name":"forceConsistentCasingInFileNames","total_count":1,"children":[]},{"name":"lib","total_count":1,"children":[]},{"name":"module","total_count":1,"children":[]},{"name":"moduleResolution","total_count":1,"children":[]},{"name":"noFallthroughCasesInSwitch","total_count":1,"children":[]},{"name":"noImplicitReturns","total_count":1,"children":[]},{"name":"noUnusedLocals","total_count":1,"children":[]},{"name":"noUnusedParameters","total_count":1,"children":[]},{"name":"resolveJsonModule","total_count":1,"children":[]},{"name":"skipLibCheck","total_count":1,"children":[]},{"name":"sourceMap","total_count":1,"children":[]},{"name":"strict","total_count":1,"children":[]},{"name":"target","total_count":1,"children":[]}]},{"name":"playwright","total_count":1,"children":[]}]};
+
+    function transformData(jsonData) {
+        // Helper function to recursively build the children structure
+        function processNode(node, parentL1StageName) {
+            let displayName = node.name;
+            // Append total_count if it exists and is not already in the name
+            if (node.total_count !== undefined) {
+                if (!/\(Total Count: \d+\)$/.test(displayName)) {
+                    displayName += ` (Total Count: ${node.total_count})`;
+                }
+            }
+
+            const newNode = { name: displayName };
+
+            if (parentL1StageName === "Root") {
+                 newNode.originalStageName = node.name;
+            } else {
+                newNode.originalStageName = parentL1StageName;
+            }
+
+            if (node.children && node.children.length > 0) {
+                const stageNameToPass = (parentL1StageName === "Root") ? node.name : parentL1StageName;
+                newNode.children = node.children.map(child => processNode(child, stageNameToPass));
+            }
+
+            return newNode;
+        }
+
+        let rootDisplayName = jsonData.name;
+        if (jsonData.total_count !== undefined && !/\(Total Count: \d+\)$/.test(rootDisplayName)) {
+            rootDisplayName += ` (Total Count: ${jsonData.total_count})`;
+        }
+
+        return {
+            name: rootDisplayName,
+            originalStageName: "Root",
+            children: (jsonData.children || []).map(child => processNode(child, "Root"))
+        };
+    }
+
+    const treeData = transformData(initialJsonData);
+
+    // Auto-populated phaseColors: every depth-1 child of the root gets
+    // a stable colour from a bigger palette so all top-level dirs are
+    // distinguishable.
+    const PALETTE = [
+      ["#3498DB","#2980B9","#AED6F1"], ["#2ECC71","#27AE60","#A9DFBF"],
+      ["#E74C3C","#C0392B","#F5B7B1"], ["#9B59B6","#8E44AD","#D7BDE2"],
+      ["#F39C12","#D68910","#FAD7A0"], ["#1ABC9C","#117864","#A2D9CE"],
+      ["#34495E","#1B2631","#ABB2B9"], ["#E67E22","#BA4A00","#F5CBA7"],
+      ["#16A085","#0E6655","#A2D9CE"], ["#D35400","#A04000","#EDBB99"],
+      ["#7F8C8D","#566573","#D5DBDB"], ["#C0392B","#7B241C","#F5B7B1"],
+      ["#2E86C1","#1B4F72","#A9CCE3"], ["#28B463","#196F3D","#A9DFBF"],
+      ["#AF7AC5","#6C3483","#D2B4DE"],
+    ];
+    const phaseColors = { "Root": { fill: "#4A4A4A", stroke: "#333333", collapsedFill: "#6C757D" },
+                          "Default": { fill: "#BDC3C7", stroke: "#95A5A6", collapsedFill: "#ECF0F1" } };
+    (initialJsonData.children || []).forEach((c, i) => {
+      const pal = PALETTE[i % PALETTE.length];
+      phaseColors[c.name] = { fill: pal[0], stroke: pal[1], collapsedFill: pal[2] };
+    });
+
+    const levelSpecificPalettes = {
+      0: { fill: "#4A4A4A", stroke: "#333333", collapsedFill: "#6C757D" },
+      2: { fill: "#6ab04c", stroke: "#508a38", collapsedFill: "#a3d391" },
+      3: { fill: "#f0932b", stroke: "#d0730f", collapsedFill: "#f6c07e" },
+      4: { fill: "#be2edd", stroke: "#a01cb3", collapsedFill: "#e08bf2" },
+      5: { fill: "#00a8ff", stroke: "#007ac1", collapsedFill: "#74d2ff" },
+      6: { fill: "#e55039", stroke: "#c23620", collapsedFill: "#f09a8d" },
+      default: { fill: "#747d8c", stroke: "#57606f", collapsedFill: "#a4b0be" }
+    };
+
+    const svgElement = d3.select("#tree-svg");
+    const initialSvgWidth = +svgElement.attr("width");
+    const initialSvgHeight = +svgElement.attr("height");
+    const margin = { top: 40, right: 120, bottom: 80, left: 450 };
+    let width = initialSvgWidth - margin.left - margin.right;
+    let height = initialSvgHeight - margin.top - margin.bottom;
+    const duration = 500;
+    let nodeCounter = 0;
+    const g = svgElement.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+    const treemap = d3.tree().nodeSize([40, 0]);
+    let rootNode = d3.hierarchy(treeData, d => d.children);
+    rootNode.x0 = 0;
+    rootNode.y0 = 0;
+
+    if (rootNode.children) {
+      rootNode.children.forEach(d_child => {
+        if (d_child.children) { collapseBranch(d_child); }
+      });
+    }
+    updateTree(rootNode);
+
+    function collapseBranch(d) { if (d.children) { d._children = d.children; d._children.forEach(collapseBranch); d.children = null; } }
+    function expandBranch(d) { if (d._children) { d.children = d._children; d._children = null; } if (d.children) { d.children.forEach(expandBranch); } }
+    window.expandAll = () => { expandBranch(rootNode); updateTree(rootNode); };
+    window.collapseAll = () => { if (rootNode.children) { rootNode.children.forEach(collapseBranch); } updateTree(rootNode); };
+    window.resetView = () => { if (rootNode.children) { rootNode.children.forEach(d_child => { if (d_child.children || d_child._children) { collapseBranch(d_child); } }); } if (rootNode._children && !rootNode.children) { rootNode.children = rootNode._children; rootNode._children = null; } updateTree(rootNode); };
+
+    function updateTree(source) {
+      const treeLayoutData = treemap(rootNode);
+      let nodes = treeLayoutData.descendants();
+      let links = treeLayoutData.descendants().slice(1);
+
+      let minX = 0;
+      let maxX = 0;
+      if (nodes.length > 0) {
+        minX = d3.min(nodes, d => d.x);
+        maxX = d3.max(nodes, d => d.x);
+      }
+
+      let neededHeight = Math.max(initialSvgHeight, maxX - minX + margin.top + margin.bottom + 100);
+      svgElement.transition().duration(duration / 2).attr("height", neededHeight);
+      g.transition().duration(duration / 2).attr("transform", `translate(${margin.left},${margin.top - minX + 40})`);
+
+      nodes.forEach(d => { d.y = d.depth * 400; }); // Adjust horizontal separation if needed
+
+      const node = g.selectAll('g.node').data(nodes, d => d.id || (d.id = ++nodeCounter));
+      const nodeEnter = node.enter().append('g')
+        .attr('class', d => "node" + (d.children || d._children ? " node--internal" : " node--leaf") + (d._children ? " _children" : ""))
+        .attr('transform', d => `translate(${source.y0},${source.x0})`)
+        .on('click', (event, d) => { if (d.children) { d._children = d.children; d.children = null; } else if (d._children) { d.children = d._children; d._children = null; } updateTree(d); })
+        .style('cursor', d => (d.children || d._children) ? 'pointer' : 'default');
+
+      nodeEnter.append('circle').attr('r', 1e-6);
+
+      nodeEnter.append('text')
+        .attr('dy', '.35em')
+        .attr('x', d => d.children || d._children ? -14 : 14)
+        .attr('text-anchor', d => d.children || d._children ? 'end' : 'start')
+        .style("fill-opacity", 1e-6)
+        .call(wrapText, 380);
+
+      const nodeUpdate = nodeEnter.merge(node);
+      nodeUpdate.transition().duration(duration)
+        .attr('transform', d => `translate(${d.y},${d.x})`)
+        .attr('class', d => "node" + (d.children ? " node--internal" : " node--leaf") + (d._children ? " node--internal _children" : ""));
+
+      nodeUpdate.select('circle').attr('r', 8.5)
+        .style('fill', d => {
+            let palette;
+            if (d.depth === 0) {
+                palette = levelSpecificPalettes[0];
+            } else if (d.depth === 1) {
+                palette = phaseColors[d.data.originalStageName] || phaseColors.Default;
+            } else {
+                palette = levelSpecificPalettes[d.depth] || levelSpecificPalettes.default;
+            }
+            if (d._children) return palette.collapsedFill;
+            if (d.children) return palette.fill;
+            return "#fff";
+        })
+        .style('stroke', d => {
+            let palette;
+            if (d.depth === 0) {
+                palette = levelSpecificPalettes[0];
+            } else if (d.depth === 1) {
+                palette = phaseColors[d.data.originalStageName] || phaseColors.Default;
+            } else {
+                palette = levelSpecificPalettes[d.depth] || levelSpecificPalettes.default;
+            }
+            return palette.stroke;
+        });
+      nodeUpdate.select('text').style("fill-opacity", 1).call(wrapText, 380);
+
+      const nodeExit = node.exit().transition().duration(duration).attr('transform', d => `translate(${source.y},${source.x})`).remove();
+      nodeExit.select('circle').attr('r', 1e-6);
+      nodeExit.select('text').style('fill-opacity', 1e-6);
+
+      const link = g.selectAll('path.link').data(links, d => d.id);
+      const linkEnter = link.enter().insert('path', "g").attr('class', 'link').attr('d', d => { const o = { x: source.x0, y: source.y0 }; return diagonal(o, o); });
+
+      linkEnter.merge(link).transition().duration(duration).attr('d', d => diagonal(d, d.parent))
+        .style('stroke', d => {
+            const sourceNode = d.parent;
+            if (!sourceNode) return phaseColors.Default.stroke;
+            const l1AncestorName = sourceNode.data.originalStageName;
+            const colorPalette = phaseColors[l1AncestorName] || phaseColors.Default;
+            return colorPalette.stroke;
+        });
+      link.exit().transition().duration(duration).attr('d', d => { const o = { x: source.x, y: source.y }; return diagonal(o, o); }).remove();
+      nodes.forEach(d => { d.x0 = d.x; d.y0 = d.y; });
+    }
+
+    function diagonal(s, d) { return `M ${s.y} ${s.x} C ${(s.y + d.y) / 2} ${s.x}, ${(s.y + d.y) / 2} ${d.x}, ${d.y} ${d.x}`; }
+
+    function wrapText(textElements, maxWidth) {
+        const textPartColors = {
+            name: '#343a40',
+            count: '#0056b3'
+        };
+        const countRegex = /(\s\(Total Count: \d+\))$/;
+
+        textElements.each(function () {
+            const textD3 = d3.select(this);
+            const originalNodeText = textD3.datum().data.name;
+            const x = parseFloat(textD3.attr("x") || 0);
+            const initialDy = textD3.attr("dy");
+            const textAnchor = textD3.attr("text-anchor");
+            const lineHeight = 1.1;
+
+            textD3.text(null);
+
+            let namePart = originalNodeText;
+            let countPartText = "";
+
+            const countMatch = originalNodeText.match(countRegex);
+            if (countMatch && originalNodeText.endsWith(countMatch[0])) {
+                namePart = originalNodeText.substring(0, originalNodeText.length - countMatch[0].length).trim();
+                countPartText = countMatch[0].trim();
+            }
+
+            const tokens = [];
+            namePart.split(/\s+/).filter(Boolean).forEach(word => {
+                tokens.push({ text: word, type: 'name' });
+            });
+            if (countPartText) {
+                tokens.push({ text: countPartText, type: 'count' });
+            }
+
+            if (tokens.length === 0 && originalNodeText) {
+                tokens.push({ text: originalNodeText, type: 'name' });
+            }
+
+            let currentTspan = textD3.append("tspan").attr("x", x).attr("dy", initialDy);
+            if (textAnchor === "end") currentTspan.attr("text-anchor", "end");
+
+            let lineTokens = [];
+
+            for (let i = 0; i < tokens.length; i++) {
+                const tokenObj = tokens[i];
+
+                lineTokens.push(tokenObj);
+                currentTspan.text(lineTokens.map(t => t.text).join(" "));
+
+                if (currentTspan.node().getComputedTextLength() > maxWidth && lineTokens.length > 1) {
+                    lineTokens.pop();
+
+                    currentTspan.text(null);
+                    lineTokens.forEach((prevToken, idx) => {
+                        currentTspan.append("tspan")
+                            .text((idx > 0 ? " " : "") + prevToken.text)
+                            .style("fill", textPartColors[prevToken.type] || textPartColors.name)
+                            .style("font-weight", prevToken.type === 'count' ? "bold" : "normal");
+                    });
+
+                    lineTokens = [tokenObj];
+                    currentTspan = textD3.append("tspan").attr("x", x).attr("dy", lineHeight + "em");
+                    if (textAnchor === "end") currentTspan.attr("text-anchor", "end");
+                }
+            }
+
+            currentTspan.text(null);
+            lineTokens.forEach((token, idx) => {
+                currentTspan.append("tspan")
+                    .text((idx > 0 ? " " : "") + token.text)
+                    .style("fill", textPartColors[token.type] || textPartColors.name)
+                    .style("font-weight", token.type === 'count' ? "bold" : "normal");
+            });
+
+            if (textD3.selectAll("tspan > tspan").empty() && textD3.select("tspan").text().length === 0 && originalNodeText) {
+                let t = textD3.select("tspan");
+                let displayText = originalNodeText;
+                t.text(displayText).style("fill", textPartColors.name);
+                if (t.node() && t.node().getComputedTextLength() > maxWidth && displayText.length > 20) {
+                    let estimatedChars = Math.floor(maxWidth / (t.node().getComputedTextLength()/displayText.length) );
+                    displayText = displayText.substring(0, Math.max(0, estimatedChars - 3)) + "...";
+                    t.text(displayText);
+                }
+            }
+        });
+    }
+  </script>
+</body>
+</html>
