@@ -32,10 +32,13 @@ interface ShopeeProductOffer {
   periodEndTime?: number;
 }
 
-interface ProductOfferResponse {
+interface ShopeeApiResponse {
   data?: {
     productOfferV2?: {
       nodes?: ShopeeProductOffer[];
+    };
+    generateShortLink?: {
+      shortLink?: string;
     };
   };
   errors?: Array<{ message?: string }>;
@@ -96,7 +99,7 @@ export class ShopeeAdapter implements SourceAdapter {
     });
   }
 
-  private async api(query: string): Promise<ProductOfferResponse> {
+  private async api(query: string): Promise<ShopeeApiResponse> {
     const readiness = this.readiness();
     if (!readiness.ready) {
       throw new AppError(
@@ -122,7 +125,7 @@ export class ShopeeAdapter implements SourceAdapter {
       body: payload,
       source: "shopee-api",
     });
-    const result = (await response.json()) as ProductOfferResponse;
+    const result = (await response.json()) as ShopeeApiResponse;
     if (!response.ok || result.errors?.length) {
       throw new AppError(
         "SOURCE_UNAVAILABLE",
@@ -230,9 +233,20 @@ export class ShopeeAdapter implements SourceAdapter {
 
   async createAffiliateLink(canonicalUrl: URL): Promise<AffiliateLinkResult> {
     const link = this.cache.get(canonicalUrl.toString())?.offerLink;
-    return link
-      ? { status: "generated", url: link }
-      : { status: "unsupported", reason: "offer_link_missing" };
+    if (link) return { status: "generated", url: link };
+
+    const result = await this.api(`mutation {
+      generateShortLink(input: {
+        originUrl: ${JSON.stringify(canonicalUrl.toString())}
+        subIds: ["freguesia"]
+      }) {
+        shortLink
+      }
+    }`);
+    const shortLink = result.data?.generateShortLink?.shortLink;
+    return shortLink
+      ? { status: "generated", url: shortLink }
+      : { status: "unsupported", reason: "short_link_missing" };
   }
 
   async healthCheck(): Promise<AdapterHealth> {

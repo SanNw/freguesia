@@ -1,22 +1,21 @@
 # Graph Report - freguesia  (2026-08-20)
 
 ## Corpus Check
-- 156 files · ~52,605 words
+- 156 files · ~52,703 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 737 nodes · 1572 edges · 51 communities (42 shown, 9 thin omitted)
+- 738 nodes · 1573 edges · 46 communities (37 shown, 9 thin omitted)
 - Extraction: 97% EXTRACTED · 3% INFERRED · 0% AMBIGUOUS · INFERRED: 47 edges (avg confidence: 0.82)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `470421d5`
+- Built from commit: `721f3bab`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
 ## Community Hubs (Navigation)
 - mercadolivre.experimental.adapter.ts
-- offers.ts
 - create-manual-offer.ts
 - AppError
 - scripts
@@ -29,7 +28,7 @@
 - product-matching/package.json
 - oauth.ts
 - compilerOptions
-- OfferRepository
+- offers.ts
 - aliexpress.adapter.ts
 - command
 - product-matching/tsconfig.json
@@ -46,28 +45,23 @@
 - export-n8n-workflows.sh
 - import-n8n-workflows.sh
 - restore.sh
-- AffiliateLinkResult
-- app.ts
+- resilientFetch
+- runtime.ts
 - shopee.adapter.ts
 - FeedAdapter
 - publish-offer.ts
 - Q: Por que Env conecta aprovação, adaptadores, persistência, OAuth, automação e Telegram?
 - url.ts
 - mercadolivre.adapter.ts
-- telegram-gateway.ts
-- requestApproval
-- product-niche.ts
-- handle-telegram-callback.ts
-- runtime.ts
 
 ## God Nodes (most connected - your core abstractions)
 1. `AppError` - 26 edges
 2. `OfferRepository` - 24 edges
 3. `Logger` - 24 edges
 4. `SourceAdapter` - 22 edges
-5. `ExtractedProduct` - 20 edges
+5. `requestApproval()` - 20 edges
 6. `AffiliateLinkResult` - 20 edges
-7. `requestApproval()` - 20 edges
+7. `ExtractedProduct` - 20 edges
 8. `PriceSnapshot` - 19 edges
 9. `ProductRef` - 19 edges
 10. `resilientFetch()` - 19 edges
@@ -92,15 +86,11 @@
 - **Offer discovery through human approval and publication** — freguesia_n8n_orchestration, freguesia_worker_domain_service, freguesia_postgresql_source_of_truth, freguesia_telegram_human_approval [EXTRACTED 1.00]
 - **Automated dependency maintenance and security verification** — github_dependabot_dependabot_configuration, github_workflows_security_dependency_audit, github_workflows_docker_build_worker_image_security, docs_security_supply_chain_security [INFERRED 0.95]
 
-## Communities (51 total, 9 thin omitted)
+## Communities (46 total, 9 thin omitted)
 
 ### Community 0 - "mercadolivre.experimental.adapter.ts"
-Cohesion: 0.17
-Nodes (7): FeedConfig, ManualAdapter, ML_ALLOWED_DOMAINS, SourceAdapter, ExtractedProduct, PriceSnapshot, ProductRef
-
-### Community 1 - "offers.ts"
-Cohesion: 0.22
-Nodes (11): ApprovalRepository, completeMercadoLivreAffiliateLink(), generateAffiliateLinkForOffer(), registerOfferRoutes(), affiliateLinkSchema, approveSchema, createDiscoveryRunSchema, createManualOfferSchema (+3 more)
+Cohesion: 0.18
+Nodes (8): FeedConfig, ManualAdapter, ML_ALLOWED_DOMAINS, SourceAdapter, AffiliateLinkResult, ExtractedProduct, PriceSnapshot, ProductRef
 
 ### Community 2 - "create-manual-offer.ts"
 Cohesion: 0.07
@@ -150,9 +140,9 @@ Nodes (12): assertConfigured(), base64Url(), completeMercadoLivreAuthorization()
 Cohesion: 0.11
 Nodes (17): compilerOptions, declaration, esModuleInterop, forceConsistentCasingInFileNames, lib, module, moduleResolution, noFallthroughCasesInSwitch (+9 more)
 
-### Community 14 - "OfferRepository"
-Cohesion: 0.21
-Nodes (3): OfferRepository, Offer, calculatePriceDropPercent()
+### Community 14 - "offers.ts"
+Cohesion: 0.13
+Nodes (13): OfferRepository, completeMercadoLivreAffiliateLink(), generateAffiliateLinkForOffer(), Offer, calculatePriceDropPercent(), registerOfferRoutes(), affiliateLinkSchema, approveSchema (+5 more)
 
 ### Community 15 - "aliexpress.adapter.ts"
 Cohesion: 0.19
@@ -186,21 +176,21 @@ Nodes (3): Source, SourceId, sourceSchema
 Cohesion: 0.50
 Nodes (3): CreateDiscoveryRunRequest, CreateDiscoveryRunResponse, errorResponse
 
-### Community 36 - "AffiliateLinkResult"
-Cohesion: 0.26
-Nodes (5): AwinAdapter, extractIdFromUrl(), AffiliateLinkResult, positiveInteger(), resilientFetch()
+### Community 36 - "resilientFetch"
+Cohesion: 0.33
+Nodes (4): AwinAdapter, extractIdFromUrl(), positiveInteger(), resilientFetch()
 
-### Community 39 - "app.ts"
-Cohesion: 0.17
-Nodes (13): TelegramPoller, buildApp(), removeOldFiles(), runMaintenanceCleanup(), createLogger(), Logger, appEnv, serviceTokenAuth() (+5 more)
+### Community 39 - "runtime.ts"
+Cohesion: 0.10
+Nodes (23): TelegramPoller, buildApp(), removeOldFiles(), runMaintenanceCleanup(), booleanString, Env, envSchema, createLogger() (+15 more)
 
 ### Community 40 - "shopee.adapter.ts"
-Cohesion: 0.20
-Nodes (9): cents(), previousPrice(), ProductOfferResponse, ShopeeAdapter, shopeeAuthorization(), ShopeeProductOffer, shopeeReadiness(), ShopeeReadinessReason (+1 more)
+Cohesion: 0.19
+Nodes (9): cents(), previousPrice(), ShopeeAdapter, ShopeeApiResponse, shopeeAuthorization(), ShopeeProductOffer, shopeeReadiness(), ShopeeReadinessReason (+1 more)
 
 ### Community 42 - "publish-offer.ts"
-Cohesion: 0.19
-Nodes (7): PublicationRepository, WorkflowEventRepository, buildPublicationCaption(), buildAffiliateCaptionLink(), appendChannelsFooter(), CHANNELS_FOOTER, CHANNELS_FOOTER_TEXT
+Cohesion: 0.06
+Nodes (37): ApprovalRepository, PublicationRepository, WorkflowEventRepository, adminUserIds(), isAdmin(), TelegramEditMessageInput, TelegramGateway, TelegramRichMessageInput (+29 more)
 
 ### Community 43 - "Q: Por que Env conecta aprovação, adaptadores, persistência, OAuth, automação e Telegram?"
 Cohesion: 0.40
@@ -214,45 +204,25 @@ Nodes (5): isAllowedDomain(), isPrivateOrLoopback(), normalizeUrl(), PRIVATE_IP_
 Cohesion: 0.17
 Nodes (10): CatalogItem, CatalogItemsResponse, CatalogProduct, CatalogSearchResponse, cents(), itemIdFromUrl(), SearchResult, mercadoLivreEnv (+2 more)
 
-### Community 46 - "telegram-gateway.ts"
-Cohesion: 0.22
-Nodes (11): adminUserIds(), isAdmin(), TelegramEditMessageInput, TelegramRichMessageInput, TelegramSendPhotoInput, field(), normalizeLabel(), parseAmazonCommand() (+3 more)
-
-### Community 47 - "requestApproval"
-Cohesion: 0.23
-Nodes (4): TelegramGateway, publishOffer(), requestApproval(), productNicheChannel()
-
-### Community 48 - "product-niche.ts"
-Cohesion: 0.22
-Nodes (9): buildOfferHeadline(), cleanProductName(), stableIndex(), classifyProductNiche(), GENERAL_ONLY_TERMS, normalize(), ProductNiche, productNicheLabel() (+1 more)
-
-### Community 49 - "handle-telegram-callback.ts"
-Cohesion: 0.27
-Nodes (7): AmazonTelegramMessage, handleTelegramCallback(), TelegramCallbackInput, telegramEnv, registerTelegramRoutes(), validWebhookSecret(), telegramCallbackSchema
-
-### Community 50 - "runtime.ts"
-Cohesion: 0.20
-Nodes (8): booleanString, Env, envSchema, databaseEnv, discoveryEnv, marketplaceEnv, offerEnv, publicationEnv
-
 ## Knowledge Gaps
-- **224 isolated node(s):** `FeedConfig`, `TokenResponse`, `AliExpressReadinessReason`, `AliProduct`, `IntegrationCredential` (+219 more)
+- **224 isolated node(s):** `name`, `version`, `private`, `type`, `description` (+219 more)
   These have ≤1 connection - possible missing edges or undocumented components.
 - **9 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `AppError` connect `AppError` to `mercadolivre.experimental.adapter.ts`, `offers.ts`, `create-manual-offer.ts`, `lomadee.adapter.ts`, `app.ts`, `shopee.adapter.ts`, `publish-offer.ts`, `oauth.ts`, `mercadolivre.adapter.ts`, `aliexpress.adapter.ts`, `handle-telegram-callback.ts`?**
+- **Why does `AppError` connect `AppError` to `mercadolivre.experimental.adapter.ts`, `create-manual-offer.ts`, `lomadee.adapter.ts`, `runtime.ts`, `shopee.adapter.ts`, `publish-offer.ts`, `oauth.ts`, `mercadolivre.adapter.ts`, `offers.ts`, `aliexpress.adapter.ts`?**
   _High betweenness centrality (0.030) - this node is a cross-community bridge._
-- **Why does `SourceAdapter` connect `mercadolivre.experimental.adapter.ts` to `AppError`, `AffiliateLinkResult`, `lomadee.adapter.ts`, `shopee.adapter.ts`, `FeedAdapter`, `affiliate-link-generator.ts`, `mercadolivre.adapter.ts`, `aliexpress.adapter.ts`, `DiscoveryInput`?**
+- **Why does `SourceAdapter` connect `mercadolivre.experimental.adapter.ts` to `AppError`, `resilientFetch`, `lomadee.adapter.ts`, `shopee.adapter.ts`, `FeedAdapter`, `affiliate-link-generator.ts`, `mercadolivre.adapter.ts`, `aliexpress.adapter.ts`, `DiscoveryInput`?**
   _High betweenness centrality (0.022) - this node is a cross-community bridge._
-- **Why does `OfferRepository` connect `OfferRepository` to `offers.ts`, `create-manual-offer.ts`, `publish-offer.ts`, `mercadolivre.adapter.ts`, `handle-telegram-callback.ts`?**
+- **Why does `OfferRepository` connect `offers.ts` to `publish-offer.ts`, `create-manual-offer.ts`, `mercadolivre.adapter.ts`?**
   _High betweenness centrality (0.021) - this node is a cross-community bridge._
-- **What connects `FeedConfig`, `TokenResponse`, `AliExpressReadinessReason` to the rest of the system?**
+- **Are the 4 inferred relationships involving `requestApproval()` (e.g. with `.buildApprovalKeyboard()` and `.buildOfferRichMarkdown()`) actually correct?**
+  _`requestApproval()` has 4 INFERRED edges - model-reasoned connections that need verification._
+- **What connects `name`, `version`, `private` to the rest of the system?**
   _224 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `create-manual-offer.ts` be split into smaller, more focused modules?**
   _Cohesion score 0.07075624797143784 - nodes in this community are weakly interconnected._
 - **Should `scripts` be split into smaller, more focused modules?**
   _Cohesion score 0.043478260869565216 - nodes in this community are weakly interconnected._
-- **Should `Freguesia Worker domain and browser automation service` be split into smaller, more focused modules?**
-  _Cohesion score 0.0627177700348432 - nodes in this community are weakly interconnected._
