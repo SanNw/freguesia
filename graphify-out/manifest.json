@@ -972,9 +972,9 @@
     "semantic_hash": ""
   },
   ".github/workflows/graphify-pages.yml": {
-    "mtime": 1787237791.4044702,
-    "seen": 1787237803.1005993,
-    "ast_hash": "228d1243b099f76cb2020b7f90553848",
+    "mtime": 1787237867.2695892,
+    "seen": 1787237877.0856478,
+    "ast_hash": "64fe2978c34465e8cd2753dd48d24f3f",
     "semantic_hash": ""
   }
 }
