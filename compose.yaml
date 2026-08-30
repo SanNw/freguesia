@@ -35,6 +35,14 @@ services:
       N8N_WORKFLOW_FOLDER: /home/node/.n8n/workflows
       N8N_BLOCK_ENV_ACCESS_IN_NODE: "false"
       N8N_PROXY_HOPS: "1"
+      N8N_DIAGNOSTICS_ENABLED: "false"
+      N8N_VERSION_NOTIFICATIONS_ENABLED: "false"
+      N8N_TEMPLATES_ENABLED: "false"
+      N8N_PERSONALIZATION_ENABLED: "false"
+      N8N_HIRING_BANNER_ENABLED: "false"
+      N8N_DISABLED_MODULES: "mcp-registry"
+      EXECUTIONS_DATA_PRUNE: "true"
+      EXECUTIONS_DATA_MAX_AGE: ${N8N_EXECUTIONS_DATA_MAX_AGE:-168}
     networks: [internal]
     healthcheck:
       test: ["CMD-SHELL", "node -e \"require('http').get('http://localhost:5678/healthz',r=>{process.exit(r.statusCode===200?0:1)}).on('error',()=>process.exit(1))\""]
@@ -61,6 +69,9 @@ services:
       WORKER_HOST: ${WORKER_HOST:-0.0.0.0}
       WORKER_PORT: ${WORKER_PORT:-3001}
       WORKER_SERVICE_TOKEN: ${WORKER_SERVICE_TOKEN}
+      SITE_SYNC_ENABLED: ${SITE_SYNC_ENABLED:-true}
+      SITE_API_BASE_URL: ${SITE_API_BASE_URL:-https://freguesia-web.pages.dev}
+      SITE_SYNC_TIMEOUT_MS: ${SITE_SYNC_TIMEOUT_MS:-10000}
       DATABASE_URL: ${DATABASE_URL}
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
       TELEGRAM_APPROVAL_CHAT_ID: ${TELEGRAM_APPROVAL_CHAT_ID}
@@ -79,10 +90,12 @@ services:
       PLAYWRIGHT_AUTH_DIR: ${PLAYWRIGHT_AUTH_DIR:-/app/data/auth}
       PLAYWRIGHT_SCREENSHOT_DIR: ${PLAYWRIGHT_SCREENSHOT_DIR:-/app/data/screenshots}
       PLAYWRIGHT_TRACE_DIR: ${PLAYWRIGHT_TRACE_DIR:-/app/data/traces}
+      AWIN_FEED_PATH: ${AWIN_FEED_PATH:-/app/data/awin/datafeed_3040995.csv}
     volumes:
       - browser_auth:/app/data/auth
       - worker_traces:/app/data/traces
       - worker_screenshots:/app/data/screenshots
+      - ./data/awin:/app/data/awin:ro
     ports:
       - "127.0.0.1:3001:3001"
     networks: [internal]

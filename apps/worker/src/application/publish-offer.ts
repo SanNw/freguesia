@@ -18,6 +18,7 @@ import {
   CHANNELS_FOOTER,
   CHANNELS_FOOTER_TEXT,
 } from "../domain/channels-footer.js";
+import { syncOfferToSite } from "./sync-offer-to-site.js";
 
 const PRICE_NOTICE = "Preço sujeito a alteração.";
 
@@ -54,6 +55,7 @@ export async function publishOffer(
   offerId: string,
   idempotencyKey: string,
   logger: Logger,
+  ignoreRateLimits = false,
 ): Promise<{ status: string; messageId: number }> {
   if (await publicationRepository.existsByIdempotencyKey(idempotencyKey)) {
     logger.info(
@@ -133,10 +135,10 @@ export async function publishOffer(
   }
 
   const rate = await publicationRepository.getRateLimitSnapshot();
-  if (
+  if (!ignoreRateLimits && (
     rate.hourly >= env.MAX_PUBLICATIONS_PER_HOUR ||
     rate.daily >= env.MAX_PUBLICATIONS_PER_DAY
-  ) {
+  )) {
     throw new AppError(
       "VALIDATION_FAILED",
       "Publication rate limit reached",
@@ -145,6 +147,7 @@ export async function publishOffer(
     );
   }
   if (
+    !ignoreRateLimits &&
     rate.lastPublishedAt &&
     Date.now() - new Date(rate.lastPublishedAt).getTime() <
       env.PUBLICATION_MIN_INTERVAL_SECONDS * 1000
@@ -169,8 +172,40 @@ export async function publishOffer(
   }
 
   const gateway = new TelegramGateway(logger);
-  const niche = classifyProductNiche(product.title, product.category);
+  const niche =
+    offer.publicationNiche ??
+    classifyProductNiche(product.title, product.category);
   const destinationChannelId = productNicheChannel(niche);
+  const originalStatus = offer.status;
+  if (
+    !(await offerRepository.transitionStatus(
+      offerId,
+      [originalStatus],
+      "publishing",
+    ))
+  ) {
+    return { status: "already_publishing", messageId: 0 };
+  }
+
+  const publicationId = crypto.randomUUID();
+  const reserved = await publicationRepository.reserve({
+    id: publicationId,
+    offerId,
+    productId: offer.productId,
+    channelId: destinationChannelId,
+    finalCaption: fullCaption,
+    finalImageUrl: offer.imageUrl,
+    finalAffiliateUrl: offer.affiliateUrl,
+    idempotencyKey,
+  });
+  if (!reserved) {
+    await offerRepository.transitionStatus(
+      offerId,
+      ["publishing"],
+      originalStatus,
+    );
+    return { status: "already_published", messageId: 0 };
+  }
 
   let telegramMessageId = 0;
   try {
@@ -180,10 +215,9 @@ export async function publishOffer(
           chatId: destinationChannelId,
           markdown: gateway.buildOfferRichMarkdown(
             [offer.imageUrl, ...offer.additionalImageUrls],
-            publicationCaption,
+            `${publicationCaption}\n\n${gateway.buildPublicationRichButtons(offer.affiliateUrl)}`,
           ),
           footer: CHANNELS_FOOTER_TEXT,
-          replyMarkup: gateway.buildPublicationKeyboard(offer.affiliateUrl),
         });
         telegramMessageId = result.messageId;
       } catch (error) {
@@ -209,19 +243,7 @@ export async function publishOffer(
       telegramMessageId = result.messageId;
     }
 
-    const publicationId = crypto.randomUUID();
-    await publicationRepository.insert({
-      id: publicationId,
-      offerId,
-      channelId: destinationChannelId,
-      telegramMessageId,
-      finalCaption: fullCaption,
-      finalImageUrl: offer.imageUrl ?? null,
-      finalAffiliateUrl: offer.affiliateUrl ?? "",
-      status: "published",
-      idempotencyKey,
-      publishedAt: new Date().toISOString(),
-    });
+    await publicationRepository.markPublished(publicationId, telegramMessageId);
 
     await offerRepository.updateStatus(offerId, "published");
 
@@ -244,8 +266,11 @@ export async function publishOffer(
       "Offer published",
     );
 
+    await syncOfferToSite(offerId, logger);
+
     return { status: "published", messageId: telegramMessageId };
   } catch (e) {
+    await publicationRepository.markFailed(publicationId, e);
     await offerRepository.updateStatus(offerId, "failed", "PUBLICATION_ERROR");
 
     await workflowEventRepository.record({

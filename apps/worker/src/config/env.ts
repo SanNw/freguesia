@@ -24,6 +24,13 @@ const envSchema = z.object({
   WORKER_BODY_LIMIT_BYTES: z.coerce.number().default(1048576),
   WORKER_ALLOWED_ORIGINS: z.string().default(""),
 
+  SITE_SYNC_ENABLED: booleanString.default("false"),
+  SITE_API_BASE_URL: z
+    .string()
+    .url()
+    .default("https://freguesia-web.pages.dev"),
+  SITE_SYNC_TIMEOUT_MS: z.coerce.number().default(10000),
+
   DATABASE_URL: z.string().url(),
   DATABASE_POOL_MIN: z.coerce.number().default(2),
   DATABASE_POOL_MAX: z.coerce.number().default(10),
@@ -39,9 +46,9 @@ const envSchema = z.object({
   REPOST_COOLDOWN_HOURS: z.coerce.number().default(168),
   REPOST_MIN_PRICE_DROP_PERCENT: z.coerce.number().default(10),
   MAX_OFFERS_PER_RUN: z.coerce.number().default(25),
-  MAX_PUBLICATIONS_PER_HOUR: z.coerce.number().default(6),
-  MAX_PUBLICATIONS_PER_DAY: z.coerce.number().default(40),
-  PUBLICATION_MIN_INTERVAL_SECONDS: z.coerce.number().default(600),
+  MAX_PUBLICATIONS_PER_HOUR: z.coerce.number().default(120),
+  MAX_PUBLICATIONS_PER_DAY: z.coerce.number().default(500),
+  PUBLICATION_MIN_INTERVAL_SECONDS: z.coerce.number().default(30),
   REQUIRE_HUMAN_APPROVAL: booleanString.default("true"),
 
   TELEGRAM_BOT_TOKEN: z.string().min(1),
@@ -54,6 +61,7 @@ const envSchema = z.object({
   TELEGRAM_CHANNEL_APPLIANCES_ID: z.string().default(""),
   TELEGRAM_CHANNEL_BEAUTY_ID: z.string().default(""),
   TELEGRAM_CHANNEL_ELECTRONICS_ID: z.string().default(""),
+  TELEGRAM_CHANNEL_FASHION_ID: z.string().default(""),
   TELEGRAM_ADMIN_USER_IDS: z.string().default(""),
   TELEGRAM_WEBHOOK_SECRET: z.string().default(""),
   TELEGRAM_POLLING_ENABLED: booleanString.default("true"),
@@ -63,6 +71,21 @@ const envSchema = z.object({
   TELEGRAM_PROTECT_CONTENT: booleanString.default("false"),
   TELEGRAM_MESSAGE_FOOTER: z.string().default("Preço sujeito a alteração."),
   TELEGRAM_MAX_CAPTION_LENGTH: z.coerce.number().default(1024),
+
+  PINTEREST_ENABLED: booleanString.default("false"),
+  PINTEREST_API_BASE_URL: z
+    .string()
+    .url()
+    .default("https://api.pinterest.com/v5"),
+  PINTEREST_ACCESS_TOKEN: z.string().default(""),
+  PINTEREST_DISCLOSURE_TEXT: z.string().default("#afiliado"),
+  PINTEREST_REQUEST_TIMEOUT_MS: z.coerce.number().default(15000),
+  PINTEREST_BOARD_HARDWARE_ID: z.string().default(""),
+  PINTEREST_BOARD_CASA_COZINHA_ID: z.string().default(""),
+  PINTEREST_BOARD_ELETRODOMESTICOS_ID: z.string().default(""),
+  PINTEREST_BOARD_COSMETICOS_BELEZA_ID: z.string().default(""),
+  PINTEREST_BOARD_ELETRONICOS_ID: z.string().default(""),
+  PINTEREST_BOARD_HUB_ID: z.string().default(""),
 
   AFFILIATE_DISCLOSURE_TEXT: z.string().default(""),
   AFFILIATE_LINK_TIMEOUT_MS: z.coerce.number().default(30000),

@@ -1,6 +1,30 @@
 import { telegramEnv as env } from "../../config/runtime.js";
 import type { Logger } from "../../config/logger.js";
 import { CHANNELS_LIST_LINK } from "../../domain/channels-footer.js";
+import {
+  buildRichButtonRows,
+  type RichButton,
+} from "./telegram-rich-buttons.js";
+
+const MAX_RETRY_ATTEMPTS = 3;
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => {
+    if (ms <= 0) {
+      resolve();
+      return;
+    }
+    setTimeout(resolve, ms);
+  });
+}
+
+export interface TelegramResponse {
+  ok: boolean;
+  description?: string;
+  error_code?: number;
+  parameters?: { retry_after?: number };
+  result?: { message_id: number };
+}
 
 export function adminUserIds(): number[] {
   return env.TELEGRAM_ADMIN_USER_IDS.split(",")
@@ -40,6 +64,69 @@ export class TelegramGateway {
     return `${env.TELEGRAM_BOT_API_BASE.replace(/\/$/, "")}/bot${env.TELEGRAM_BOT_TOKEN}`;
   }
 
+  private async request(
+    method: string,
+    body: Record<string, unknown>,
+  ): Promise<TelegramResponse> {
+    const url = `${this.baseUrl}/${method}`;
+    let attempt = 0;
+
+    while (true) {
+      let resp: Response;
+      try {
+        resp = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+      } catch (networkError) {
+        attempt += 1;
+        if (attempt > MAX_RETRY_ATTEMPTS) throw networkError;
+        const delayMs = Math.min(1000 * 2 ** (attempt - 1), 10_000);
+        this.logger.warn(
+          { err: networkError, method, attempt },
+          "Telegram request failed, retrying",
+        );
+        await sleep(delayMs);
+        continue;
+      }
+
+      const data = (await resp.json()) as TelegramResponse;
+
+      if (resp.status === 429) {
+        const retryAfter = Number(data.parameters?.retry_after ?? 0);
+        attempt += 1;
+        if (attempt > MAX_RETRY_ATTEMPTS) {
+          this.logger.error(
+            { method, retryAfter },
+            "Telegram rate limited, exhausted retries",
+          );
+          return data;
+        }
+        const delayMs = Math.max(retryAfter * 1000, 1_000);
+        this.logger.warn(
+          { method, retryAfter, attempt },
+          "Telegram 429, waiting before retry",
+        );
+        await sleep(delayMs);
+        continue;
+      }
+
+      if (resp.status >= 500 && attempt < MAX_RETRY_ATTEMPTS) {
+        attempt += 1;
+        const delayMs = Math.min(1000 * 2 ** (attempt - 1), 10_000);
+        this.logger.warn(
+          { method, status: resp.status, attempt },
+          "Telegram returned server error, retrying",
+        );
+        await sleep(delayMs);
+        continue;
+      }
+
+      return data;
+    }
+  }
+
   async sendRichMessage(
     input: TelegramRichMessageInput,
   ): Promise<{ messageId: number }> {
@@ -53,16 +140,7 @@ export class TelegramGateway {
     };
     if (input.replyMarkup) body.reply_markup = input.replyMarkup;
 
-    const resp = await fetch(`${this.baseUrl}/sendRichMessage`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    const data = (await resp.json()) as {
-      ok: boolean;
-      result?: { message_id: number };
-      description?: string;
-    };
+    const data = await this.request("sendRichMessage", body);
     if (!data.ok || !data.result) {
       throw new Error(`Telegram sendRichMessage failed: ${data.description}`);
     }
@@ -96,16 +174,7 @@ export class TelegramGateway {
       body.reply_markup = JSON.stringify(input.replyMarkup);
     }
 
-    const resp = await fetch(`${this.baseUrl}/sendPhoto`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    const data = (await resp.json()) as {
-      ok: boolean;
-      result?: { message_id: number };
-      description?: string;
-    };
+    const data = await this.request("sendPhoto", body);
     if (!data.ok) {
       this.logger.error(
         { description: data.description },
@@ -130,16 +199,7 @@ export class TelegramGateway {
     if (replyMarkup) {
       body.reply_markup = JSON.stringify(replyMarkup);
     }
-    const resp = await fetch(`${this.baseUrl}/sendMessage`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    const data = (await resp.json()) as {
-      ok: boolean;
-      result?: { message_id: number };
-      description?: string;
-    };
+    const data = await this.request("sendMessage", body);
     if (!data.ok) {
       throw new Error(`Telegram sendMessage failed: ${data.description}`);
     }
@@ -242,6 +302,95 @@ export class TelegramGateway {
     };
   }
 
+  buildApprovalRichButtons(
+    offerShortId: string,
+    affiliateUrl?: string | null,
+  ): string {
+    const rows: RichButton[][] = [];
+    if (affiliateUrl && affiliateUrl.length <= 256) {
+      rows.push([
+        {
+          text: "🛒 Comprar com desconto",
+          url: affiliateUrl,
+          style: "success",
+        },
+        {
+          text: "📣 Canais de promoção",
+          url: CHANNELS_LIST_LINK,
+          style: "primary",
+        },
+      ]);
+    }
+    rows.push(
+      [
+        {
+          text: "✅ Aprovar",
+          callbackData: `offer:approve:${offerShortId}`,
+          style: "success",
+        },
+        {
+          text: "✏️ Editar",
+          callbackData: `offer:edit:${offerShortId}`,
+          style: "primary",
+        },
+      ],
+      [
+        {
+          text: "❌ Descartar",
+          callbackData: `offer:reject:${offerShortId}`,
+          style: "danger",
+        },
+        {
+          text: "🔄 Revalidar",
+          callbackData: `offer:revalidate:${offerShortId}`,
+        },
+        { text: "🕒 Agendar", callbackData: `offer:schedule:${offerShortId}` },
+      ],
+    );
+    return buildRichButtonRows(rows);
+  }
+
+  buildChannelApprovalKeyboard(offerId: string) {
+    const button = (text: string, niche: string) => ({
+      text,
+      callback_data: `offer:channel:${niche}:${offerId}`,
+    });
+    return {
+      inline_keyboard: [
+        [button("Hardware", "hardware"), button("Eletrônicos", "electronics")],
+        [
+          button("Eletrodomésticos", "appliances"),
+          button("Casa e Cozinha", "home_kitchen"),
+        ],
+        [button("Beleza", "beauty"), button("Moda", "fashion")],
+        [button("Ofertas Gerais", "general")],
+        [button("Descartar", "discard")],
+      ],
+    };
+  }
+
+  buildChannelApprovalRichButtons(offerId: string): string {
+    const button = (
+      text: string,
+      niche: string,
+      style?: RichButton["style"],
+    ) => ({
+      text,
+      callbackData: `offer:channel:${niche}:${offerId}`,
+      style,
+    });
+    return buildRichButtonRows([
+      [button("Hardware", "hardware"), button("Eletrônicos", "electronics")],
+      [
+        button("Eletrodomésticos", "appliances"),
+        button("Casa e Cozinha", "home_kitchen"),
+      ],
+      [button("Beleza", "beauty"), button("Moda", "fashion")],
+      [button("Ofertas Gerais", "general", "primary")],
+      [button("Descartar", "discard", "danger")],
+    ]);
+  }
+
   buildPublicationKeyboard(affiliateUrl: string) {
     const buttons: Array<Record<string, string>> = [
       { text: "📣 Canais de promoção", url: CHANNELS_LIST_LINK },
@@ -250,5 +399,23 @@ export class TelegramGateway {
       buttons.unshift({ text: "🛒 Comprar com desconto", url: affiliateUrl });
     }
     return { inline_keyboard: [buttons] };
+  }
+
+  buildPublicationRichButtons(affiliateUrl: string): string {
+    const buttons: RichButton[] = [
+      {
+        text: "📣 Canais de promoção",
+        url: CHANNELS_LIST_LINK,
+        style: "primary",
+      },
+    ];
+    if (affiliateUrl.length <= 256) {
+      buttons.unshift({
+        text: "🛒 Comprar com desconto",
+        url: affiliateUrl,
+        style: "success",
+      });
+    }
+    return buildRichButtonRows([buttons]);
   }
 }

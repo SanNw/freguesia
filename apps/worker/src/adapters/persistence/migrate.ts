@@ -31,6 +31,35 @@ async function main() {
   await db.query(
     `CREATE UNIQUE INDEX IF NOT EXISTS uq_approvals_idempotency_key ON approvals(idempotency_key) WHERE idempotency_key IS NOT NULL`,
   );
+  await db.query(
+    `CREATE UNIQUE INDEX IF NOT EXISTS uq_publications_offer ON publications(offer_id)`,
+  );
+  await db.query(
+    `ALTER TABLE offers ADD COLUMN IF NOT EXISTS publication_niche TEXT`,
+  );
+  await db.query(
+    `ALTER TABLE offers ADD COLUMN IF NOT EXISTS publication_niche_source TEXT`,
+  );
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS pinterest_publications (
+      id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+      offer_id UUID NOT NULL REFERENCES offers(id),
+      board_id TEXT NOT NULL,
+      idempotency_key TEXT NOT NULL UNIQUE,
+      title TEXT NOT NULL,
+      description TEXT NOT NULL,
+      image_url TEXT NOT NULL,
+      affiliate_url TEXT NOT NULL,
+      status TEXT NOT NULL,
+      external_id TEXT,
+      external_url TEXT,
+      error_message TEXT,
+      published_at TIMESTAMPTZ,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `);
+  await db.query(`CREATE INDEX IF NOT EXISTS idx_pinterest_publications_offer ON pinterest_publications(offer_id)`);
   console.log("Integration credential migrations applied.");
   await db.close();
 }

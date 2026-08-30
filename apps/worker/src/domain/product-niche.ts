@@ -6,34 +6,23 @@ export type ProductNiche =
   | "appliances"
   | "beauty"
   | "electronics"
+  | "fashion"
   | "general";
 
+export interface ProductNicheDecision {
+  niche: ProductNiche;
+  confidence: "high" | "medium" | "low";
+  evidence:
+    | "official_category"
+    | "category"
+    | "title"
+    | "explicit_general"
+    | "conflict"
+    | "unclassified";
+  automatic: boolean;
+}
+
 const RULES: Array<{ niche: ProductNiche; terms: string[] }> = [
-  {
-    niche: "beauty",
-    terms: [
-      "perfume",
-      "maquiagem",
-      "batom",
-      "base facial",
-      "rimel",
-      "mascara de cilios",
-      "cosmetico",
-      "shampoo",
-      "condicionador",
-      "hidratante",
-      "protetor solar",
-      "skincare",
-      "serum facial",
-      "creme facial",
-      "desodorante",
-      "barbeador",
-      "secador de cabelo",
-      "chapinha",
-      "modelador de cachos",
-      "escova secadora",
-    ],
-  },
   {
     niche: "appliances",
     terms: [
@@ -56,6 +45,11 @@ const RULES: Array<{ niche: ProductNiche; terms: string[] }> = [
       "batedeira",
       "mixer",
       "processador de alimentos",
+      "triturador de alimentos",
+      "processador alimentos",
+      "processador univ",
+      "processador 170ml",
+      "processador 500ml",
       "cafeteira",
       "sanduicheira",
       "torradeira",
@@ -64,6 +58,8 @@ const RULES: Array<{ niche: ProductNiche; terms: string[] }> = [
       "climatizador",
       "ar-condicionado",
       "aquecedor",
+      "eletrodomesticos",
+      "espremedor",
     ],
   },
   {
@@ -104,12 +100,48 @@ const RULES: Array<{ niche: ProductNiche; terms: string[] }> = [
       "kindle",
       "carregador",
       "power bank",
+      "radios am/fm",
+      "pilhas e carregadores",
+    ],
+  },
+  {
+    niche: "beauty",
+    terms: [
+      "perfume",
+      "maquiagem",
+      "batom",
+      "base facial",
+      "rimel",
+      "mascara de cilios",
+      "cosmetico",
+      "shampoo",
+      "condicionador",
+      "hidratante",
+      "protetor solar",
+      "skincare",
+      "serum facial",
+      "creme facial",
+      "desodorante",
+      "barbeador",
+      "secador de cabelo",
+      "chapinha",
+      "modelador de cachos",
+      "escova secadora",
+      "leave-in",
+      "serum capilar",
+      "cabelo humano",
+      "extensao de cabelo",
+      "gloss labial",
+      "adesivo para acne",
+      "adesivos para acne",
+      "beleza e cuidado pessoal",
     ],
   },
   {
     niche: "hardware",
     terms: [
-      "processador",
+      "processador intel",
+      "processador amd",
       "cpu amd",
       "cpu intel",
       "placa-mae",
@@ -137,10 +169,40 @@ const RULES: Array<{ niche: ProductNiche; terms: string[] }> = [
       "repetidor wifi",
       "switch de rede",
       "placa de rede",
+      "cabo de rede",
+      "cabo hdmi",
+      "perifericos",
       "impressora",
       "scanner",
       "nobreak",
       "estabilizador",
+    ],
+  },
+  {
+    niche: "fashion",
+    terms: [
+      "shorts",
+      "bermuda",
+      "camiseta",
+      "camisa",
+      "calca",
+      "vestido",
+      "saia",
+      "blusa",
+      "lingerie",
+      "cueca",
+      "jaqueta",
+      "chinelo",
+      "sandalia",
+      "sapato",
+      "tenis feminino",
+      "tenis masculino",
+      "bolsa feminina",
+      "bolsa masculina",
+      "mochila",
+      "pulseira",
+      "colar",
+      "brinco",
     ],
   },
   {
@@ -178,6 +240,10 @@ const RULES: Array<{ niche: ProductNiche; terms: string[] }> = [
       "luminaria",
       "varal",
       "lixeira",
+      "jarra",
+      "forma de gelo",
+      "espelho",
+      "tira manchas",
     ],
   },
 ];
@@ -199,16 +265,91 @@ const GENERAL_ONLY_TERMS = [
   "adivinhacao",
 ];
 
+const TITLE_PRIMARY_RULES: Array<{ niche: ProductNiche; terms: string[] }> = [
+  {
+    niche: "electronics",
+    terms: [
+      "notebook",
+      "laptop",
+      "chromebook",
+      "computador completo",
+      "pc completo",
+      "pc gamer",
+      "desktop completo",
+      "all in one",
+      "mini pc",
+      "macbook",
+      "imac",
+    ],
+  },
+];
+
+const OFFICIAL_CATEGORY_ROOTS: Array<{
+  roots: string[];
+  niche: ProductNiche;
+}> = [
+  { roots: ["casa, moveis e decoracao"], niche: "home_kitchen" },
+  { roots: ["eletrodomesticos"], niche: "appliances" },
+  { roots: ["beleza e cuidado pessoal"], niche: "beauty" },
+  {
+    roots: ["eletronicos, audio e video", "celulares e telefones"],
+    niche: "electronics",
+  },
+  {
+    roots: ["computacao", "informatica", "perifericos"],
+    niche: "hardware",
+  },
+  {
+    roots: ["esportes e fitness", "livros", "automoveis, motos e outros"],
+    niche: "general",
+  },
+  { roots: ["roupas e acessorios", "calcados"], niche: "fashion" },
+];
+
 export function classifyProductNiche(
   title: string,
   category?: string | null,
 ): ProductNiche {
-  const text = normalize(title);
-  if (GENERAL_ONLY_TERMS.some((term) => text.includes(term))) return "general";
-  const titleMatch = RULES.find((rule) =>
+  return classifyProductNicheDecision(title, category).niche;
+}
+
+function matchingNiches(text: string): ProductNiche[] {
+  return RULES.filter((rule) =>
     rule.terms.some((term) => text.includes(term)),
+  ).map((rule) => rule.niche);
+}
+
+export function classifyProductNicheDecision(
+  title: string,
+  category?: string | null,
+): ProductNicheDecision {
+  const text = normalize(title);
+  const normalizedCategory = normalize(category ?? "");
+  const officialCategoryMatch = OFFICIAL_CATEGORY_ROOTS.find(({ roots }) =>
+    roots.some(
+      (root) =>
+        normalizedCategory === root ||
+        normalizedCategory.startsWith(`${root} >`) ||
+        normalizedCategory.startsWith(`${root}/`),
+    ),
   )?.niche;
-  if (titleMatch) return titleMatch;
+  if (officialCategoryMatch) {
+    return {
+      niche: officialCategoryMatch,
+      confidence: "high",
+      evidence: "official_category",
+      automatic: true,
+    };
+  }
+
+  if (GENERAL_ONLY_TERMS.some((term) => text.includes(term))) {
+    return {
+      niche: "general",
+      confidence: "high",
+      evidence: "explicit_general",
+      automatic: true,
+    };
+  }
 
   const categoryFallback: Record<string, ProductNiche> = {
     MLB1055: "electronics",
@@ -218,7 +359,72 @@ export function classifyProductNiche(
     MLB1574: "home_kitchen",
     MLB1246: "beauty",
   };
-  return categoryFallback[category ?? ""] ?? "general";
+  const categoryIdMatch = categoryFallback[category ?? ""];
+  if (categoryIdMatch) {
+    return {
+      niche: categoryIdMatch,
+      confidence: "high",
+      evidence: "official_category",
+      automatic: true,
+    };
+  }
+
+  const categoryMatches = normalizedCategory
+    ? matchingNiches(normalizedCategory)
+    : [];
+  if (categoryMatches.length === 1) {
+    return {
+      niche: categoryMatches[0],
+      confidence: "medium",
+      evidence: "category",
+      automatic: false,
+    };
+  }
+  if (categoryMatches.length > 1) {
+    return {
+      niche: "general",
+      confidence: "low",
+      evidence: "conflict",
+      automatic: false,
+    };
+  }
+
+  const primaryTitleMatch = TITLE_PRIMARY_RULES.find((rule) =>
+    rule.terms.some((term) => text.includes(term)),
+  )?.niche;
+  if (primaryTitleMatch) {
+    return {
+      niche: primaryTitleMatch,
+      confidence: "medium",
+      evidence: "title",
+      automatic: false,
+    };
+  }
+
+  const titleMatches = matchingNiches(text);
+  if (titleMatches.length === 1) {
+    return {
+      niche: titleMatches[0],
+      confidence: "medium",
+      evidence: "title",
+      automatic: false,
+    };
+  }
+  if (titleMatches.length > 1) {
+    return {
+      niche: "general",
+      confidence: "low",
+      evidence: "conflict",
+      automatic: false,
+    };
+  }
+
+  return {
+    niche: "general",
+    confidence: "low",
+    evidence: "unclassified",
+    automatic: false,
+  };
 }
 
 export function productNicheLabel(niche: ProductNiche): string {
@@ -228,6 +434,7 @@ export function productNicheLabel(niche: ProductNiche): string {
     appliances: "Eletrodomésticos",
     beauty: "Cosméticos e Beleza",
     electronics: "Eletrônicos",
+    fashion: "Moda e Acessórios",
     general: "Ofertas Gerais",
   }[niche];
 }
@@ -239,6 +446,7 @@ export function productNicheChannel(niche: ProductNiche): string {
     appliances: env.TELEGRAM_CHANNEL_APPLIANCES_ID,
     beauty: env.TELEGRAM_CHANNEL_BEAUTY_ID,
     electronics: env.TELEGRAM_CHANNEL_ELECTRONICS_ID,
+    fashion: env.TELEGRAM_CHANNEL_FASHION_ID,
     general: env.TELEGRAM_PUBLIC_CHANNEL_ID,
   }[niche];
   return configured || env.TELEGRAM_PUBLIC_CHANNEL_ID;

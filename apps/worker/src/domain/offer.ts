@@ -24,6 +24,7 @@ export const OFFER_STATUS = [
   "discovered",
   "validated",
   "needs_affiliate_link",
+  "approval_sending",
   "pending_approval",
   "approved",
   "rejected",
@@ -58,6 +59,7 @@ export const extractedProductSchema = z.object({
   previousPriceCents: z.number().int().positive().optional().nullable(),
   currency: z.string().length(3),
   imageUrl: z.string().url().optional().nullable(),
+  category: z.string().optional().nullable(),
   availability: z.enum(AVAILABILITY).default("unknown"),
   seller: z.string().optional().nullable(),
   rating: z.number().min(0).max(5).optional().nullable(),
@@ -82,6 +84,22 @@ export const offerSchema = z.object({
   couponCode: z.string().optional().nullable(),
   couponDescription: z.string().optional().nullable(),
   proposedCaption: z.string().optional().nullable(),
+  publicationNiche: z
+    .enum([
+      "hardware",
+      "home_kitchen",
+      "appliances",
+      "beauty",
+      "electronics",
+      "fashion",
+      "general",
+    ])
+    .optional()
+    .nullable(),
+  publicationNicheSource: z
+    .enum(["classifier", "manual"])
+    .optional()
+    .nullable(),
   rejectionReason: z.string().optional().nullable(),
   expiresAt: z.string().datetime().optional().nullable(),
   idempotencyKey: z.string(),

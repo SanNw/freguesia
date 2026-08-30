@@ -5,15 +5,21 @@ import { buildApp } from "./app.js";
 import { db } from "./adapters/persistence/db.js";
 import { browserPool } from "./adapters/browser/browser-pool.js";
 import { TelegramPoller } from "./adapters/telegram/telegram-poller.js";
+import { processNextScheduledOffer } from "./application/process-scheduled-offer.js";
+import { createScheduledPublicationRunner } from "./application/scheduled-publication-runner.js";
 
 async function main() {
   const logger = createLogger(env.APP_NAME, env.LOG_PRETTY);
 
   const app = await buildApp(logger);
   const telegramPoller = new TelegramPoller(logger);
+  const scheduledRunner = createScheduledPublicationRunner(() =>
+    processNextScheduledOffer(logger),
+  );
 
   app.addHook("onClose", async () => {
     telegramPoller.stop();
+    scheduledRunner.stop();
     await db.close();
     await browserPool.close();
   });
@@ -25,6 +31,7 @@ async function main() {
       "Freguesia Worker started",
     );
     telegramPoller.start();
+    scheduledRunner.start();
   } catch (e) {
     logger.error(e, "Failed to start server");
     process.exit(1);

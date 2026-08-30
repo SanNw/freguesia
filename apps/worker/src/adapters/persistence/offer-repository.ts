@@ -1,6 +1,7 @@
 import { db } from "./db.js";
 import { calculatePriceDropPercent } from "../../domain/price.js";
 import type { Offer } from "../../domain/offer.js";
+import type { ProductNiche } from "../../domain/product-niche.js";
 
 export class OfferRepository {
   async insertOffer(offer: {
@@ -50,7 +51,8 @@ export class OfferRepository {
       `SELECT id, product_id, source_observation_id, status, score, discount_percent,
         affiliate_url, affiliate_provider, image_url, additional_image_urls,
         coupon_code, coupon_description, proposed_caption,
-        rejection_reason, expires_at, idempotency_key, created_at, updated_at
+        publication_niche, publication_niche_source, rejection_reason,
+        expires_at, idempotency_key, created_at, updated_at
        FROM offers WHERE id = $1`,
       [id],
     );
@@ -77,7 +79,8 @@ export class OfferRepository {
     let query = `SELECT id, product_id, source_observation_id, status, score, discount_percent,
         affiliate_url, affiliate_provider, image_url, additional_image_urls,
         coupon_code, coupon_description, proposed_caption,
-        rejection_reason, expires_at, idempotency_key, created_at, updated_at
+        publication_niche, publication_niche_source, rejection_reason,
+        expires_at, idempotency_key, created_at, updated_at
        FROM offers`;
     const params: unknown[] = [];
     if (status) {
@@ -91,19 +94,115 @@ export class OfferRepository {
   }
 
   async getByIdShort(shortId: string): Promise<Offer | null> {
-    if (!/^[0-9a-f]{8}$/i.test(shortId)) return null;
+    const isFullId =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+        shortId,
+      );
+    if (!isFullId && !/^[0-9a-f]{8}$/i.test(shortId)) return null;
     const rows = await db.query(
       `SELECT id, product_id, source_observation_id, status, score, discount_percent,
         affiliate_url, affiliate_provider, image_url, additional_image_urls,
         coupon_code, coupon_description, proposed_caption,
-        rejection_reason, expires_at, idempotency_key, created_at, updated_at
-       FROM offers WHERE id::text LIKE $1 || '%' 
+        publication_niche, publication_niche_source, rejection_reason,
+        expires_at, idempotency_key, created_at, updated_at
+       FROM offers WHERE ${isFullId ? "id = $1" : "id::text LIKE $1 || '%'"}
        ORDER BY created_at DESC 
-       LIMIT 1`,
+       LIMIT 2`,
       [shortId],
     );
-    if (rows.length === 0) return null;
+    if (rows.length !== 1) return null;
     return this.mapRow(rows[0]);
+  }
+
+  async transitionStatus(
+    id: string,
+    from: string[],
+    to: string,
+    rejectionReason?: string | null,
+  ): Promise<boolean> {
+    const rows = await db.query<{ id: string }>(
+      `UPDATE offers
+       SET status = $1, rejection_reason = $2, updated_at = NOW()
+       WHERE id = $3 AND status = ANY($4::text[])
+       RETURNING id`,
+      [to, rejectionReason ?? null, id, from],
+    );
+    return rows.length === 1;
+  }
+
+  async updatePendingCaption(id: string, caption: string): Promise<boolean> {
+    const rows = await db.query<{ id: string }>(
+      `UPDATE offers SET proposed_caption = $1, updated_at = NOW()
+       WHERE id = $2 AND status = 'pending_approval'
+       RETURNING id`,
+      [caption, id],
+    );
+    return rows.length === 1;
+  }
+
+  async expireScheduledOffers(): Promise<number> {
+    const rows = await db.query<{ id: string }>(
+      `UPDATE offers
+       SET status = 'expired', rejection_reason = 'Offer expired before publication', updated_at = NOW()
+       WHERE status IN ('scheduled', 'approved')
+         AND expires_at IS NOT NULL AND expires_at <= NOW()
+       RETURNING id`,
+    );
+    return rows.length;
+  }
+
+  async setPublicationNiche(
+    id: string,
+    niche: ProductNiche,
+    source: "classifier" | "manual",
+    fromStatuses: string[],
+  ): Promise<boolean> {
+    const rows = await db.query<{ id: string }>(
+      `UPDATE offers
+       SET publication_niche = $1,
+           publication_niche_source = $2,
+           status = $3,
+           rejection_reason = NULL,
+           updated_at = NOW()
+       WHERE id = $4 AND status = ANY($5::text[])
+       RETURNING id`,
+      [niche, source, "scheduled", id, fromStatuses],
+    );
+    return rows.length === 1;
+  }
+
+    async findNextScheduled(): Promise<Offer | null> {
+        const rows = await db.query(
+            `SELECT o.id, o.product_id, o.source_observation_id, o.status, o.score, o.discount_percent,
+               o.affiliate_url, o.affiliate_provider, o.image_url, o.additional_image_urls,
+               o.coupon_code, o.coupon_description, o.proposed_caption,
+               o.publication_niche, o.publication_niche_source, o.rejection_reason,
+               o.expires_at, o.idempotency_key, o.created_at, o.updated_at
+              FROM offers o
+              JOIN products p ON p.id = o.product_id
+              WHERE o.status IN ('scheduled', 'approved')
+                AND (o.expires_at IS NULL OR o.expires_at > NOW())
+              ORDER BY o.created_at ASC
+              LIMIT 1`,
+            []
+        );
+        return rows[0] ? this.mapRow(rows[0]) : null;
+    }
+
+  async claimApproval(id: string, from: string): Promise<boolean> {
+    const rows = await db.query<{ id: string }>(
+      `UPDATE offers o
+       SET status = 'approval_sending', updated_at = NOW()
+       WHERE o.id = $1 AND o.status = $2
+         AND NOT EXISTS (
+           SELECT 1 FROM workflow_events e
+           WHERE e.entity_type = 'offer' AND e.entity_id = o.id::text
+             AND e.event_type = 'offer.pending_approval'
+         )
+       RETURNING o.id`,
+      [id, from],
+    );
+    return rows.length === 1;
   }
 
   async updateAffiliateUrl(
@@ -182,7 +281,8 @@ export class OfferRepository {
       `SELECT o.id, o.product_id, o.source_observation_id, o.status, o.score,
          o.discount_percent, o.affiliate_url, o.affiliate_provider,
          o.image_url, o.additional_image_urls, o.coupon_code,
-         o.coupon_description, o.proposed_caption, o.rejection_reason, o.expires_at,
+         o.coupon_description, o.proposed_caption, o.publication_niche,
+         o.publication_niche_source, o.rejection_reason, o.expires_at,
          o.idempotency_key, o.created_at, o.updated_at
         FROM offers o
         JOIN products p ON p.id = o.product_id
@@ -223,7 +323,8 @@ export class OfferRepository {
       `SELECT o.id, o.product_id, o.source_observation_id, o.status, o.score,
          o.discount_percent, o.affiliate_url, o.affiliate_provider,
          o.image_url, o.additional_image_urls, o.coupon_code,
-         o.coupon_description, o.proposed_caption, o.rejection_reason, o.expires_at,
+         o.coupon_description, o.proposed_caption, o.publication_niche,
+         o.publication_niche_source, o.rejection_reason, o.expires_at,
          o.idempotency_key, o.created_at, o.updated_at,
          po.current_price_cents
         FROM offers o
@@ -283,6 +384,14 @@ export class OfferRepository {
         row.coupon_description != null ? String(row.coupon_description) : null,
       proposedCaption:
         row.proposed_caption != null ? String(row.proposed_caption) : null,
+      publicationNiche:
+        row.publication_niche != null
+          ? (String(row.publication_niche) as ProductNiche)
+          : null,
+      publicationNicheSource:
+        row.publication_niche_source != null
+          ? (String(row.publication_niche_source) as "classifier" | "manual")
+          : null,
       rejectionReason:
         row.rejection_reason != null ? String(row.rejection_reason) : null,
       expiresAt: row.expires_at != null ? String(row.expires_at) : null,

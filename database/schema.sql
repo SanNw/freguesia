@@ -129,6 +129,8 @@ CREATE TABLE IF NOT EXISTS offers (
   coupon_code TEXT,
   coupon_description TEXT,
   proposed_caption TEXT,
+  publication_niche TEXT,
+  publication_niche_source TEXT,
   rejection_reason TEXT,
   expires_at TIMESTAMPTZ,
   idempotency_key TEXT NOT NULL UNIQUE,
@@ -216,6 +218,28 @@ CREATE TABLE IF NOT EXISTS publications (
 );
 
 CREATE INDEX IF NOT EXISTS idx_publications_offer ON publications(offer_id);
+CREATE UNIQUE INDEX IF NOT EXISTS uq_publications_offer ON publications(offer_id);
+
+CREATE TABLE IF NOT EXISTS pinterest_publications (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  offer_id UUID NOT NULL REFERENCES offers(id),
+  board_id TEXT NOT NULL,
+  idempotency_key TEXT NOT NULL UNIQUE,
+  title TEXT NOT NULL,
+  description TEXT NOT NULL,
+  image_url TEXT NOT NULL,
+  affiliate_url TEXT NOT NULL,
+  status TEXT NOT NULL,
+  external_id TEXT,
+  external_url TEXT,
+  error_message TEXT,
+  published_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_pinterest_publications_offer
+  ON pinterest_publications(offer_id);
 
 -- ---------------------------------------------------------------------------
 -- workflow_events: auditoria append-only
