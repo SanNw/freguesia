@@ -1,0 +1,52 @@
+{
+  "id": "62c074ba-1e6c-4d34-b5f8-f8473c85c01d",
+  "name": "WF-010 - Relatórios privados semanais e mensais",
+  "active": false,
+  "nodes": [
+    {
+      "parameters": { "inputSource": "passthrough" },
+      "id": "on-demand-weekly-report", "name": "Relatório semanal sob demanda",
+      "type": "n8n-nodes-base.executeWorkflowTrigger", "typeVersion": 1.2, "position": [0, -250]
+    },
+    {
+      "parameters": { "rule": { "interval": [{ "field": "cronExpression", "expression": "0 0 9 * * 1" }] } },
+      "id": "weekly-report-schedule", "name": "Segunda-feira às 9h",
+      "type": "n8n-nodes-base.scheduleTrigger", "typeVersion": 1.2, "position": [0, 0]
+    },
+    {
+      "parameters": {
+        "method": "POST", "url": "={{ $env.WORKER_INTERNAL_BASE_URL }}/v1/reports/performance/send",
+        "authentication": "none", "sendHeaders": true,
+        "headerParameters": { "parameters": [{ "name": "Authorization", "value": "=Bearer {{ $env.WORKER_SERVICE_TOKEN }}" }] },
+        "sendBody": true, "specifyBody": "json", "jsonBody": "{\"period\":\"weekly\"}",
+        "options": { "timeout": 120000 }
+      },
+      "id": "weekly-report-send", "name": "Enviar relatório semanal no privado",
+      "type": "n8n-nodes-base.httpRequest", "typeVersion": 4.2, "position": [250, 0],
+      "retryOnFail": true, "maxTries": 3, "waitBetweenTries": 5000
+    },
+    {
+      "parameters": { "rule": { "interval": [{ "field": "cronExpression", "expression": "0 0 9 1 * *" }] } },
+      "id": "monthly-report-schedule", "name": "Dia 1 às 9h",
+      "type": "n8n-nodes-base.scheduleTrigger", "typeVersion": 1.2, "position": [0, 250]
+    },
+    {
+      "parameters": {
+        "method": "POST", "url": "={{ $env.WORKER_INTERNAL_BASE_URL }}/v1/reports/performance/send",
+        "authentication": "none", "sendHeaders": true,
+        "headerParameters": { "parameters": [{ "name": "Authorization", "value": "=Bearer {{ $env.WORKER_SERVICE_TOKEN }}" }] },
+        "sendBody": true, "specifyBody": "json", "jsonBody": "{\"period\":\"monthly\"}",
+        "options": { "timeout": 120000 }
+      },
+      "id": "monthly-report-send", "name": "Enviar relatório mensal no privado",
+      "type": "n8n-nodes-base.httpRequest", "typeVersion": 4.2, "position": [250, 250],
+      "retryOnFail": true, "maxTries": 3, "waitBetweenTries": 5000
+    }
+  ],
+  "connections": {
+    "Relatório semanal sob demanda": { "main": [[{ "node": "Enviar relatório semanal no privado", "type": "main", "index": 0 }]] },
+    "Segunda-feira às 9h": { "main": [[{ "node": "Enviar relatório semanal no privado", "type": "main", "index": 0 }]] },
+    "Dia 1 às 9h": { "main": [[{ "node": "Enviar relatório mensal no privado", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1", "timezone": "America/Sao_Paulo" }
+}

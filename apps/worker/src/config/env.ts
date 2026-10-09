@@ -63,6 +63,8 @@ const envSchema = z.object({
   TELEGRAM_CHANNEL_ELECTRONICS_ID: z.string().default(""),
   TELEGRAM_CHANNEL_FASHION_ID: z.string().default(""),
   TELEGRAM_ADMIN_USER_IDS: z.string().default(""),
+  PERFORMANCE_REPORTS_ENABLED: booleanString.default("false"),
+  TELEGRAM_REPORT_CHAT_ID: z.string().default(""),
   TELEGRAM_WEBHOOK_SECRET: z.string().default(""),
   TELEGRAM_POLLING_ENABLED: booleanString.default("true"),
   TELEGRAM_RICH_TEXT_ENABLED: booleanString.default("true"),

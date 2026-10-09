@@ -112,3 +112,10 @@ export const marketplaceEnv: Pick<
 > = env;
 
 export const discoveryEnv: Pick<Env, "TZ"> = env;
+
+export const reportEnv: Pick<
+  Env,
+  | "PERFORMANCE_REPORTS_ENABLED"
+  | "TELEGRAM_REPORT_CHAT_ID"
+  | "TELEGRAM_ADMIN_USER_IDS"
+> = env;

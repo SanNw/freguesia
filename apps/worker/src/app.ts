@@ -12,6 +12,7 @@ import { registerMaintenanceRoutes } from "./http/routes/maintenance.js";
 import { registerShopeeRoutes } from "./http/routes/shopee.js";
 import { registerAliExpressRoutes } from "./http/routes/aliexpress.js";
 import { registerPinterestRoutes } from "./http/routes/pinterest.js";
+import { registerReportRoutes } from "./http/routes/reports.js";
 import { AppError } from "./shared/errors.js";
 
 export async function buildApp(logger: Logger) {
@@ -54,6 +55,7 @@ export async function buildApp(logger: Logger) {
   registerShopeeRoutes(app);
   registerAliExpressRoutes(app);
   registerPinterestRoutes(app, logger);
+  registerReportRoutes(app, logger);
 
   return app;
 }

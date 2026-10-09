@@ -90,9 +90,9 @@
     "semantic_hash": "9bd47390aff44f0b42604f328c716577"
   },
   "apps/worker/src/adapters/persistence/migrate.ts": {
-    "mtime": 1788091029.4381826,
-    "seen": 1791562112.4803348,
-    "ast_hash": "81c2955d6b049429fc9d9cb9c8ffecee",
+    "mtime": 1791571864.7103357,
+    "seen": 1791572177.4988346,
+    "ast_hash": "01df7bf0a26e5b7ff3b043d96f7210f1",
     "semantic_hash": ""
   },
   "apps/worker/src/adapters/persistence/oauth-state-repository.ts": {
@@ -186,9 +186,9 @@
     "semantic_hash": "48df2a9617063836782ae23ce4ac75b7"
   },
   "apps/worker/src/adapters/telegram/telegram-gateway.ts": {
-    "mtime": 1788091417.9406655,
-    "seen": 1791562112.4807057,
-    "ast_hash": "e633e0edf896b50b3142d4634be46e3e",
+    "mtime": 1791574182.552848,
+    "seen": 1791574513.5127003,
+    "ast_hash": "fc94cbda0dc68451b05d98e7240857b3",
     "semantic_hash": ""
   },
   "apps/worker/src/adapters/telegram/telegram-poller.ts": {
@@ -198,9 +198,9 @@
     "semantic_hash": ""
   },
   "apps/worker/src/app.ts": {
-    "mtime": 1787605596.5217974,
-    "seen": 1791562112.480709,
-    "ast_hash": "393ab29bbebc2dedbefc9ed95fa41b87",
+    "mtime": 1791571728.0889642,
+    "seen": 1791572177.499734,
+    "ast_hash": "d0bf85c133b30d5458ce993751187a34",
     "semantic_hash": ""
   },
   "apps/worker/src/application/amazon-command.ts": {
@@ -300,9 +300,9 @@
     "semantic_hash": ""
   },
   "apps/worker/src/config/env.ts": {
-    "mtime": 1788091801.2964919,
-    "seen": 1791562112.480946,
-    "ast_hash": "25699351c3c3d24ee62c499182525bb7",
+    "mtime": 1791571728.0848687,
+    "seen": 1791572177.500575,
+    "ast_hash": "653a1dff0ae2b82161c16ef288bc9420",
     "semantic_hash": ""
   },
   "apps/worker/src/config/logger.ts": {
@@ -882,9 +882,9 @@
     "semantic_hash": "4dd054cd1b8d497ea42d55e33f10c7ca"
   },
   "README.md": {
-    "mtime": 1791561773.959703,
-    "seen": 1791562112.4818432,
-    "ast_hash": "072169a29eab03468d1551512dce4e41",
+    "mtime": 1791571863.2413516,
+    "seen": 1791572177.5040047,
+    "ast_hash": "a39114c05eea31c9baf79a53ec3017d5",
     "semantic_hash": ""
   },
   "SECURITY.md": {
@@ -894,9 +894,9 @@
     "semantic_hash": "613bb8f837996e6c2f0e7db99827f687"
   },
   "compose.yaml": {
-    "mtime": 1791561773.959703,
-    "seen": 1791562112.4818451,
-    "ast_hash": "e02e6d16416f8fff7b32b9082fbcce02",
+    "mtime": 1791571830.8509583,
+    "seen": 1791572177.5040278,
+    "ast_hash": "82712e6358c2d6014ebc7f8296adc819",
     "semantic_hash": ""
   },
   "docs/DATA_RETENTION.md": {
@@ -960,9 +960,9 @@
     "semantic_hash": ""
   },
   "apps/worker/src/config/runtime.ts": {
-    "mtime": 1791561567.2277174,
-    "seen": 1791562112.480984,
-    "ast_hash": "b9c6043aff5bc3536693e4e9c39c70a0",
+    "mtime": 1791571864.6203585,
+    "seen": 1791572177.5006156,
+    "ast_hash": "2e0e9c58cd460a8a377cd08bf969f779",
     "semantic_hash": ""
   },
   ".github/workflows/graphify-pages.yml": {
@@ -1113,6 +1113,72 @@
     "mtime": 1791560764.3302732,
     "seen": 1791562112.4818547,
     "ast_hash": "717f306b6b327104c098a9a78b5fc50b",
+    "semantic_hash": ""
+  },
+  "apps/worker/src/adapters/persistence/performance-report-repository.ts": {
+    "mtime": 1791572905.3149061,
+    "seen": 1791573071.1053634,
+    "ast_hash": "2b17a65e8650b42b05b19f7858dd99b2",
+    "semantic_hash": ""
+  },
+  "apps/worker/src/adapters/reporting/performance-metrics.ts": {
+    "mtime": 1791574891.7653093,
+    "seen": 1791575141.397841,
+    "ast_hash": "0fd0bc4d99a4e0278c7309f2ed57e1db",
+    "semantic_hash": ""
+  },
+  "apps/worker/src/application/send-performance-report.ts": {
+    "mtime": 1791574182.5940835,
+    "seen": 1791574513.5139635,
+    "ast_hash": "cdc463f33c7fc0fffd343b858e45516f",
+    "semantic_hash": ""
+  },
+  "apps/worker/src/domain/performance-report.ts": {
+    "mtime": 1791574324.499352,
+    "seen": 1791574513.5145538,
+    "ast_hash": "e578fbcdc4c1f89528fafe83d66d2196",
+    "semantic_hash": ""
+  },
+  "apps/worker/src/http/routes/reports.ts": {
+    "mtime": 1791571864.4853926,
+    "seen": 1791572177.501242,
+    "ast_hash": "903940cbd30a82a17cb475c7ff5ca239",
+    "semantic_hash": ""
+  },
+  "apps/worker/tests/unit/performance-metrics.test.ts": {
+    "mtime": 1791574891.8403177,
+    "seen": 1791575141.4014516,
+    "ast_hash": "48afdf0654fc534156c94a9bd20f8f5b",
+    "semantic_hash": ""
+  },
+  "apps/worker/tests/unit/performance-report.test.ts": {
+    "mtime": 1791574182.6188247,
+    "seen": 1791574513.5167077,
+    "ast_hash": "23a87befeb6691f216a326080eba27ae",
+    "semantic_hash": ""
+  },
+  "apps/worker/tests/unit/send-performance-report.test.ts": {
+    "mtime": 1791574182.6559367,
+    "seen": 1791574513.5170648,
+    "ast_hash": "a3d5cc3b498bf32e2dea561360ec56a0",
+    "semantic_hash": ""
+  },
+  "apps/worker/tests/unit/telegram-report-delivery.test.ts": {
+    "mtime": 1791574182.6765544,
+    "seen": 1791574513.5171714,
+    "ast_hash": "587d65d1a734bd13e63fe044b4503d76",
+    "semantic_hash": ""
+  },
+  "n8n/workflows/010-private-performance-reports.json": {
+    "mtime": 1791573355.029405,
+    "seen": 1791573463.9602017,
+    "ast_hash": "805eae77d4a929d717f0a3995b2f4128",
+    "semantic_hash": ""
+  },
+  "docs/REPORTS.md": {
+    "mtime": 1791574181.3281596,
+    "seen": 1791574513.5192058,
+    "ast_hash": "df009bc5923685243bb7ced692224655",
     "semantic_hash": ""
   }
 }

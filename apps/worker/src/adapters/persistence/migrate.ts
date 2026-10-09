@@ -1,6 +1,8 @@
 import { db } from "./db.js";
+import { performanceReportsSchema } from "./performance-report-repository.js";
 
 async function main() {
+  await db.query(performanceReportsSchema);
   await db.query(`
     CREATE TABLE IF NOT EXISTS integration_credentials (
       provider TEXT PRIMARY KEY,
@@ -59,7 +61,9 @@ async function main() {
       updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     )
   `);
-  await db.query(`CREATE INDEX IF NOT EXISTS idx_pinterest_publications_offer ON pinterest_publications(offer_id)`);
+  await db.query(
+    `CREATE INDEX IF NOT EXISTS idx_pinterest_publications_offer ON pinterest_publications(offer_id)`,
+  );
   console.log("Integration credential migrations applied.");
   await db.close();
 }

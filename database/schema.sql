@@ -244,6 +244,19 @@ CREATE INDEX IF NOT EXISTS idx_pinterest_publications_offer
 -- ---------------------------------------------------------------------------
 -- workflow_events: auditoria append-only
 -- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS performance_reports (
+  report_key TEXT PRIMARY KEY,
+  recipient_chat_id TEXT NOT NULL,
+  period_kind TEXT NOT NULL CHECK (period_kind IN ('weekly', 'monthly')),
+  period_start DATE NOT NULL,
+  period_end DATE NOT NULL,
+  report_data JSONB NOT NULL,
+  status TEXT NOT NULL CHECK (status IN ('sending', 'sent', 'unknown')),
+  telegram_message_id BIGINT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  sent_at TIMESTAMPTZ
+);
+
 CREATE TABLE IF NOT EXISTS workflow_events (
   id BIGSERIAL PRIMARY KEY,
   correlation_id UUID NOT NULL,

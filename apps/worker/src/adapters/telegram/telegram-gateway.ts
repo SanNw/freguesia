@@ -26,6 +26,10 @@ export interface TelegramResponse {
   result?: { message_id: number };
 }
 
+export class TelegramMessageRejectedError extends Error {
+  override name = "TelegramMessageRejectedError";
+}
+
 export function adminUserIds(): number[] {
   return env.TELEGRAM_ADMIN_USER_IDS.split(",")
     .map((s) => parseInt(s.trim(), 10))
@@ -67,6 +71,7 @@ export class TelegramGateway {
   private async request(
     method: string,
     body: Record<string, unknown>,
+    retryAmbiguousErrors = true,
   ): Promise<TelegramResponse> {
     const url = `${this.baseUrl}/${method}`;
     let attempt = 0;
@@ -80,6 +85,7 @@ export class TelegramGateway {
           body: JSON.stringify(body),
         });
       } catch (networkError) {
+        if (!retryAmbiguousErrors) throw networkError;
         attempt += 1;
         if (attempt > MAX_RETRY_ATTEMPTS) throw networkError;
         const delayMs = Math.min(1000 * 2 ** (attempt - 1), 10_000);
@@ -112,7 +118,11 @@ export class TelegramGateway {
         continue;
       }
 
-      if (resp.status >= 500 && attempt < MAX_RETRY_ATTEMPTS) {
+      if (
+        retryAmbiguousErrors &&
+        resp.status >= 500 &&
+        attempt < MAX_RETRY_ATTEMPTS
+      ) {
         attempt += 1;
         const delayMs = Math.min(1000 * 2 ** (attempt - 1), 10_000);
         this.logger.warn(
@@ -129,9 +139,10 @@ export class TelegramGateway {
 
   async sendRichMessage(
     input: TelegramRichMessageInput,
+    options: { retryAmbiguousErrors?: boolean } = {},
   ): Promise<{ messageId: number }> {
     const markdown = input.footer
-      ? `${input.markdown}\n\n<tg-footer>${input.footer}</tg-footer>`
+      ? `${input.markdown}\n\n<footer>${input.footer}</footer>`
       : input.markdown;
     const richMessage: Record<string, unknown> = { markdown };
     const body: Record<string, unknown> = {
@@ -140,8 +151,17 @@ export class TelegramGateway {
     };
     if (input.replyMarkup) body.reply_markup = input.replyMarkup;
 
-    const data = await this.request("sendRichMessage", body);
+    const data = await this.request(
+      "sendRichMessage",
+      body,
+      options.retryAmbiguousErrors,
+    );
     if (!data.ok || !data.result) {
+      if (data.error_code && data.error_code >= 400 && data.error_code < 500) {
+        throw new TelegramMessageRejectedError(
+          `Telegram sendRichMessage failed: ${data.description}`,
+        );
+      }
       throw new Error(`Telegram sendRichMessage failed: ${data.description}`);
     }
     return { messageId: data.result.message_id };
