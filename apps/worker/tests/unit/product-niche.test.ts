@@ -150,4 +150,21 @@ describe("product niche routing", () => {
       automatic: false,
     });
   });
+
+  it.each([
+    ["Tênis Nike Free Metcon 6 Masculino", "Masculino > Calçados > Tênis", "fashion"],
+    ["Mop Shark Steam Vapor 110V", null, "home_kitchen"],
+    ["Secador Shark SpeedStyle - Cacheados e Crespos 110V", null, "beauty"],
+    ["Attracione Men (Perfume Masculino com Feromônios Ativados)", null, "beauty"],
+  ])("automatically routes observed obvious item %s", (title, category, niche) => {
+    expect(classifyProductNicheDecision(title, category)).toMatchObject({
+      niche,
+      confidence: "high",
+      automatic: true,
+    });
+  });
+
+  it("keeps unclear items for review", () => {
+    expect(classifyProductNicheDecision("150 Bolinhas Transparentes Extras").automatic).toBe(false);
+  });
 });

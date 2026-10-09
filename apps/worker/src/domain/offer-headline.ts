@@ -42,6 +42,11 @@ export function buildOfferHeadline(
       `💄 Beleza em oferta: ${product}`,
       `🪞 Momento de se cuidar pagando menos: ${product}`,
     ],
+    fashion: [
+      `👗 Achado de moda: ${product}`,
+      `✨ Estilo com desconto: ${product}`,
+      `🛍️ Moda por um preço melhor: ${product}`,
+    ],
     appliances: [
       `⚡ Eletro em oferta: ${product}`,
       `🏠 Casa equipada por menos: ${product}`,

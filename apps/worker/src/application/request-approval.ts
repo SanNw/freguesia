@@ -58,8 +58,11 @@ export async function requestApproval(
     );
   }
 
+  const claimed = await offerRepository.claimApproval(offerId, offer.status);
+  if (!claimed) return { messageId: 0, status: "already_pending" };
+
   const gateway = new TelegramGateway(logger);
-  const shortId = offer.id.slice(0, 8);
+  const shortId = offer.id;
   const keyboard = gateway.buildApprovalKeyboard(shortId, offer.affiliateUrl);
 
   let messageId: number;
@@ -67,23 +70,32 @@ export async function requestApproval(
   const niche = classifyProductNiche(product.title, product.category);
   const baseCaption = offer.proposedCaption || `Oferta: ${product.title}`;
   const caption = `Destino: ${productNicheLabel(niche)}\n\n${baseCaption}`;
-  if (env.TELEGRAM_RICH_TEXT_ENABLED) {
-    try {
-      const result = await gateway.sendRichMessage({
-        chatId: env.TELEGRAM_APPROVAL_CHAT_ID,
-        markdown: gateway.buildOfferRichMarkdown(
-          [offer.imageUrl, ...offer.additionalImageUrls],
-          caption,
-        ),
-        footer: CHANNELS_FOOTER_TEXT,
-        replyMarkup: keyboard,
-      });
-      messageId = result.messageId;
-    } catch (error) {
-      logger.warn(
-        { err: error, offerId },
-        "Rich approval failed; using photo fallback",
-      );
+  try {
+    if (env.TELEGRAM_RICH_TEXT_ENABLED) {
+      try {
+        const result = await gateway.sendRichMessage({
+          chatId: env.TELEGRAM_APPROVAL_CHAT_ID,
+          markdown: gateway.buildOfferRichMarkdown(
+            [offer.imageUrl, ...offer.additionalImageUrls],
+            `${caption}\n\n${gateway.buildApprovalRichButtons(shortId, offer.affiliateUrl)}`,
+          ),
+          footer: CHANNELS_FOOTER_TEXT,
+        });
+        messageId = result.messageId;
+      } catch (error) {
+        logger.warn(
+          { err: error, offerId },
+          "Rich approval failed; using photo fallback",
+        );
+        const result = await gateway.sendPhoto({
+          chatId: env.TELEGRAM_APPROVAL_CHAT_ID,
+          photo: offer.imageUrl,
+          caption: appendChannelsFooter(caption),
+          replyMarkup: keyboard,
+        });
+        messageId = result.messageId;
+      }
+    } else {
       const result = await gateway.sendPhoto({
         chatId: env.TELEGRAM_APPROVAL_CHAT_ID,
         photo: offer.imageUrl,
@@ -92,28 +104,27 @@ export async function requestApproval(
       });
       messageId = result.messageId;
     }
-  } else {
-    const result = await gateway.sendPhoto({
-      chatId: env.TELEGRAM_APPROVAL_CHAT_ID,
-      photo: offer.imageUrl,
-      caption: appendChannelsFooter(caption),
-      replyMarkup: keyboard,
+
+    await workflowEventRepository.record({
+      correlationId: crypto.randomUUID(),
+      entityType: "offer",
+      entityId: offerId,
+      eventType: "offer.pending_approval",
+      actor: "system",
+      payload: { messageId, shortId, niche },
     });
-    messageId = result.messageId;
+
+    await offerRepository.updateStatus(offerId, "pending_approval");
+
+    logger.info({ offerId, messageId }, "Approval requested in Telegram");
+
+    return { messageId, status: "pending_approval" };
+  } catch (error) {
+    await offerRepository.transitionStatus(
+      offerId,
+      ["approval_sending"],
+      offer.status,
+    );
+    throw error;
   }
-
-  await offerRepository.updateStatus(offerId, "pending_approval");
-
-  await workflowEventRepository.record({
-    correlationId: crypto.randomUUID(),
-    entityType: "offer",
-    entityId: offerId,
-    eventType: "offer.pending_approval",
-    actor: "system",
-    payload: { messageId, shortId, niche },
-  });
-
-  logger.info({ offerId, messageId }, "Approval requested in Telegram");
-
-  return { messageId, status: "pending_approval" };
 }

@@ -290,7 +290,7 @@ const OFFICIAL_CATEGORY_ROOTS: Array<{
 }> = [
   { roots: ["casa, moveis e decoracao"], niche: "home_kitchen" },
   { roots: ["eletrodomesticos"], niche: "appliances" },
-  { roots: ["beleza e cuidado pessoal"], niche: "beauty" },
+  { roots: ["beleza e cuidado pessoal", "cuidados pessoais"], niche: "beauty" },
   {
     roots: ["eletronicos, audio e video", "celulares e telefones"],
     niche: "electronics",
@@ -303,7 +303,67 @@ const OFFICIAL_CATEGORY_ROOTS: Array<{
     roots: ["esportes e fitness", "livros", "automoveis, motos e outros"],
     niche: "general",
   },
-  { roots: ["roupas e acessorios", "calcados"], niche: "fashion" },
+  {
+    roots: ["roupas e acessorios", "calcados", "calcados, roupas e bolsas"],
+    niche: "fashion",
+  },
+];
+
+const EXPLICIT_AUTOMATIC_RULES: Array<{
+  niche: ProductNiche;
+  terms: string[];
+}> = [
+  {
+    niche: "appliances",
+    terms: ["geladeira", "micro-ondas", "lava-loucas", "maquina de lavar", "liquidificador", "sorveteira"],
+  },
+  { niche: "electronics", terms: ["power bank", "controle joystick"] },
+  { niche: "beauty", terms: ["pente dentes largos", "modelador shark"] },
+  { niche: "beauty", terms: ["secador shark", "perfume masculino", "perfume feminino"] },
+  { niche: "home_kitchen", terms: ["jogo de tacas", "mop shark"] },
+  { niche: "hardware", terms: ["estabilizador", "switch wired"] },
+];
+
+const EXPLICIT_FASHION_TERMS = [
+  "mochila",
+  "tenis casual",
+  "tenis nike",
+  "bone ",
+  "regata",
+  "sacola nike",
+  "bolsa de ombro",
+  "meia nike",
+  "vestido",
+  "camiseta",
+  "camisa feminina",
+  "camisa masculina",
+  "blusa feminina",
+  "calca feminina",
+  "calca masculina",
+  "bermuda feminina",
+  "bermuda masculina",
+  "saia feminina",
+  "tenis feminino",
+  "tenis masculino",
+  "sapato feminino",
+  "sapato masculino",
+  "bolsa feminina",
+  "bolsa masculina",
+  "calcinha",
+  "sutiene",
+  "sutia",
+];
+
+const FASHION_ADJACENT_BLOCKERS = [
+  "boneca",
+  "brinquedo",
+  "cachorro",
+  "gato",
+  " pet ",
+  "aplique",
+  "para costura",
+  "patch",
+  "saco para lavar",
 ];
 
 export function classifyProductNiche(
@@ -358,6 +418,7 @@ export function classifyProductNicheDecision(
     MLB5726: "appliances",
     MLB1574: "home_kitchen",
     MLB1246: "beauty",
+    MLB1430: "fashion",
   };
   const categoryIdMatch = categoryFallback[category ?? ""];
   if (categoryIdMatch) {
@@ -372,19 +433,44 @@ export function classifyProductNicheDecision(
   const categoryMatches = normalizedCategory
     ? matchingNiches(normalizedCategory)
     : [];
-  if (categoryMatches.length === 1) {
-    return {
-      niche: categoryMatches[0],
-      confidence: "medium",
-      evidence: "category",
-      automatic: false,
-    };
-  }
   if (categoryMatches.length > 1) {
     return {
       niche: "general",
       confidence: "low",
       evidence: "conflict",
+      automatic: false,
+    };
+  }
+
+  if (
+    EXPLICIT_FASHION_TERMS.some((term) => text.includes(term)) &&
+    !FASHION_ADJACENT_BLOCKERS.some((term) => ` ${text} `.includes(term))
+  ) {
+    return {
+      niche: "fashion",
+      confidence: "high",
+      evidence: "title",
+      automatic: true,
+    };
+  }
+
+  const explicitTitleMatch = EXPLICIT_AUTOMATIC_RULES.find((rule) =>
+    rule.terms.some((term) => text.includes(term)),
+  )?.niche;
+  if (explicitTitleMatch) {
+    return {
+      niche: explicitTitleMatch,
+      confidence: "high",
+      evidence: "title",
+      automatic: true,
+    };
+  }
+
+  if (categoryMatches.length === 1) {
+    return {
+      niche: categoryMatches[0],
+      confidence: "medium",
+      evidence: "category",
       automatic: false,
     };
   }

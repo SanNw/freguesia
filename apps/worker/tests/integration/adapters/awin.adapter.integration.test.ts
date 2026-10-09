@@ -27,7 +27,7 @@ describe("AwinAdapter - Integration", () => {
     const products = await adapter.discover({ limit: 1 });
 
     expect(products).toHaveLength(1);
-    expect(products[0].externalId).toBe("promo123");
+    expect(products[0].externalId).toBe("123");
     expect(products[0].title).toBe("Awin Smartphone Teste 512GB");
     expect(products[0].canonicalUrl).toBe(
       "https://awin.example.com/p/promo123",
@@ -65,6 +65,7 @@ describe("AwinAdapter - Integration", () => {
   });
 
   it("creates affiliate link", async () => {
+    process.env.AWIN_ADVERTISER_IDS = "999";
     mockFetch.mockResolvedValue({
       ok: true,
       json: () =>

@@ -5,6 +5,8 @@ import type { PriceSnapshot, ProductRef } from "../../domain/price.js";
 import type { AffiliateLinkResult } from "../../domain/affiliate-link.js";
 import { AppError } from "../../shared/errors.js";
 import { resilientFetch } from "../../shared/http-client.js";
+import { mmrSelect, applyRecencyBoost } from "../../shared/title-similarity.js";
+
 
 const LOMADEE_BASE_URL =
   process.env.LOMADEE_BASE_URL || "https://api.lomadee.com.br";
@@ -99,26 +101,6 @@ function promotionRank(
   return [discount + popularity, price];
 }
 
-function titleTokens(title: string): Set<string> {
-  return new Set(
-    title
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, " ")
-      .split(" ")
-      .filter((token) => token.length > 2),
-  );
-}
-
-function titleSimilarity(left: string, right: string): number {
-  const a = titleTokens(left);
-  const b = titleTokens(right);
-  if (a.size === 0 || b.size === 0) return 0;
-  const intersection = [...a].filter((token) => b.has(token)).length;
-  return intersection / new Set([...a, ...b]).size;
-}
-
 export class LomadeeAdapter implements SourceAdapter {
   readonly source = "lomadee";
   private readonly productCache = new Map<string, LomadeeProduct>();
@@ -196,10 +178,9 @@ export class LomadeeAdapter implements SourceAdapter {
     }
 
     const requestedLimit = Math.min(input.limit ?? 20, LOMADEE_PAGE_LIMIT, 100);
-    const poolLimit = Math.min(Math.max(requestedLimit * 5, 20), 100);
     const params = new URLSearchParams({
       page: "1",
-      limit: String(poolLimit),
+      limit: String(Math.min(Math.max(requestedLimit * 5, 20), 100)),
       isAvailable: "true",
     });
     if (input.query) params.set("search", input.query);
@@ -211,28 +192,23 @@ export class LomadeeAdapter implements SourceAdapter {
       this.loadCampaigns(),
     ]);
 
-    const ranked = [...(response.data ?? [])].sort((left, right) => {
-      const [leftRank, leftPrice] = promotionRank(
-        left,
-        this.highlightedOrganizations.has(left.organizationId),
-      );
-      const [rightRank, rightPrice] = promotionRank(
-        right,
-        this.highlightedOrganizations.has(right.organizationId),
-      );
-      return rightRank - leftRank || leftPrice - rightPrice;
-    });
-    const selected: LomadeeProduct[] = [];
-    for (const product of ranked) {
-      if (
-        selected.some(
-          (existing) => titleSimilarity(existing.name, product.name) >= 0.85,
-        )
-      ) {
-        continue;
-      }
-      selected.push(product);
-    }
+    const candidates = [...(response.data ?? [])]
+      .map((product) => {
+        const [score, price] = promotionRank(
+          product,
+          this.highlightedOrganizations.has(product.organizationId),
+        );
+        return { item: product, score, price, publishedAt: null };
+      })
+      .sort((a, b) => b.score - a.score || a.price - b.price);
+
+    const boosted = applyRecencyBoost(candidates);
+
+    const selected = mmrSelect<LomadeeProduct>(
+      boosted,
+      input.limit ?? 20,
+      { getTitle: (product) => product.name },
+    ).map((candidate) => candidate.item);
 
     return selected.map((product) => {
       this.productCache.set(product.url, product);

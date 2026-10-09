@@ -1,9 +1,11 @@
 import type { Logger } from "../../config/logger.js";
 import { telegramEnv as env } from "../../config/runtime.js";
 import { handleTelegramCallback } from "../../application/handle-telegram-callback.js";
+import { handleTelegramEditMessage } from "../../application/handle-telegram-callback.js";
 import { telegramCallbackSchema } from "../../http/schemas/index.js";
 import { handleAmazonMessage } from "../../application/handle-amazon-message.js";
 import type { AmazonTelegramMessage } from "../../application/handle-amazon-message.js";
+import { shouldRetryTelegramUpdate } from "../../application/telegram-update.js";
 
 export class TelegramPoller {
   private running = false;
@@ -48,7 +50,6 @@ export class TelegramPoller {
         for (const rawUpdate of payload.result ?? []) {
           const parsed = telegramCallbackSchema.safeParse(rawUpdate);
           const updateId = (rawUpdate as { update_id?: number }).update_id;
-          if (typeof updateId === "number") this.offset = updateId + 1;
           const message = (rawUpdate as { message?: unknown }).message;
           if (
             message &&
@@ -59,30 +60,39 @@ export class TelegramPoller {
             "id" in message.chat
           ) {
             try {
-              await handleAmazonMessage(
+              const handled = await handleTelegramEditMessage(
                 message as AmazonTelegramMessage,
                 this.logger,
               );
+              if (!handled) {
+                await handleAmazonMessage(
+                  message as AmazonTelegramMessage,
+                  this.logger,
+                );
+              }
             } catch (error) {
               this.logger.error(
                 { err: error },
                 "Telegram message processing failed",
               );
+              if (shouldRetryTelegramUpdate(error)) throw error;
             }
           }
-          if (!parsed.success) continue;
-
-          try {
-            await handleTelegramCallback(
-              parsed.data.callback_query,
-              this.logger,
-            );
-          } catch (error) {
-            this.logger.error(
-              { err: error },
-              "Telegram callback processing failed",
-            );
+          if (parsed.success) {
+            try {
+              await handleTelegramCallback(
+                parsed.data.callback_query,
+                this.logger,
+              );
+            } catch (error) {
+              this.logger.error(
+                { err: error },
+                "Telegram callback processing failed",
+              );
+              if (shouldRetryTelegramUpdate(error)) throw error;
+            }
           }
+          if (typeof updateId === "number") this.offset = updateId + 1;
         }
       } catch (error) {
         this.logger.warn({ err: error }, "Telegram polling failed; retrying");

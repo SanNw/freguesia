@@ -114,10 +114,12 @@ export async function generateMercadoLivreAffiliateLink(
         )
         .first();
       if ((await urlField.count()) === 0) {
-        await page.screenshot({
-          path: `${process.env.PLAYWRIGHT_SCREENSHOT_DIR || "/app/data/screenshots"}/mercadolivre-affiliate-debug.png`,
-          fullPage: true,
-        });
+        await page
+          .screenshot({
+            path: `${process.env.PLAYWRIGHT_SCREENSHOT_DIR || "/app/data/screenshots"}/mercadolivre-affiliate-debug.png`,
+            fullPage: true,
+          })
+          .catch(() => undefined);
         return {
           status: "unsupported",
           reason: "affiliate_url_field_not_found",

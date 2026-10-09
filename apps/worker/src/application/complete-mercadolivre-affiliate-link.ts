@@ -4,7 +4,6 @@ import { offerRepository } from "../adapters/persistence/offer-repository.js";
 import { validateAffiliateUrl } from "../domain/affiliate-link.js";
 import { AppError } from "../shared/errors.js";
 import { buildCaption } from "./create-manual-offer.js";
-import { requestApproval } from "./request-approval.js";
 
 export async function completeMercadoLivreAffiliateLink(
   offerId: string,
@@ -65,8 +64,9 @@ export async function completeMercadoLivreAffiliateLink(
     },
     data.discount_percent == null ? null : Number(data.discount_percent),
   );
-  await offerRepository.completeAffiliateLink(offerId, affiliateUrl, caption);
-  const approval = await requestApproval(offerId, logger);
+  if (!(await offerRepository.completeAffiliateLink(offerId, affiliateUrl, caption))) {
+    throw new AppError("INVALID_STATE", "Offer expired before affiliate completion", false, 409);
+  }
   logger.info({ offerId }, "Mercado Livre affiliate link completed");
-  return { offerId, status: "pending_approval", approval };
+  return { offerId, status: "scheduled" };
 }

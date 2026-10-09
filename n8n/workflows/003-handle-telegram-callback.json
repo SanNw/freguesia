@@ -1,7 +1,7 @@
 {
   "id": "5fcb552b-c6c6-41d5-b9ef-bde2ce642aef",
   "name": "WF-003 - Callback Telegram",
-  "active": false,
+  "active": true,
   "nodes": [
     {
       "parameters": {

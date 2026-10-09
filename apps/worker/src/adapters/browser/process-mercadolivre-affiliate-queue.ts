@@ -63,24 +63,20 @@ async function main() {
       });
       const page = await context.newPage();
       page.setDefaultTimeout(10_000);
-      await page.goto(
-        "https://www.mercadolivre.com.br/afiliados/linkbuilder#hub",
-        {
-          waitUntil: "domcontentloaded",
-          timeout: 30_000,
-        },
-      );
-      await page.waitForTimeout(2_000);
-      if (!/linkbuilder/.test(page.url())) {
-        throw new Error("Mercado Livre affiliate session expired");
-      }
-
-      const field = page
-        .getByPlaceholder(/Insira 1 ou mais URLs/i)
-        .or(page.locator("textarea:visible"))
-        .first();
-      try {
-        await field.fill(details.map((item) => item.canonicalUrl).join("\n"));
+      const generateLinks = async (urls: string[]): Promise<string[]> => {
+        await page.goto(
+          "https://www.mercadolivre.com.br/afiliados/linkbuilder#hub",
+          { waitUntil: "domcontentloaded", timeout: 30_000 },
+        );
+        await page.waitForTimeout(2_000);
+        if (!/linkbuilder/.test(page.url())) {
+          throw new Error("Mercado Livre affiliate session expired");
+        }
+        const field = page
+          .getByPlaceholder(/Insira 1 ou mais URLs/i)
+          .or(page.locator("textarea:visible"))
+          .first();
+        await field.fill(urls.join("\n"));
         await page.getByRole("button", { name: "Gerar", exact: true }).click();
         await page
           .getByText(/Copie (?:o link|seus links) e comece/i)
@@ -88,43 +84,61 @@ async function main() {
           .waitFor({
             timeout: 20_000,
           });
-      } catch (error) {
-        await page.screenshot({
-          path: "./data/screenshots/mercadolivre-affiliate-queue-error.png",
-          fullPage: true,
-        });
-        throw error;
-      }
+        const values = await page
+          .locator("input, textarea")
+          .evaluateAll((elements: Array<{ value?: string }>) =>
+            elements.flatMap((element) => (element.value || "").split(/\s+/)),
+          );
+        return [
+          ...new Set(
+            values.filter((value) => /^https:\/\/meli\.la\//.test(value)),
+          ),
+        ];
+      };
 
-      const values = await page
-        .locator("input, textarea")
-        .evaluateAll((elements: Array<{ value?: string }>) =>
-          elements.flatMap((element) => (element.value || "").split(/\s+/)),
-        );
-      const links = [
-        ...new Set(
-          values.filter((value) => /^https:\/\/meli\.la\//.test(value)),
-        ),
-      ];
-      if (links.length !== details.length) {
-        throw new Error(
-          `Expected ${details.length} affiliate links, received ${links.length}`,
-        );
+      let links: string[] = [];
+      let failed = 0;
+      try {
+        links = await generateLinks(details.map((item) => item.canonicalUrl));
+        if (links.length !== details.length) {
+          throw new Error(`Expected ${details.length} affiliate links, received ${links.length}`);
+        }
+      } catch (error) {
+        console.warn(`${error instanceof Error ? error.message : error}; retrying individually`);
+        links = [];
+        for (const detail of details) {
+          try {
+            const individual = await generateLinks([detail.canonicalUrl]);
+            if (individual.length !== 1) throw new Error("Expected one affiliate link");
+            links.push(individual[0]);
+          } catch (individualError) {
+            console.error(`Affiliate link failed for ${detail.id}: ${individualError instanceof Error ? individualError.message : individualError}`);
+            links.push("");
+            failed++;
+          }
+        }
       }
 
       for (const [index, detail] of details.entries()) {
-        await workerRequest(`/v1/offers/${detail.id}/affiliate-link`, {
-          method: "POST",
-          body: JSON.stringify({ affiliateUrl: links[index] }),
-        });
+        if (!links[index]) continue;
+        try {
+          await workerRequest(`/v1/offers/${detail.id}/affiliate-link`, {
+            method: "POST",
+            body: JSON.stringify({ affiliateUrl: links[index] }),
+          });
+        } catch (error) {
+          console.error(`Affiliate completion failed for ${detail.id}: ${error instanceof Error ? error.message : error}`);
+          failed++;
+        }
       }
       sessionStore.save(
         sessionName,
         JSON.stringify(await context.storageState()),
       );
       console.log(
-        `${details.length} Mercado Livre affiliate link(s) generated`,
+        `${details.length - failed} Mercado Livre affiliate link(s) generated, ${failed} failed`,
       );
+      if (failed > 0) process.exitCode = 1;
     } finally {
       await browser.close();
     }

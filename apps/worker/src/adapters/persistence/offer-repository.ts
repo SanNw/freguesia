@@ -87,7 +87,13 @@ export class OfferRepository {
       query += ` WHERE status = $1`;
       params.push(status);
     }
-    query += ` ORDER BY created_at DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
+    if (status === "needs_affiliate_link") {
+      query += ` AND (expires_at IS NULL OR expires_at > NOW())
+        ORDER BY expires_at ASC NULLS LAST, created_at ASC`;
+    } else {
+      query += ` ORDER BY created_at DESC`;
+    }
+    query += ` LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
     params.push(limit, offset);
     const rows = await db.query(query, params);
     return rows.map((r) => this.mapRow(r));
@@ -189,6 +195,41 @@ export class OfferRepository {
         return rows[0] ? this.mapRow(rows[0]) : null;
     }
 
+  async wasRecentlyPublished(
+    offerId: string,
+    cooldownHours: number,
+    minPriceDropPercent: number,
+  ): Promise<boolean> {
+    const rows = await db.query<{
+      current_price_cents: number;
+      previous_price_cents: number;
+    }>(
+      `SELECT current_price.current_price_cents AS current_price_cents,
+              previous_price.current_price_cents AS previous_price_cents
+       FROM offers current_offer
+       JOIN products current_product ON current_product.id = current_offer.product_id
+       JOIN price_observations current_price ON current_price.id = current_offer.source_observation_id
+       JOIN products previous_product ON previous_product.normalized_title = current_product.normalized_title
+       JOIN offers previous_offer ON previous_offer.product_id = previous_product.id
+       JOIN price_observations previous_price ON previous_price.id = previous_offer.source_observation_id
+       JOIN publications publication ON publication.offer_id = previous_offer.id
+       WHERE current_offer.id = $1
+         AND previous_offer.id <> current_offer.id
+         AND publication.status = 'published'
+         AND publication.published_at >= NOW() - ($2 * INTERVAL '1 hour')
+       ORDER BY publication.published_at DESC
+       LIMIT 1`,
+      [offerId, cooldownHours],
+    );
+    return (
+      rows.length > 0 &&
+      calculatePriceDropPercent(
+        Number(rows[0].previous_price_cents),
+        Number(rows[0].current_price_cents),
+      ) < minPriceDropPercent
+    );
+  }
+
   async claimApproval(id: string, from: string): Promise<boolean> {
     const rows = await db.query<{ id: string }>(
       `UPDATE offers o
@@ -238,18 +279,21 @@ export class OfferRepository {
     id: string,
     url: string,
     caption: string,
-  ): Promise<void> {
-    await db.query(
+  ): Promise<boolean> {
+    const rows = await db.query<{ id: string }>(
       `UPDATE offers SET
         affiliate_url = $1,
         affiliate_provider = 'mercadolivre-manual',
         proposed_caption = $2,
-        status = 'pending_approval',
+        status = 'scheduled',
         expires_at = NOW() + INTERVAL '2 hours',
         updated_at = NOW()
-       WHERE id = $3 AND status = 'needs_affiliate_link'`,
+       WHERE id = $3 AND status = 'needs_affiliate_link'
+         AND (expires_at IS NULL OR expires_at > NOW())
+       RETURNING id`,
       [url, caption, id],
     );
+    return rows.length === 1;
   }
 
   async isBestPromotionForProduct(offerId: string): Promise<boolean> {

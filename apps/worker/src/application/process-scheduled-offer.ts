@@ -1,6 +1,7 @@
 import { offerRepository } from "../adapters/persistence/offer-repository.js";
 import { productRepository } from "../adapters/persistence/product-repository.js";
 import type { Logger } from "../config/logger.js";
+import { publicationEnv as env } from "../config/runtime.js";
 import { classifyProductNicheDecision } from "../domain/product-niche.js";
 import { AppError } from "../shared/errors.js";
 import { publishOffer } from "./publish-offer.js";
@@ -19,6 +20,23 @@ export async function processNextScheduledOffer(
     await offerRepository.expireScheduledOffers();
     offer = await offerRepository.findNextScheduled();
     if (!offer) return "idle";
+
+    if (
+      offer.publicationNicheSource !== "manual" &&
+      (await offerRepository.wasRecentlyPublished(
+        offer.id,
+        env.REPOST_COOLDOWN_HOURS,
+        env.REPOST_MIN_PRICE_DROP_PERCENT,
+      ))
+    ) {
+      await offerRepository.transitionStatus(
+        offer.id,
+        [offer.status],
+        "rejected",
+        "RECENTLY_PUBLISHED",
+      );
+      return "idle";
+    }
 
     if (offer.publicationNicheSource !== "manual") {
       const product = await productRepository.getById(offer.productId);

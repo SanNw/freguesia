@@ -90,7 +90,7 @@
             },
             {
               "name": "limit",
-              "value": "1"
+              "value": "5"
             }
           ]
         },
@@ -113,20 +113,43 @@
         "url": "={{ $env.WORKER_INTERNAL_BASE_URL }}/v1/discovery-runs",
         "authentication": "none",
         "sendHeaders": true,
-        "headerParameters": { "parameters": [{ "name": "Authorization", "value": "=Bearer {{ $env.WORKER_SERVICE_TOKEN }}" }] },
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.WORKER_SERVICE_TOKEN }}"
+            }
+          ]
+        },
         "sendBody": true,
-        "bodyParameters": { "parameters": [
-          { "name": "sourceSlug", "value": "mercadolivre" },
-          { "name": "category", "value": "MLB1648" },
-          { "name": "limit", "value": "1" }
-        ] },
-        "options": { "timeout": 120000 }
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "sourceSlug",
+              "value": "mercadolivre"
+            },
+            {
+              "name": "category",
+              "value": "MLB1648"
+            },
+            {
+              "name": "limit",
+              "value": "5"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 120000
+        }
       },
       "id": "disc-ml-informatica",
       "name": "ML Informática",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [220, 100]
+      "position": [
+        220,
+        100
+      ]
     },
     {
       "parameters": {
@@ -134,20 +157,43 @@
         "url": "={{ $env.WORKER_INTERNAL_BASE_URL }}/v1/discovery-runs",
         "authentication": "none",
         "sendHeaders": true,
-        "headerParameters": { "parameters": [{ "name": "Authorization", "value": "=Bearer {{ $env.WORKER_SERVICE_TOKEN }}" }] },
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.WORKER_SERVICE_TOKEN }}"
+            }
+          ]
+        },
         "sendBody": true,
-        "bodyParameters": { "parameters": [
-          { "name": "sourceSlug", "value": "mercadolivre" },
-          { "name": "category", "value": "MLB1000" },
-          { "name": "limit", "value": "1" }
-        ] },
-        "options": { "timeout": 120000 }
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "sourceSlug",
+              "value": "mercadolivre"
+            },
+            {
+              "name": "category",
+              "value": "MLB1000"
+            },
+            {
+              "name": "limit",
+              "value": "5"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 120000
+        }
       },
       "id": "disc-ml-eletronicos",
       "name": "ML Eletrônicos",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [220, 200]
+      "position": [
+        220,
+        200
+      ]
     },
     {
       "parameters": {
@@ -155,20 +201,43 @@
         "url": "={{ $env.WORKER_INTERNAL_BASE_URL }}/v1/discovery-runs",
         "authentication": "none",
         "sendHeaders": true,
-        "headerParameters": { "parameters": [{ "name": "Authorization", "value": "=Bearer {{ $env.WORKER_SERVICE_TOKEN }}" }] },
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.WORKER_SERVICE_TOKEN }}"
+            }
+          ]
+        },
         "sendBody": true,
-        "bodyParameters": { "parameters": [
-          { "name": "sourceSlug", "value": "mercadolivre" },
-          { "name": "category", "value": "MLB5726" },
-          { "name": "limit", "value": "1" }
-        ] },
-        "options": { "timeout": 120000 }
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "sourceSlug",
+              "value": "mercadolivre"
+            },
+            {
+              "name": "category",
+              "value": "MLB5726"
+            },
+            {
+              "name": "limit",
+              "value": "5"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 120000
+        }
       },
       "id": "disc-ml-eletrodomesticos",
       "name": "ML Eletrodomésticos",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [220, 300]
+      "position": [
+        220,
+        300
+      ]
     },
     {
       "parameters": {
@@ -176,20 +245,43 @@
         "url": "={{ $env.WORKER_INTERNAL_BASE_URL }}/v1/discovery-runs",
         "authentication": "none",
         "sendHeaders": true,
-        "headerParameters": { "parameters": [{ "name": "Authorization", "value": "=Bearer {{ $env.WORKER_SERVICE_TOKEN }}" }] },
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.WORKER_SERVICE_TOKEN }}"
+            }
+          ]
+        },
         "sendBody": true,
-        "bodyParameters": { "parameters": [
-          { "name": "sourceSlug", "value": "mercadolivre" },
-          { "name": "category", "value": "MLB1574" },
-          { "name": "limit", "value": "1" }
-        ] },
-        "options": { "timeout": 120000 }
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "sourceSlug",
+              "value": "mercadolivre"
+            },
+            {
+              "name": "category",
+              "value": "MLB1574"
+            },
+            {
+              "name": "limit",
+              "value": "5"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 120000
+        }
       },
       "id": "disc-ml-casa",
       "name": "ML Casa e Cozinha",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [220, 400]
+      "position": [
+        220,
+        400
+      ]
     },
     {
       "parameters": {
@@ -197,20 +289,87 @@
         "url": "={{ $env.WORKER_INTERNAL_BASE_URL }}/v1/discovery-runs",
         "authentication": "none",
         "sendHeaders": true,
-        "headerParameters": { "parameters": [{ "name": "Authorization", "value": "=Bearer {{ $env.WORKER_SERVICE_TOKEN }}" }] },
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.WORKER_SERVICE_TOKEN }}"
+            }
+          ]
+        },
         "sendBody": true,
-        "bodyParameters": { "parameters": [
-          { "name": "sourceSlug", "value": "mercadolivre" },
-          { "name": "category", "value": "MLB1246" },
-          { "name": "limit", "value": "1" }
-        ] },
-        "options": { "timeout": 120000 }
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "sourceSlug",
+              "value": "mercadolivre"
+            },
+            {
+              "name": "category",
+              "value": "MLB1246"
+            },
+            {
+              "name": "limit",
+              "value": "5"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 120000
+        }
       },
       "id": "disc-ml-beleza",
       "name": "ML Beleza",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [220, 500]
+      "position": [
+        220,
+        500
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.WORKER_INTERNAL_BASE_URL }}/v1/discovery-runs",
+        "authentication": "none",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.WORKER_SERVICE_TOKEN }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "sourceSlug",
+              "value": "mercadolivre"
+            },
+            {
+              "name": "category",
+              "value": "MLB1430"
+            },
+            {
+              "name": "limit",
+              "value": "5"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "id": "disc-ml-moda",
+      "name": "ML Moda",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        220,
+        600
+      ]
     }
   ],
   "connections": {
@@ -249,6 +408,11 @@
           },
           {
             "node": "ML Beleza",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "ML Moda",
             "type": "main",
             "index": 0
           }

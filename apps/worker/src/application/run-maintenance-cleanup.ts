@@ -27,7 +27,7 @@ export async function runMaintenanceCleanup(logger: Logger) {
      SET status = 'expired', rejection_reason = 'Expired by daily maintenance', updated_at = NOW()
      WHERE expires_at < NOW()
        AND status IN ('discovered', 'validated', 'needs_affiliate_link',
-         'pending_approval', 'approved', 'scheduled')
+         'approval_sending', 'pending_approval', 'approved', 'scheduled', 'publishing')
      RETURNING id`,
   );
   const removedOauthStates = await db.query<{ state_hash: string }>(

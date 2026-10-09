@@ -6,16 +6,25 @@ const expireScheduledOffers = vi.fn();
 const updateStatus = vi.fn();
 const transitionStatus = vi.fn();
 const setPublicationNiche = vi.fn();
+const wasRecentlyPublished = vi.fn();
 const getProductById = vi.fn();
 const classifyProductNicheDecision = vi.fn();
 const publishOffer = vi.fn();
 const requestChannelApproval = vi.fn();
+
+vi.mock("../../src/config/runtime.js", () => ({
+  publicationEnv: {
+    REPOST_COOLDOWN_HOURS: 168,
+    REPOST_MIN_PRICE_DROP_PERCENT: 10,
+  },
+}));
 
 vi.mock("../../src/adapters/persistence/offer-repository.js", () => ({
   offerRepository: {
     expireScheduledOffers,
     findNextScheduled,
     setPublicationNiche,
+    wasRecentlyPublished,
     transitionStatus,
     updateStatus,
   },
@@ -51,6 +60,7 @@ describe("scheduled offer processing", () => {
       category: "Celulares e Telefones > Smartphones",
     });
     setPublicationNiche.mockResolvedValue(true);
+    wasRecentlyPublished.mockResolvedValue(false);
     transitionStatus.mockResolvedValue(true);
     updateStatus.mockResolvedValue(undefined);
     publishOffer.mockResolvedValue({ status: "published", messageId: 1 });
@@ -84,6 +94,25 @@ describe("scheduled offer processing", () => {
       expect.anything(),
     );
     expect(result).toBe("published");
+  });
+
+  it("skips a recently published title before requesting a channel", async () => {
+    wasRecentlyPublished.mockResolvedValue(true);
+    const result = await processNextScheduledOffer({
+      debug: vi.fn(),
+      warn: vi.fn(),
+    } as never);
+
+    expect(transitionStatus).toHaveBeenCalledWith(
+      "offer-1",
+      ["scheduled"],
+      "rejected",
+      "RECENTLY_PUBLISHED",
+    );
+    expect(classifyProductNicheDecision).not.toHaveBeenCalled();
+    expect(requestChannelApproval).not.toHaveBeenCalled();
+    expect(publishOffer).not.toHaveBeenCalled();
+    expect(result).toBe("idle");
   });
 
   it("also drains offers left in the approved status", async () => {

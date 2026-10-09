@@ -18,7 +18,10 @@
       "name": "Shopee Schedule",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
-      "position": [0, 0]
+      "position": [
+        0,
+        0
+      ]
     },
     {
       "parameters": {
@@ -37,23 +40,240 @@
         "sendBody": true,
         "bodyParameters": {
           "parameters": [
-            { "name": "sourceSlug", "value": "shopee" },
-            { "name": "limit", "value": "5" }
+            {
+              "name": "sourceSlug",
+              "value": "shopee"
+            },
+            {
+              "name": "limit",
+              "value": "5"
+            }
           ]
         },
-        "options": { "timeout": 120000 }
+        "options": {
+          "timeout": 120000
+        }
       },
       "id": "shopee-discovery",
       "name": "POST Shopee Discovery",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [220, 0]
+      "position": [
+        220,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.WORKER_INTERNAL_BASE_URL }}/v1/discovery-runs",
+        "authentication": "none",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.WORKER_SERVICE_TOKEN }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "sourceSlug",
+              "value": "shopee"
+            },
+            {
+              "name": "query",
+              "value": "vestido feminino"
+            },
+            {
+              "name": "limit",
+              "value": "2"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "id": "shopee-fashion-discovery",
+      "name": "Shopee Moda",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        220,
+        120
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.WORKER_INTERNAL_BASE_URL }}/v1/discovery-runs",
+        "authentication": "none",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.WORKER_SERVICE_TOKEN }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "sourceSlug",
+              "value": "shopee"
+            },
+            {
+              "name": "query",
+              "value": "camiseta masculina"
+            },
+            {
+              "name": "limit",
+              "value": "2"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "id": "shopee-mens-fashion-discovery",
+      "name": "Shopee Moda Masculina",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        220,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.WORKER_INTERNAL_BASE_URL }}/v1/discovery-runs",
+        "authentication": "none",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.WORKER_SERVICE_TOKEN }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "sourceSlug",
+              "value": "shopee"
+            },
+            {
+              "name": "query",
+              "value": "tênis feminino masculino"
+            },
+            {
+              "name": "limit",
+              "value": "2"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "id": "shopee-shoes-discovery",
+      "name": "Shopee Calçados",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        220,
+        360
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.WORKER_INTERNAL_BASE_URL }}/v1/discovery-runs",
+        "authentication": "none",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.WORKER_SERVICE_TOKEN }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "sourceSlug",
+              "value": "shopee"
+            },
+            {
+              "name": "query",
+              "value": "bolsa feminina"
+            },
+            {
+              "name": "limit",
+              "value": "2"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "id": "shopee-accessories-discovery",
+      "name": "Shopee Acessórios",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        220,
+        480
+      ]
     }
   ],
   "connections": {
     "Shopee Schedule": {
-      "main": [[{ "node": "POST Shopee Discovery", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "POST Shopee Discovery",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Shopee Moda",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Shopee Moda Masculina",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Shopee Calçados",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Shopee Acessórios",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
-  "settings": { "executionOrder": "v1" }
+  "settings": {
+    "executionOrder": "v1"
+  }
 }

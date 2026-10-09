@@ -9,7 +9,6 @@ import { validateOffer } from "./validate-offer.js";
 import { scoreOffer } from "./score.js";
 import { generateIdempotencyKey } from "./offer-helpers.js";
 import { buildCaption } from "./create-manual-offer.js";
-import { requestApproval } from "./request-approval.js";
 
 export interface LomadeeDiscoveryInput {
   query?: string;
@@ -119,8 +118,7 @@ export async function runLomadeeDiscovery(
       if (
         duplicate &&
         localDate(duplicate.createdAt) ===
-          localDate(new Date().toISOString()) &&
-        !["failed", "rejected", "expired"].includes(duplicate.status)
+          localDate(new Date().toISOString())
       ) {
         recordSkip(result, "duplicate_today");
         continue;
@@ -230,7 +228,7 @@ export async function runLomadeeDiscovery(
         id: offerId,
         productId: product.id,
         sourceObservationId: observation.id,
-        status: "pending_approval",
+        status: "scheduled",
         score,
         discountPercent,
         affiliateUrl: affiliate.url,
@@ -251,8 +249,6 @@ export async function runLomadeeDiscovery(
       result.created += 1;
       result.offerIds.push(offerId);
 
-      await requestApproval(offerId, logger);
-      result.approvalRequested += 1;
     } catch (error) {
       result.failed += 1;
       logger.warn(

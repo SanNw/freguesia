@@ -75,7 +75,7 @@ export async function runMercadoLivreDiscovery(
   const sourceId = await getOrCreateSource();
   const candidates = await adapter.discover({
     ...input,
-    limit: input.limit * 5,
+    limit: input.limit * 2,
   });
   const result: MercadoLivreDiscoveryResult = {
     status: "completed",
@@ -142,7 +142,7 @@ export async function runMercadoLivreDiscovery(
         title: extracted.title,
         normalizedTitle: extracted.title.toLowerCase().trim(),
         gtin: typeof evidence.gtin === "string" ? evidence.gtin : null,
-        category: input.category ?? null,
+        category: extracted.category ?? null,
         currency: extracted.currency,
         imageUrl: extracted.imageUrl,
         availability: extracted.availability,
@@ -166,7 +166,7 @@ export async function runMercadoLivreDiscovery(
           currency: extracted.currency,
           imageUrl: extracted.imageUrl,
           store: extracted.seller ?? "Mercado Livre",
-          category: input.category ?? null,
+          category: extracted.category ?? null,
           availability: extracted.availability,
           shippingOrigin: "brazil",
           rating: extracted.rating ?? null,

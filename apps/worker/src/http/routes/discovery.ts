@@ -6,6 +6,7 @@ import { runLomadeeDiscovery } from "../../application/run-lomadee-discovery.js"
 import { runMercadoLivreDiscovery } from "../../application/run-mercadolivre-discovery.js";
 import { runShopeeDiscovery } from "../../application/run-shopee-discovery.js";
 import { runAliExpressDiscovery } from "../../application/run-aliexpress-discovery.js";
+import { runAwinDiscovery } from "../../application/run-awin-discovery.js";
 
 export function registerDiscoveryRoutes(app: FastifyInstance, logger: Logger) {
   app.post("/v1/discovery-runs", async (request, reply) => {
@@ -73,6 +74,22 @@ export function registerDiscoveryRoutes(app: FastifyInstance, logger: Logger) {
       reply.send({
         runId,
         ...(await runAliExpressDiscovery(
+          {
+            query: parsed.data.query,
+            category: parsed.data.category,
+            limit: parsed.data.limit,
+            correlationId: parsed.data.correlationId ?? runId,
+          },
+          logger,
+        )),
+      });
+      return;
+    }
+
+    if (parsed.data.sourceSlug === "awin") {
+      reply.send({
+        runId,
+        ...(await runAwinDiscovery(
           {
             query: parsed.data.query,
             category: parsed.data.category,

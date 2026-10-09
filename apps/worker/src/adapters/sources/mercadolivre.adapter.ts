@@ -1,3 +1,4 @@
+import { setTimeout as sleep } from "node:timers/promises";
 import type { ExtractedProduct } from "../../domain/offer.js";
 import type { PriceSnapshot, ProductRef } from "../../domain/price.js";
 import type { AffiliateLinkResult } from "../../domain/affiliate-link.js";
@@ -20,6 +21,7 @@ interface SearchResult {
   currency_id?: string;
   available_quantity?: number;
   thumbnail?: string;
+  category_id?: string;
   seller?: { id?: number; nickname?: string };
   attributes?: Array<{ id: string; value_name?: string | null }>;
   installments?: { quantity?: number; amount?: number; rate?: number } | null;
@@ -30,6 +32,7 @@ interface CatalogProduct {
   name: string;
   status?: string;
   pictures?: Array<{ url?: string }>;
+  category_id?: string;
   attributes?: Array<{ id: string; value_name?: string | null }>;
 }
 
@@ -47,6 +50,11 @@ interface CatalogItem {
   tags?: string[];
   shipping?: { free_shipping?: boolean };
   installments?: { quantity?: number; amount?: number; rate?: number } | null;
+  category_id?: string;
+}
+
+interface CategoryPathResponse {
+  path_from_root?: Array<{ id: string; name: string }>;
 }
 
 interface CatalogItemsResponse {
@@ -69,19 +77,39 @@ function cents(value: number | null | undefined): number | null {
     : Math.round(value * 100);
 }
 
+let nextRequestAt = 0;
+let requestGate = Promise.resolve();
+
+function paceMercadoLivreRequest(): Promise<void> {
+  const turn = requestGate.then(async () => {
+    const wait = Math.max(0, nextRequestAt - Date.now());
+    if (wait) await sleep(wait);
+    nextRequestAt = Date.now() + 300;
+  });
+  requestGate = turn.catch(() => undefined);
+  return turn;
+}
+
 export class MercadoLivreAdapter implements SourceAdapter {
   readonly source = "mercadolivre";
   private readonly cache = new Map<string, SearchResult>();
 
   private async api<T>(path: string): Promise<T> {
     const token = await getMercadoLivreAccessToken();
-    const response = await resilientFetch(
-      `${env.MERCADOLIVRE_API_BASE_URL}${path}`,
-      {
-        headers: { Authorization: `Bearer ${token}` },
-        source: "mercadolivre-api",
-      },
-    );
+    let response: Response;
+    for (let attempt = 0; ; attempt++) {
+      await paceMercadoLivreRequest();
+      response = await resilientFetch(
+        `${env.MERCADOLIVRE_API_BASE_URL}${path}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+          source: "mercadolivre-api",
+        },
+      );
+      if (response.status !== 429 || attempt === 2) break;
+      const retryAfter = Number(response.headers.get("retry-after")) * 1000;
+      await sleep(Math.max(1000 * 2 ** attempt, retryAfter || 0) + Math.random() * 250);
+    }
     if (!response.ok) {
       const detail = await response.text();
       throw new AppError(
@@ -99,7 +127,7 @@ export class MercadoLivreAdapter implements SourceAdapter {
   async discover(input: DiscoveryInput): Promise<DiscoveredProduct[]> {
     const limit = Math.min(input.limit ?? 20, 50);
     const products = input.category
-      ? await this.productsFromHighlights(input.category, limit * 3)
+      ? await this.productsFromHighlights(input.category, limit)
       : await this.searchCatalogProducts(
           input.query ?? "smartphone",
           limit * 3,
@@ -148,6 +176,7 @@ export class MercadoLivreAdapter implements SourceAdapter {
         thumbnail: product.pictures?.[0]?.url,
         seller: { id: item.seller_id },
         attributes: product.attributes,
+        category_id: product.category_id ?? item.category_id,
         installments: item.installments,
       };
       this.cache.set(candidate.id, candidate);
@@ -196,6 +225,19 @@ export class MercadoLivreAdapter implements SourceAdapter {
     return products;
   }
 
+  private async fetchCategoryPath(categoryId: string | undefined): Promise<string | null> {
+    if (!categoryId) return null;
+    try {
+      const category = await this.api<CategoryPathResponse>(`/categories/${categoryId}`);
+      if (category.path_from_root && category.path_from_root.length > 0) {
+        return category.path_from_root.map((c) => c.name).join(" > ");
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  }
+
   async extract({ url }: { url: URL }): Promise<ExtractedProduct> {
     const id = itemIdFromUrl(url);
     if (!id) {
@@ -228,6 +270,8 @@ export class MercadoLivreAdapter implements SourceAdapter {
       ["GTIN", "EAN"].includes(attribute.id),
     )?.value_name;
 
+    const categoryPath = await this.fetchCategoryPath(item.category_id);
+
     return {
       source: this.source,
       externalId: id,
@@ -237,6 +281,7 @@ export class MercadoLivreAdapter implements SourceAdapter {
       previousPriceCents: cents(item.original_price),
       currency: item.currency_id || "BRL",
       imageUrl,
+      category: categoryPath,
       availability:
         item.available_quantity != null && item.available_quantity <= 0
           ? "out_of_stock"
@@ -252,6 +297,7 @@ export class MercadoLivreAdapter implements SourceAdapter {
         installmentCount: item.installments?.quantity ?? null,
         installmentValueCents: cents(item.installments?.amount),
         interestFree: item.installments?.rate === 0,
+        categoryPath: categoryPath ?? null,
       },
     };
   }

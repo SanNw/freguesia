@@ -10,6 +10,12 @@ const AWIN_BASE_URL = process.env.AWIN_BASE_URL || "https://api.awin.com";
 const AWIN_API_TOKEN = process.env.AWIN_API_TOKEN;
 const AWIN_PUBLISHER_ID = process.env.AWIN_PUBLISHER_ID;
 const AWIN_PAGE_SIZE = Number(process.env.AWIN_PAGE_SIZE) || 200;
+function advertiserIds(): number[] {
+  return (process.env.AWIN_ADVERTISER_IDS || "")
+    .split(",")
+    .map(Number)
+    .filter(Number.isInteger);
+}
 
 export class AwinAdapter implements SourceAdapter {
   readonly source = "awin";
@@ -46,22 +52,25 @@ export class AwinAdapter implements SourceAdapter {
     }
 
     const limit = input.limit ?? 20;
-    const category = input.category;
-
-    const params: Record<string, string | number> = {
-      publisherId: AWIN_PUBLISHER_ID,
-      pageSize: Math.min(limit, AWIN_PAGE_SIZE),
-    };
-
-    if (category) {
-      params.category = category;
-    }
-
-    const url = this.buildUrl("/promotions", params);
+    const url = `${AWIN_BASE_URL}/publisher/${AWIN_PUBLISHER_ID}/promotions`;
 
     const resp = await resilientFetch(url, {
       source: this.source,
-      headers: this.headers,
+      method: "POST",
+      headers: { ...this.headers, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        filters: {
+          advertiserIds: advertiserIds(),
+          membership: "joined",
+          regionCodes: ["BR"],
+          status: "active",
+          type: "all",
+        },
+        pagination: {
+          page: 1,
+          pageSize: Math.max(10, Math.min(limit, AWIN_PAGE_SIZE)),
+        },
+      }),
     });
 
     if (resp.status === 429) {
@@ -81,18 +90,26 @@ export class AwinAdapter implements SourceAdapter {
       );
     }
 
-    const data = (await resp.json()) as Array<{
-      id: string;
+    type Promotion = {
+      promotionId: number;
       title: string;
       urlTracking?: string;
-      destinationUrl?: string;
-    }>;
+      url?: string;
+    };
+    const payload = (await resp.json()) as
+      | Promotion[]
+      | { data?: Promotion[]; promotions?: Promotion[] };
+    const data = Array.isArray(payload)
+      ? payload
+      : payload.data || payload.promotions || [];
 
-    return data.map((item) => ({
-      externalId: item.id,
-      canonicalUrl: item.urlTracking || item.destinationUrl || "",
-      title: item.title,
-    }));
+    return data
+      .slice(0, limit)
+      .map((item) => ({
+        externalId: String(item.promotionId),
+        canonicalUrl: item.urlTracking || item.url || "",
+        title: item.title,
+      }));
   }
 
   async extract({ url }: { url: URL }): Promise<ExtractedProduct> {
@@ -197,7 +214,14 @@ export class AwinAdapter implements SourceAdapter {
       };
     }
 
-    const id = extractIdFromUrl(url);
+    if (url.hostname.endsWith("awin1.com")) {
+      return { status: "generated", url: url.toString() };
+    }
+
+    const advertiserId = advertiserIds()[0];
+    if (!advertiserId) {
+      return { status: "unsupported", reason: "Awin advertiser not configured" };
+    }
 
     try {
       const resp = await resilientFetch(
@@ -210,10 +234,11 @@ export class AwinAdapter implements SourceAdapter {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
+            advertiserId,
             destinationUrl: url.toString(),
             parameters: {
               campaign: "freguesia_telegram",
-              clickref: `offer-${id}`,
+              clickref: "freguesia-offer",
             },
             shorten: false,
           }),
@@ -227,11 +252,12 @@ export class AwinAdapter implements SourceAdapter {
       }
 
       const data = (await resp.json()) as {
+        url?: string;
         generatedLink?: string;
         link?: string;
       };
 
-      const link = data.generatedLink || data.link;
+      const link = data.url || data.generatedLink || data.link;
       if (link) {
         return {
           status: "generated",
