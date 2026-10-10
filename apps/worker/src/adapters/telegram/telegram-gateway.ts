@@ -1,6 +1,7 @@
 import { telegramEnv as env } from "../../config/runtime.js";
 import type { Logger } from "../../config/logger.js";
 import { CHANNELS_LIST_LINK } from "../../domain/channels-footer.js";
+import { shopperDeepLink } from "../../domain/shopper-ui.js";
 import {
   buildRichButtonRows,
   type RichButton,
@@ -28,6 +29,12 @@ export interface TelegramResponse {
 
 export class TelegramMessageRejectedError extends Error {
   override name = "TelegramMessageRejectedError";
+  constructor(
+    message: string,
+    readonly errorCode?: number,
+  ) {
+    super(message);
+  }
 }
 
 export function adminUserIds(): number[] {
@@ -160,11 +167,54 @@ export class TelegramGateway {
       if (data.error_code && data.error_code >= 400 && data.error_code < 500) {
         throw new TelegramMessageRejectedError(
           `Telegram sendRichMessage failed: ${data.description}`,
+          data.error_code,
         );
       }
       throw new Error(`Telegram sendRichMessage failed: ${data.description}`);
     }
     return { messageId: data.result.message_id };
+  }
+
+  async editRichMessage(
+    chatId: string,
+    messageId: number,
+    markdown: string,
+  ): Promise<void> {
+    const data = await this.request(
+      "editMessageText",
+      { chat_id: chatId, message_id: messageId, rich_message: { markdown } },
+      false,
+    );
+    if (!data.ok && !data.description?.includes("message is not modified"))
+      throw new TelegramMessageRejectedError(
+        `Telegram editMessageText failed: ${data.description}`,
+        data.error_code,
+      );
+  }
+  async sendEphemeralRichMessage(input: {
+    chatId: string;
+    receiverUserId: number;
+    callbackQueryId: string;
+    markdown: string;
+  }): Promise<void> {
+    const data = await this.request(
+      "sendRichMessage",
+      {
+        chat_id: input.chatId,
+        rich_message: { markdown: input.markdown },
+        ephemeral_message_parameters: {
+          receiver_user_id: input.receiverUserId,
+          callback_query_id: input.callbackQueryId,
+          replace_callback_query_message: true,
+        },
+      },
+      false,
+    );
+    if (!data.ok)
+      throw new TelegramMessageRejectedError(
+        `Telegram ephemeral send failed: ${data.description}`,
+        data.error_code,
+      );
   }
 
   buildOfferRichMarkdown(mediaUrls: string[], caption: string): string {
@@ -411,17 +461,43 @@ export class TelegramGateway {
     ]);
   }
 
-  buildPublicationKeyboard(affiliateUrl: string) {
+  buildPublicationKeyboard(affiliateUrl: string, offerId?: string) {
     const buttons: Array<Record<string, string>> = [
       { text: "📣 Canais de promoção", url: CHANNELS_LIST_LINK },
     ];
     if (affiliateUrl.length <= 256) {
       buttons.unshift({ text: "🛒 Comprar com desconto", url: affiliateUrl });
     }
-    return { inline_keyboard: [buttons] };
+    const watch =
+      env.SHOPPING_ASSISTANT_ENABLED && offerId
+        ? shopperDeepLink(env.TELEGRAM_BOT_USERNAME, "watch", offerId)
+        : null;
+    const compare =
+      env.SHOPPING_ASSISTANT_ENABLED && offerId
+        ? shopperDeepLink(env.TELEGRAM_BOT_USERNAME, "compare", offerId)
+        : null;
+    return {
+      inline_keyboard: [
+        buttons,
+        ...(watch && compare
+          ? [
+              [
+                {
+                  text: "🔔 Acompanhar produto",
+                  callback_data: `shop:watch:${offerId}`,
+                },
+                {
+                  text: "⚖️ Comparar",
+                  callback_data: `shop:compare:${offerId}`,
+                },
+              ],
+            ]
+          : []),
+      ],
+    };
   }
 
-  buildPublicationRichButtons(affiliateUrl: string): string {
+  buildPublicationRichButtons(affiliateUrl: string, offerId?: string): string {
     const buttons: RichButton[] = [
       {
         text: "📣 Canais de promoção",
@@ -436,6 +512,27 @@ export class TelegramGateway {
         style: "success",
       });
     }
-    return buildRichButtonRows([buttons]);
+    const watch =
+      env.SHOPPING_ASSISTANT_ENABLED && offerId
+        ? shopperDeepLink(env.TELEGRAM_BOT_USERNAME, "watch", offerId)
+        : null;
+    const compare =
+      env.SHOPPING_ASSISTANT_ENABLED && offerId
+        ? shopperDeepLink(env.TELEGRAM_BOT_USERNAME, "compare", offerId)
+        : null;
+    return buildRichButtonRows([
+      buttons,
+      ...(watch && compare
+        ? [
+            [
+              {
+                text: "🔔 Acompanhar produto",
+                callbackData: `shop:watch:${offerId}`,
+              },
+              { text: "⚖️ Comparar", callbackData: `shop:compare:${offerId}` },
+            ],
+          ]
+        : []),
+    ]);
   }
 }

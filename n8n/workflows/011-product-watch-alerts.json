@@ -1,0 +1,25 @@
+{
+  "id": "eb27c3f5-d14a-4b7b-a836-efc1d08cff11",
+  "name": "WF-011 - Alertas privados de produtos",
+  "active": false,
+  "nodes": [
+    { "parameters": { "inputSource": "passthrough" }, "id": "on-demand-watch-check", "name": "Consultar sob demanda", "type": "n8n-nodes-base.executeWorkflowTrigger", "typeVersion": 1.2, "position": [0, -150] },
+    { "parameters": { "rule": { "interval": [{ "field": "cronExpression", "expression": "0 */5 * * * *" }] } }, "id": "watch-schedule", "name": "A cada cinco minutos", "type": "n8n-nodes-base.scheduleTrigger", "typeVersion": 1.2, "position": [0, 100] },
+    {
+      "parameters": {
+        "method": "POST", "url": "={{ $env.WORKER_INTERNAL_BASE_URL }}/v1/product-watches/dispatch",
+        "authentication": "none", "sendHeaders": true,
+        "headerParameters": { "parameters": [{ "name": "Authorization", "value": "=Bearer {{ $env.WORKER_SERVICE_TOKEN }}" }] },
+        "sendBody": true, "specifyBody": "json", "jsonBody": "{\"limit\":20}",
+        "options": { "timeout": 360000 }
+      },
+      "id": "watch-dispatch", "name": "Consultar e entregar alertas privados", "type": "n8n-nodes-base.httpRequest", "typeVersion": 4.2, "position": [250, 0],
+      "retryOnFail": true, "maxTries": 3, "waitBetweenTries": 5000
+    }
+  ],
+  "connections": {
+    "Consultar sob demanda": { "main": [[{ "node": "Consultar e entregar alertas privados", "type": "main", "index": 0 }]] },
+    "A cada cinco minutos": { "main": [[{ "node": "Consultar e entregar alertas privados", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1", "timezone": "America/Sao_Paulo" }
+}

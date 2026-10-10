@@ -1,8 +1,10 @@
 import { db } from "./db.js";
 import { performanceReportsSchema } from "./performance-report-repository.js";
+import { productWatchesSchema } from "./product-watch-repository.js";
 
 async function main() {
   await db.query(performanceReportsSchema);
+  await db.query(productWatchesSchema);
   await db.query(`
     CREATE TABLE IF NOT EXISTS integration_credentials (
       provider TEXT PRIMARY KEY,

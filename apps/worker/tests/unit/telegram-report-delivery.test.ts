@@ -10,6 +10,50 @@ import { TelegramGateway } from "../../src/adapters/telegram/telegram-gateway.js
 afterEach(() => vi.unstubAllGlobals());
 
 describe("report Telegram transport", () => {
+  it("sends an ephemeral reply scoped to the real callback and user", async () => {
+    const requests: Record<string, unknown>[] = [];
+    vi.stubGlobal("fetch", async (_url: unknown, init: RequestInit) => {
+      requests.push(JSON.parse(String(init.body)));
+      return Response.json({
+        ok: true,
+        result: { ephemeral_message_id: "ephemeral" },
+      });
+    });
+    await new TelegramGateway({} as never).sendEphemeralRichMessage({
+      chatId: "-100",
+      receiverUserId: 123,
+      callbackQueryId: "clicked",
+      markdown: "Continue no privado",
+    });
+    expect(requests[0]).toEqual({
+      chat_id: "-100",
+      rich_message: { markdown: "Continue no privado" },
+      ephemeral_message_parameters: {
+        receiver_user_id: 123,
+        callback_query_id: "clicked",
+        replace_callback_query_message: true,
+      },
+    });
+  });
+  it("edits native RichText rather than sending a new menu", async () => {
+    const requests: Record<string, unknown>[] = [];
+    vi.stubGlobal("fetch", async (_url: unknown, init: RequestInit) => {
+      requests.push(JSON.parse(String(init.body)));
+      return Response.json({ ok: true, result: { message_id: 5 } });
+    });
+    await new TelegramGateway({} as never).editRichMessage(
+      "123",
+      5,
+      "## Meus alertas",
+    );
+    expect(requests).toEqual([
+      {
+        chat_id: "123",
+        message_id: 5,
+        rich_message: { markdown: "## Meus alertas" },
+      },
+    ]);
+  });
   it("distinguishes an explicit Telegram rejection from an uncertain timeout", async () => {
     vi.stubGlobal("fetch", async () =>
       Response.json(
@@ -22,7 +66,10 @@ describe("report Telegram transport", () => {
         { chatId: "123", markdown: "# Relatório" },
         { retryAmbiguousErrors: false },
       ),
-    ).rejects.toMatchObject({ name: "TelegramMessageRejectedError" });
+    ).rejects.toMatchObject({
+      name: "TelegramMessageRejectedError",
+      errorCode: 403,
+    });
   });
   it("uses the native rich_message payload with a real footer", async () => {
     const requests: Record<string, unknown>[] = [];

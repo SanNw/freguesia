@@ -6,6 +6,10 @@ import { telegramCallbackSchema } from "../../http/schemas/index.js";
 import { handleAmazonMessage } from "../../application/handle-amazon-message.js";
 import type { AmazonTelegramMessage } from "../../application/handle-amazon-message.js";
 import { shouldRetryTelegramUpdate } from "../../application/telegram-update.js";
+import {
+  handleShopperMessage,
+  handleShopperCallback,
+} from "../../application/handle-shopper-interaction.js";
 
 export class TelegramPoller {
   private running = false;
@@ -60,10 +64,16 @@ export class TelegramPoller {
             "id" in message.chat
           ) {
             try {
-              const handled = await handleTelegramEditMessage(
-                message as AmazonTelegramMessage,
+              const shopperHandled = await handleShopperMessage(
+                message,
                 this.logger,
               );
+              const handled =
+                shopperHandled ||
+                (await handleTelegramEditMessage(
+                  message as AmazonTelegramMessage,
+                  this.logger,
+                ));
               if (!handled) {
                 await handleAmazonMessage(
                   message as AmazonTelegramMessage,
@@ -80,10 +90,15 @@ export class TelegramPoller {
           }
           if (parsed.success) {
             try {
-              await handleTelegramCallback(
+              const shopperHandled = await handleShopperCallback(
                 parsed.data.callback_query,
                 this.logger,
               );
+              if (!shopperHandled)
+                await handleTelegramCallback(
+                  parsed.data.callback_query,
+                  this.logger,
+                );
             } catch (error) {
               this.logger.error(
                 { err: error },

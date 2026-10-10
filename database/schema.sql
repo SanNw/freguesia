@@ -312,3 +312,46 @@ CREATE TABLE IF NOT EXISTS oauth_states (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   PRIMARY KEY (provider, state_hash)
 );
+
+-- Private shopper alerts and short-lived interaction state.
+CREATE TABLE IF NOT EXISTS shopper_users (
+  chat_id BIGINT PRIMARY KEY CHECK (chat_id > 0 AND chat_id <= 9007199254740991),
+  started_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  blocked BOOLEAN NOT NULL DEFAULT FALSE,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE TABLE IF NOT EXISTS shopper_sessions (
+  chat_id BIGINT PRIMARY KEY,
+  action TEXT NOT NULL,
+  data JSONB NOT NULL DEFAULT '{}',
+  expires_at TIMESTAMPTZ NOT NULL,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE TABLE IF NOT EXISTS product_watches (
+  id UUID PRIMARY KEY,
+  chat_id BIGINT NOT NULL REFERENCES shopper_users(chat_id),
+  product_key TEXT NOT NULL,
+  identity JSONB NOT NULL,
+  title TEXT NOT NULL,
+  monitoring TEXT NOT NULL CHECK (monitoring IN ('direct', 'catalog_wait')),
+  active BOOLEAN NOT NULL DEFAULT TRUE,
+  baseline JSONB,
+  last_checked_at TIMESTAMPTZ,
+  last_attempt_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE(chat_id, product_key)
+);
+CREATE INDEX IF NOT EXISTS idx_product_watches_active ON product_watches(last_checked_at) WHERE active;
+CREATE TABLE IF NOT EXISTS product_watch_notifications (
+  id UUID PRIMARY KEY,
+  chat_id BIGINT NOT NULL REFERENCES shopper_users(chat_id),
+  product_key TEXT NOT NULL,
+  fingerprint TEXT NOT NULL,
+  payload JSONB NOT NULL,
+  status TEXT NOT NULL CHECK (status IN ('sending', 'sent', 'unknown', 'rejected')),
+  telegram_message_id BIGINT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE(chat_id, product_key, fingerprint)
+);

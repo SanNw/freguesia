@@ -52,6 +52,11 @@ const envSchema = z.object({
   REQUIRE_HUMAN_APPROVAL: booleanString.default("true"),
 
   TELEGRAM_BOT_TOKEN: z.string().min(1),
+  SHOPPING_ASSISTANT_ENABLED: booleanString.default("false"),
+  TELEGRAM_BOT_USERNAME: z
+    .string()
+    .regex(/^$|^[a-zA-Z0-9_]{5,32}$/)
+    .default(""),
   TELEGRAM_BOT_API_BASE: z.string().url().default("https://api.telegram.org"),
   TELEGRAM_APPROVAL_CHAT_ID: z.string(),
   TELEGRAM_PUBLIC_CHANNEL_ID: z.string(),

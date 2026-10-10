@@ -74,6 +74,8 @@ npm run typecheck
 
 O WF-010 envia relatórios semanais e mensais no privado de um administrador, com publicações por canal e métricas das contas afiliadas Awin e Shopee. Consulte [configuração, dados disponíveis e limites](./docs/REPORTS.md) antes de ativar o workflow.
 
+O assistente de compras permite criar alertas privados por produto e comparar modelos. Tem menu RichText com botões, respostas efêmeras nos canais e remoção de alertas pelo próprio usuário. É opcional e vem desativado; consulte [instalação e limites do assistente](./docs/SHOPPING_ASSISTANT.md).
+
 ## Estrutura do repositório
 
 Ver [Freguesia.md](./Freguesia.md) para a especificação técnica completa.

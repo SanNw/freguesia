@@ -3,6 +3,7 @@ import type { Logger } from "../../config/logger.js";
 import { telegramCallbackSchema } from "../schemas/index.js";
 import { AppError } from "../../shared/errors.js";
 import { handleTelegramCallback } from "../../application/handle-telegram-callback.js";
+import { handleShopperCallback } from "../../application/handle-shopper-interaction.js";
 import { telegramEnv as env } from "../../config/runtime.js";
 
 function validWebhookSecret(value: string | string[] | undefined): boolean {
@@ -38,10 +39,13 @@ export function registerTelegramRoutes(app: FastifyInstance, logger: Logger) {
       );
     }
 
-    const result = await handleTelegramCallback(
+    const handled = await handleShopperCallback(
       parsed.data.callback_query,
       logger,
     );
+    const result = handled
+      ? { handled: true }
+      : await handleTelegramCallback(parsed.data.callback_query, logger);
     reply.send(result);
   });
 }

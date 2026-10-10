@@ -135,10 +135,11 @@ export async function publishOffer(
   }
 
   const rate = await publicationRepository.getRateLimitSnapshot();
-  if (!ignoreRateLimits && (
-    rate.hourly >= env.MAX_PUBLICATIONS_PER_HOUR ||
-    rate.daily >= env.MAX_PUBLICATIONS_PER_DAY
-  )) {
+  if (
+    !ignoreRateLimits &&
+    (rate.hourly >= env.MAX_PUBLICATIONS_PER_HOUR ||
+      rate.daily >= env.MAX_PUBLICATIONS_PER_DAY)
+  ) {
     throw new AppError(
       "VALIDATION_FAILED",
       "Publication rate limit reached",
@@ -215,7 +216,7 @@ export async function publishOffer(
           chatId: destinationChannelId,
           markdown: gateway.buildOfferRichMarkdown(
             [offer.imageUrl, ...offer.additionalImageUrls],
-            `${publicationCaption}\n\n${gateway.buildPublicationRichButtons(offer.affiliateUrl)}`,
+            `${publicationCaption}\n\n${gateway.buildPublicationRichButtons(offer.affiliateUrl, offer.id)}`,
           ),
           footer: CHANNELS_FOOTER_TEXT,
         });
@@ -229,7 +230,10 @@ export async function publishOffer(
           chatId: destinationChannelId,
           photo: offer.imageUrl,
           caption: fullCaption,
-          replyMarkup: gateway.buildPublicationKeyboard(offer.affiliateUrl),
+          replyMarkup: gateway.buildPublicationKeyboard(
+            offer.affiliateUrl,
+            offer.id,
+          ),
         });
         telegramMessageId = result.messageId;
       }
@@ -238,7 +242,10 @@ export async function publishOffer(
         chatId: destinationChannelId,
         photo: offer.imageUrl,
         caption: fullCaption,
-        replyMarkup: gateway.buildPublicationKeyboard(offer.affiliateUrl),
+        replyMarkup: gateway.buildPublicationKeyboard(
+          offer.affiliateUrl,
+          offer.id,
+        ),
       });
       telegramMessageId = result.messageId;
     }
