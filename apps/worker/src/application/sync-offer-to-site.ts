@@ -36,9 +36,13 @@ export function buildSiteOfferPayload(row: SiteOfferRow) {
     previousPriceCents:
       row.previousPriceCents === null ? null : Number(row.previousPriceCents),
     discountPercent:
-      row.discountPercent === null ? null : Math.round(Number(row.discountPercent)),
+      row.discountPercent === null
+        ? null
+        : Math.round(Number(row.discountPercent)),
     affiliateUrl: row.affiliateUrl,
-    imageUrls: [...new Set([row.imageUrl, ...row.additionalImageUrls].filter(Boolean))],
+    imageUrls: [
+      ...new Set([row.imageUrl, ...row.additionalImageUrls].filter(Boolean)),
+    ],
     expiresAt: row.expiresAt ? iso(row.expiresAt) : null,
     publishedAt: iso(row.publishedAt),
     updatedAt: iso(row.updatedAt),
@@ -86,13 +90,19 @@ async function push(row: SiteOfferRow): Promise<void> {
   });
 }
 
-export async function syncOfferToSite(offerId: string, logger: Logger): Promise<void> {
+export async function syncOfferToSite(
+  offerId: string,
+  logger: Logger,
+): Promise<void> {
   if (!siteEnv.SITE_SYNC_ENABLED) return;
   try {
     const row = await siteSyncRepository.findPublishedOffer(offerId);
     if (row) await push(row);
   } catch (error) {
-    logger.warn({ err: error, offerId }, "Site sync failed; Telegram publication preserved");
+    logger.warn(
+      { err: error, offerId },
+      "Site sync failed; Telegram publication preserved",
+    );
   }
 }
 
@@ -109,7 +119,10 @@ export async function syncPublishedOffersToSite(
       synced += 1;
     } catch (error) {
       failed += 1;
-      logger.warn({ err: error, offerId: row.id }, "Published offer backfill failed");
+      logger.warn(
+        { err: error, offerId: row.id },
+        "Published offer backfill failed",
+      );
     }
   }
   return { synced, failed };

@@ -70,6 +70,10 @@ npm run typecheck
 - Montar `n8n/workflows/` no container não importa nem publica workflows automaticamente. Após a importação, revise URLs, credenciais e IDs de canais antes de ativá-los.
 - Antes de implantar mudanças no Worker, execute `npm ci`, `npm run build`, `npm test` e `npm run lint` em `apps/worker`.
 
+## Classificação e variedade das ofertas
+
+O classificador usa regras por tipo de produto, trata grafias equivalentes e mantém casos ambíguos em aprovação. Escolhas manuais anteriores são reaproveitadas para o mesmo produto ou GTIN validado. A descoberta do Mercado Livre alterna famílias de produtos e rankings; a publicação busca equilibrar os canais sem reduzir os filtros de qualidade. Consulte [configuração, atualização e limites da curadoria](./docs/CURATION.md), incluindo a geração opcional de links afiliados no Docker.
+
 ## Relatórios no Telegram
 
 O WF-010 envia relatórios semanais e mensais no privado de um administrador, com publicações por canal e métricas das contas afiliadas Awin e Shopee. Consulte [configuração, dados disponíveis e limites](./docs/REPORTS.md) antes de ativar o workflow.

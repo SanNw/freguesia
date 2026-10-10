@@ -29,7 +29,9 @@ describe("Shopee adapter", () => {
   });
 
   it("signs the exact request payload with SHA-256", () => {
-    const payload = JSON.stringify({ query: "{ productOfferV2 { nodes { itemId } } }" });
+    const payload = JSON.stringify({
+      query: "{ productOfferV2 { nodes { itemId } } }",
+    });
     const timestamp = 1_577_836_800;
     const signature = createHash("sha256")
       .update(`123456${timestamp}${payload}demo`)
@@ -61,8 +63,8 @@ describe("Shopee adapter", () => {
       url: "https://s.shopee.com.br/demo",
     });
 
-    expect(JSON.parse(String(fetchMock.mock.calls[0][1]?.body)).query).toContain(
-      "generateShortLink",
-    );
+    expect(
+      JSON.parse(String(fetchMock.mock.calls[0][1]?.body)).query,
+    ).toContain("generateShortLink");
   });
 });

@@ -1,4 +1,5 @@
 import { db } from "./db.js";
+import { normalizeProductTitle } from "../../domain/product-identity.js";
 
 export interface ProductRow {
   [key: string]: unknown;
@@ -60,7 +61,7 @@ export class ProductRepository {
         input.externalId,
         input.canonicalUrl,
         input.title,
-        input.normalizedTitle,
+        normalizeProductTitle(input.title),
         input.brand ?? null,
         input.model ?? null,
         input.gtin ?? null,

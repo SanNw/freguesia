@@ -11,8 +11,20 @@ export function registerPinterestRoutes(app: FastifyInstance, logger: Logger) {
     "/internal/pinterest/offers/:offerId/publish",
     async (request, reply) => {
       const parsed = publishSchema.safeParse(request.body);
-      if (!parsed.success) throw new AppError("VALIDATION_FAILED", "Invalid publish body", false, 400);
-      reply.send(await publishToPinterest(request.params.offerId, parsed.data.idempotencyKey, logger));
+      if (!parsed.success)
+        throw new AppError(
+          "VALIDATION_FAILED",
+          "Invalid publish body",
+          false,
+          400,
+        );
+      reply.send(
+        await publishToPinterest(
+          request.params.offerId,
+          parsed.data.idempotencyKey,
+          logger,
+        ),
+      );
     },
   );
 }

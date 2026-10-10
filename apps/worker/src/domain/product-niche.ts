@@ -17,10 +17,15 @@ export interface ProductNicheDecision {
     | "category"
     | "title"
     | "explicit_general"
+    | "manual_history"
     | "conflict"
     | "unclassified";
   automatic: boolean;
+  version?: string;
+  matchedTerms?: string[];
 }
+
+export const PRODUCT_CLASSIFIER_VERSION = "2.0.0";
 
 const RULES: Array<{ niche: ProductNiche; terms: string[] }> = [
   {
@@ -34,6 +39,7 @@ const RULES: Array<{ niche: ProductNiche; terms: string[] }> = [
       "forno eletrico",
       "micro-ondas",
       "air fryer",
+      "airfryer",
       "fritadeira",
       "maquina de lavar",
       "lavadora",
@@ -131,6 +137,9 @@ const RULES: Array<{ niche: ProductNiche; terms: string[] }> = [
       "serum capilar",
       "cabelo humano",
       "extensao de cabelo",
+      "hidratacao capilar",
+      "elastico de cabelo",
+      "mascara capilar",
       "gloss labial",
       "adesivo para acne",
       "adesivos para acne",
@@ -149,6 +158,12 @@ const RULES: Array<{ niche: ProductNiche; terms: string[] }> = [
       "gpu",
       "memoria ram",
       "ssd",
+      "pen drive",
+      "pendrive",
+      "rtx",
+      "gtx",
+      "radeon",
+      "ryzen",
       "hd interno",
       "disco rigido",
       "gabinete",
@@ -196,6 +211,11 @@ const RULES: Array<{ niche: ProductNiche; terms: string[] }> = [
       "sandalia",
       "sapato",
       "tenis feminino",
+      "tenis",
+      "babuche",
+      "sneakers",
+      "running shoes",
+      "regata",
       "tenis masculino",
       "bolsa feminina",
       "bolsa masculina",
@@ -237,6 +257,7 @@ const RULES: Array<{ niche: ProductNiche; terms: string[] }> = [
       "colchao",
       "estante",
       "decoracao",
+      "arvore de natal",
       "luminaria",
       "varal",
       "lixeira",
@@ -252,7 +273,10 @@ function normalize(value: string): string {
   return value
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase();
+    .toLowerCase()
+    .replace(/[-–—_]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 const GENERAL_ONLY_TERMS = [
@@ -263,6 +287,7 @@ const GENERAL_ONLY_TERMS = [
   "oraculo",
   "oracle",
   "adivinhacao",
+  "creatina",
 ];
 
 const TITLE_PRIMARY_RULES: Array<{ niche: ProductNiche; terms: string[] }> = [
@@ -315,11 +340,21 @@ const EXPLICIT_AUTOMATIC_RULES: Array<{
 }> = [
   {
     niche: "appliances",
-    terms: ["geladeira", "micro-ondas", "lava-loucas", "maquina de lavar", "liquidificador", "sorveteira"],
+    terms: [
+      "geladeira",
+      "micro-ondas",
+      "lava-loucas",
+      "maquina de lavar",
+      "liquidificador",
+      "sorveteira",
+    ],
   },
   { niche: "electronics", terms: ["power bank", "controle joystick"] },
   { niche: "beauty", terms: ["pente dentes largos", "modelador shark"] },
-  { niche: "beauty", terms: ["secador shark", "perfume masculino", "perfume feminino"] },
+  {
+    niche: "beauty",
+    terms: ["secador shark", "perfume masculino", "perfume feminino"],
+  },
   { niche: "home_kitchen", terms: ["jogo de tacas", "mop shark"] },
   { niche: "hardware", terms: ["estabilizador", "switch wired"] },
 ];
@@ -354,18 +389,6 @@ const EXPLICIT_FASHION_TERMS = [
   "sutia",
 ];
 
-const FASHION_ADJACENT_BLOCKERS = [
-  "boneca",
-  "brinquedo",
-  "cachorro",
-  "gato",
-  " pet ",
-  "aplique",
-  "para costura",
-  "patch",
-  "saco para lavar",
-];
-
 export function classifyProductNiche(
   title: string,
   category?: string | null,
@@ -373,40 +396,163 @@ export function classifyProductNiche(
   return classifyProductNicheDecision(title, category).niche;
 }
 
-function matchingNiches(text: string): ProductNiche[] {
-  return RULES.filter((rule) =>
-    rule.terms.some((term) => text.includes(term)),
-  ).map((rule) => rule.niche);
+function matchesTerm(text: string, term: string): boolean {
+  const escaped = normalize(term).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return new RegExp(`(?:^|[^a-z0-9])${escaped}s?(?=$|[^a-z0-9])`).test(text);
 }
 
-export function classifyProductNicheDecision(
+function matchingNiches(text: string): ProductNiche[] {
+  return [
+    ...new Set(
+      [
+        ...RULES,
+        ...EXPLICIT_AUTOMATIC_RULES,
+        { niche: "fashion" as const, terms: EXPLICIT_FASHION_TERMS },
+      ]
+        .filter((rule) => rule.terms.some((term) => matchesTerm(text, term)))
+        .map((rule) => rule.niche),
+    ),
+  ];
+}
+
+function decideProductNiche(
   title: string,
   category?: string | null,
 ): ProductNicheDecision {
-  const text = normalize(title);
+  let text = normalize(title);
   const normalizedCategory = normalize(category ?? "");
   const officialCategoryMatch = OFFICIAL_CATEGORY_ROOTS.find(({ roots }) =>
     roots.some(
       (root) =>
-        normalizedCategory === root ||
-        normalizedCategory.startsWith(`${root} >`) ||
-        normalizedCategory.startsWith(`${root}/`),
+        normalizedCategory === normalize(root) ||
+        normalizedCategory.startsWith(`${normalize(root)} >`) ||
+        normalizedCategory.startsWith(`${normalize(root)}/`),
     ),
   )?.niche;
+  if (
+    GENERAL_ONLY_TERMS.some((term) => matchesTerm(text, term)) ||
+    /\b(boneca|brinquedo|cachorro|gato|pet)\b/.test(text) ||
+    /\bmonitor de pressao\b/.test(text)
+  ) {
+    return {
+      niche: "general",
+      confidence: "high",
+      evidence: "explicit_general",
+      automatic: true,
+    };
+  }
+
+  // Accessory/usage context must not be mistaken for the principal object.
+  if (/\b(suporte|base|capa) (?:para |de )?notebook\b/.test(text)) {
+    return {
+      niche: "hardware",
+      confidence: "high",
+      evidence: "title",
+      automatic: true,
+    };
+  }
+  if (/\b(mochila|bolsa)\b/.test(text)) {
+    text = text.replace(/\bpara notebook\b/g, " ");
+  }
+  if (/\b(para costura|saco para lavar|aplique)\b/.test(text)) {
+    return {
+      niche: "general",
+      confidence: "low",
+      evidence: "conflict",
+      automatic: false,
+    };
+  }
+  if (/\b(capilar|cabelo|facial)\b/.test(text)) {
+    text = text.replace(/\b(potes?|embalagem|frasco)\b/g, " ");
+    if (matchesTerm(text, "elastico de cabelo"))
+      text = text.replace(/\bbolsa\b/g, " ");
+  }
+  if (matchesTerm(text, "mousepad")) text = text.replace(/\btapetes?\b/g, " ");
+  if (/\b(potes?|marmita|organizador)\b/.test(text)) {
+    text = text.replace(/\b(?:para |de )?freezer\b/g, " ");
+  }
+
+  const titleMatches = matchingNiches(text);
+  const primaryTitleMatch = TITLE_PRIMARY_RULES.find((rule) =>
+    rule.terms.some((term) => matchesTerm(text, term)),
+  )?.niche;
+  if (
+    primaryTitleMatch &&
+    titleMatches.every(
+      (niche) => niche === "hardware" || niche === "electronics",
+    ) &&
+    !matchesTerm(text, "mochila") &&
+    !matchesTerm(text, "bolsa")
+  ) {
+    return {
+      niche: primaryTitleMatch,
+      confidence: "high",
+      evidence: "title",
+      automatic: true,
+    };
+  }
+  if (titleMatches.length > 1) {
+    return {
+      niche: "general",
+      confidence: "low",
+      evidence: "conflict",
+      automatic: false,
+    };
+  }
+  if (titleMatches.length === 1) {
+    const niche = titleMatches[0];
+    const ambiguous = new Set([
+      "monitor",
+      "camera",
+      "console",
+      "gabinete",
+      "pote",
+      "cama",
+      "mesa",
+      "cadeira",
+      "organizador",
+      "espelho",
+      "colar",
+      "pulseira",
+      "galaxy",
+      "mixer",
+      "lavadora",
+      "aquecedor",
+    ]);
+    const strong = [
+      ...RULES,
+      ...EXPLICIT_AUTOMATIC_RULES,
+      { niche: "fashion" as const, terms: EXPLICIT_FASHION_TERMS },
+    ]
+      .filter((rule) => rule.niche === niche)
+      .some((rule) =>
+        rule.terms.some(
+          (term) => !ambiguous.has(normalize(term)) && matchesTerm(text, term),
+        ),
+      );
+    if (
+      strong ||
+      officialCategoryMatch === niche ||
+      (niche === "home_kitchen" &&
+        /\b(pote|organizador)\b.*\bpara freezer\b/.test(normalize(title)))
+    ) {
+      return { niche, confidence: "high", evidence: "title", automatic: true };
+    }
+    if (!officialCategoryMatch) {
+      return {
+        niche,
+        confidence: "medium",
+        evidence: "title",
+        automatic: false,
+      };
+    }
+  }
+
   if (officialCategoryMatch) {
     return {
       niche: officialCategoryMatch,
       confidence: "high",
       evidence: "official_category",
-      automatic: true,
-    };
-  }
-
-  if (GENERAL_ONLY_TERMS.some((term) => text.includes(term))) {
-    return {
-      niche: "general",
-      confidence: "high",
-      evidence: "explicit_general",
       automatic: true,
     };
   }
@@ -420,7 +566,8 @@ export function classifyProductNicheDecision(
     MLB1246: "beauty",
     MLB1430: "fashion",
   };
-  const categoryIdMatch = categoryFallback[category ?? ""];
+  const categoryIdMatch =
+    categoryFallback[(category ?? "").trim().toUpperCase()];
   if (categoryIdMatch) {
     return {
       niche: categoryIdMatch,
@@ -442,65 +589,11 @@ export function classifyProductNicheDecision(
     };
   }
 
-  if (
-    EXPLICIT_FASHION_TERMS.some((term) => text.includes(term)) &&
-    !FASHION_ADJACENT_BLOCKERS.some((term) => ` ${text} `.includes(term))
-  ) {
-    return {
-      niche: "fashion",
-      confidence: "high",
-      evidence: "title",
-      automatic: true,
-    };
-  }
-
-  const explicitTitleMatch = EXPLICIT_AUTOMATIC_RULES.find((rule) =>
-    rule.terms.some((term) => text.includes(term)),
-  )?.niche;
-  if (explicitTitleMatch) {
-    return {
-      niche: explicitTitleMatch,
-      confidence: "high",
-      evidence: "title",
-      automatic: true,
-    };
-  }
-
   if (categoryMatches.length === 1) {
     return {
       niche: categoryMatches[0],
       confidence: "medium",
       evidence: "category",
-      automatic: false,
-    };
-  }
-
-  const primaryTitleMatch = TITLE_PRIMARY_RULES.find((rule) =>
-    rule.terms.some((term) => text.includes(term)),
-  )?.niche;
-  if (primaryTitleMatch) {
-    return {
-      niche: primaryTitleMatch,
-      confidence: "medium",
-      evidence: "title",
-      automatic: false,
-    };
-  }
-
-  const titleMatches = matchingNiches(text);
-  if (titleMatches.length === 1) {
-    return {
-      niche: titleMatches[0],
-      confidence: "medium",
-      evidence: "title",
-      automatic: false,
-    };
-  }
-  if (titleMatches.length > 1) {
-    return {
-      niche: "general",
-      confidence: "low",
-      evidence: "conflict",
       automatic: false,
     };
   }
@@ -511,6 +604,24 @@ export function classifyProductNicheDecision(
     evidence: "unclassified",
     automatic: false,
   };
+}
+
+export function classifyProductNicheDecision(
+  title: string,
+  category?: string | null,
+): ProductNicheDecision {
+  const decision = decideProductNiche(title, category);
+  const text = normalize(title);
+  const matchedTerms = [
+    ...new Set(
+      [
+        ...RULES,
+        ...EXPLICIT_AUTOMATIC_RULES,
+        { niche: "fashion" as const, terms: EXPLICIT_FASHION_TERMS },
+      ].flatMap((rule) => rule.terms.filter((term) => matchesTerm(text, term))),
+    ),
+  ];
+  return { ...decision, version: PRODUCT_CLASSIFIER_VERSION, matchedTerms };
 }
 
 export function productNicheLabel(niche: ProductNiche): string {

@@ -56,7 +56,12 @@ async function getOrCreateAwinSource(): Promise<string> {
 }
 
 export async function runAwinDiscovery(
-  input: { query?: string; category?: string; limit: number; correlationId?: string },
+  input: {
+    query?: string;
+    category?: string;
+    limit: number;
+    correlationId?: string;
+  },
   logger: Logger,
 ): Promise<AwinDiscoveryResult> {
   const adapter = new AwinAdapter();
@@ -102,7 +107,7 @@ export async function runAwinDiscovery(
       const capturedAt = new Date().toISOString();
       const discountPercent = product.previousPriceCents
         ? ((product.previousPriceCents - product.currentPriceCents) /
-          product.previousPriceCents) *
+            product.previousPriceCents) *
           100
         : null;
 
@@ -181,7 +186,11 @@ export async function runAwinDiscovery(
     } catch (error) {
       result.failed += 1;
       logger.warn(
-        { err: error, externalId: product.externalId, correlationId: input.correlationId },
+        {
+          err: error,
+          externalId: product.externalId,
+          correlationId: input.correlationId,
+        },
         "Awin product processing failed",
       );
     }

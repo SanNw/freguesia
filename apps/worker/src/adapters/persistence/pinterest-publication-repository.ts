@@ -16,13 +16,25 @@ class PinterestPublicationRepository {
         (id, offer_id, board_id, idempotency_key, title, description, image_url, affiliate_url, status)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'publishing')
        ON CONFLICT DO NOTHING RETURNING id`,
-      [input.id, input.offerId, input.boardId, input.idempotencyKey, input.title,
-        input.description, input.imageUrl, input.affiliateUrl],
+      [
+        input.id,
+        input.offerId,
+        input.boardId,
+        input.idempotencyKey,
+        input.title,
+        input.description,
+        input.imageUrl,
+        input.affiliateUrl,
+      ],
     );
     return rows.length === 1;
   }
 
-  async markPublished(id: string, externalId: string, externalUrl: string): Promise<void> {
+  async markPublished(
+    id: string,
+    externalId: string,
+    externalUrl: string,
+  ): Promise<void> {
     await db.query(
       `UPDATE pinterest_publications SET status = 'published', external_id = $1,
        external_url = $2, published_at = NOW(), updated_at = NOW() WHERE id = $3`,
@@ -39,4 +51,5 @@ class PinterestPublicationRepository {
   }
 }
 
-export const pinterestPublicationRepository = new PinterestPublicationRepository();
+export const pinterestPublicationRepository =
+  new PinterestPublicationRepository();

@@ -70,7 +70,10 @@ function discountShare(product: AwinFeedProduct): number {
   if (!product.previousPriceCents || product.previousPriceCents <= 0) {
     return -1;
   }
-  return (product.previousPriceCents - product.currentPriceCents) / product.previousPriceCents;
+  return (
+    (product.previousPriceCents - product.currentPriceCents) /
+    product.previousPriceCents
+  );
 }
 
 export function selectFeedOffers(
@@ -102,7 +105,10 @@ export function selectFeedOffers(
   }
 
   const selected: AwinFeedProduct[] = [];
-  while (selected.length < poolSize && [...byMerchant.values()].some((items) => items.length)) {
+  while (
+    selected.length < poolSize &&
+    [...byMerchant.values()].some((items) => items.length)
+  ) {
     for (const items of byMerchant.values()) {
       const product = items.shift();
       if (product) selected.push(product);
@@ -116,8 +122,13 @@ export async function loadAwinFeed(
   path = process.env.AWIN_FEED_PATH,
 ): Promise<AwinFeedProduct[]> {
   if (!path) throw new Error("AWIN_FEED_PATH is not configured");
-  const paths = path.split(",").map((value) => value.trim()).filter(Boolean);
-  const feeds = await Promise.all(paths.map((feedPath) => readFile(feedPath, "utf8")));
+  const paths = path
+    .split(",")
+    .map((value) => value.trim())
+    .filter(Boolean);
+  const feeds = await Promise.all(
+    paths.map((feedPath) => readFile(feedPath, "utf8")),
+  );
   return feeds.flatMap(parseAwinFeed);
 }
 

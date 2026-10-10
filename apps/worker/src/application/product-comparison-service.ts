@@ -108,9 +108,7 @@ export class ProductComparisonService {
       ],
     };
   }
-  async comparisonSuggestions(
-    offerId: string,
-  ): Promise<{
+  async comparisonSuggestions(offerId: string): Promise<{
     left: string;
     title: string;
     choices: Array<{ query: string; label: string }>;

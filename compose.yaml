@@ -51,6 +51,7 @@ services:
       retries: 3
 
   worker:
+    image: ${FREGUESIA_WORKER_IMAGE:-freguesia-worker}
     build:
       context: ./apps/worker
     restart: unless-stopped

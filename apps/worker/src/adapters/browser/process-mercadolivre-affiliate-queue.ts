@@ -101,18 +101,25 @@ async function main() {
       try {
         links = await generateLinks(details.map((item) => item.canonicalUrl));
         if (links.length !== details.length) {
-          throw new Error(`Expected ${details.length} affiliate links, received ${links.length}`);
+          throw new Error(
+            `Expected ${details.length} affiliate links, received ${links.length}`,
+          );
         }
       } catch (error) {
-        console.warn(`${error instanceof Error ? error.message : error}; retrying individually`);
+        console.warn(
+          `${error instanceof Error ? error.message : error}; retrying individually`,
+        );
         links = [];
         for (const detail of details) {
           try {
             const individual = await generateLinks([detail.canonicalUrl]);
-            if (individual.length !== 1) throw new Error("Expected one affiliate link");
+            if (individual.length !== 1)
+              throw new Error("Expected one affiliate link");
             links.push(individual[0]);
           } catch (individualError) {
-            console.error(`Affiliate link failed for ${detail.id}: ${individualError instanceof Error ? individualError.message : individualError}`);
+            console.error(
+              `Affiliate link failed for ${detail.id}: ${individualError instanceof Error ? individualError.message : individualError}`,
+            );
             links.push("");
             failed++;
           }
@@ -127,7 +134,9 @@ async function main() {
             body: JSON.stringify({ affiliateUrl: links[index] }),
           });
         } catch (error) {
-          console.error(`Affiliate completion failed for ${detail.id}: ${error instanceof Error ? error.message : error}`);
+          console.error(
+            `Affiliate completion failed for ${detail.id}: ${error instanceof Error ? error.message : error}`,
+          );
           failed++;
         }
       }

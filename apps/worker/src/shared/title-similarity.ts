@@ -46,9 +46,12 @@ const DEFAULT_MMR_CONFIG = {
  * Logarithmic recency decay: fresh items keep boost ~1.0, older items decay
  * towards a floor of 0.3. Items without a timestamp are treated as neutral (1.0).
  */
-export function recencyBoost(publishedAt: Date | string | null | undefined): number {
+export function recencyBoost(
+  publishedAt: Date | string | null | undefined,
+): number {
   if (!publishedAt) return 1.0;
-  const date = publishedAt instanceof Date ? publishedAt : new Date(publishedAt);
+  const date =
+    publishedAt instanceof Date ? publishedAt : new Date(publishedAt);
   const time = date.getTime();
   if (!Number.isFinite(time)) return 1.0;
   const ageDays = (Date.now() - time) / (1000 * 60 * 60 * 24);
@@ -75,7 +78,10 @@ export function mmrSelect<T>(
   };
   if (candidates.length <= targetCount) return [...candidates];
 
-  const maxSimAgainstSelected = (item: T, selected: RankedItem<T>[]): number => {
+  const maxSimAgainstSelected = (
+    item: T,
+    selected: RankedItem<T>[],
+  ): number => {
     let maxSim = 0;
     for (const sel of selected) {
       const sim = titleSimilarity(getTitle(item), getTitle(sel.item));

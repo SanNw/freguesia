@@ -98,12 +98,12 @@ describe("product niche routing", () => {
   });
 
   it.each([
-    ["Mouse sem fio", "Celulares e Telefones > Acessórios", "electronics"],
-    ["Notebook gamer", "Informática > Notebooks", "hardware"],
-    ["Perfume importado", "Roupas e Acessórios > Moda Feminina", "fashion"],
-    ["Smartwatch esportivo", "Esportes e Fitness > Corrida", "general"],
+    ["Mouse sem fio", "Celulares e Telefones > Acessórios", "hardware"],
+    ["Notebook gamer", "Informática > Notebooks", "electronics"],
+    ["Perfume importado", "Roupas e Acessórios > Moda Feminina", "beauty"],
+    ["Smartwatch esportivo", "Esportes e Fitness > Corrida", "electronics"],
   ])(
-    "prioritizes the official root category %s",
+    "prioritizes a specific product over a broad category %s",
     (title, category, expected) => {
       expect(classifyProductNiche(title, category)).toBe(expected);
     },
@@ -114,7 +114,7 @@ describe("product niche routing", () => {
       classifyProductNiche(
         "Kit 10 Pote De Vidro Marmita Hermética 370ml Freezer Fit",
       ),
-    ).toBe("general");
+    ).toBe("home_kitchen");
   });
 
   it("marks an official category path as safe for automatic routing", () => {
@@ -123,48 +123,62 @@ describe("product niche routing", () => {
         "Kit 10 Potes para freezer",
         "Casa, Moveis e Decoracao > Cozinha > Potes",
       ),
-    ).toEqual({
+    ).toMatchObject({
       niche: "home_kitchen",
       confidence: "high",
-      evidence: "official_category",
+      evidence: "title",
       automatic: true,
     });
   });
 
-  it("routes conflicting title evidence to the safe general channel", () => {
+  it("recognizes freezer as the intended use of a storage pot", () => {
     expect(
       classifyProductNicheDecision("Kit pote organizador para freezer"),
-    ).toEqual({
-      niche: "general",
-      confidence: "low",
-      evidence: "conflict",
-      automatic: false,
+    ).toMatchObject({
+      niche: "home_kitchen",
+      confidence: "high",
+      evidence: "title",
+      automatic: true,
     });
   });
 
-  it("keeps a single title rule reviewable", () => {
-    expect(classifyProductNicheDecision("SSD NVMe 1 TB")).toEqual({
+  it("automates a specific hardware product without requiring a category", () => {
+    expect(classifyProductNicheDecision("SSD NVMe 1 TB")).toMatchObject({
       niche: "hardware",
-      confidence: "medium",
+      confidence: "high",
       evidence: "title",
-      automatic: false,
+      automatic: true,
     });
   });
 
   it.each([
-    ["Tênis Nike Free Metcon 6 Masculino", "Masculino > Calçados > Tênis", "fashion"],
+    [
+      "Tênis Nike Free Metcon 6 Masculino",
+      "Masculino > Calçados > Tênis",
+      "fashion",
+    ],
     ["Mop Shark Steam Vapor 110V", null, "home_kitchen"],
     ["Secador Shark SpeedStyle - Cacheados e Crespos 110V", null, "beauty"],
-    ["Attracione Men (Perfume Masculino com Feromônios Ativados)", null, "beauty"],
-  ])("automatically routes observed obvious item %s", (title, category, niche) => {
-    expect(classifyProductNicheDecision(title, category)).toMatchObject({
-      niche,
-      confidence: "high",
-      automatic: true,
-    });
-  });
+    [
+      "Attracione Men (Perfume Masculino com Feromônios Ativados)",
+      null,
+      "beauty",
+    ],
+  ])(
+    "automatically routes observed obvious item %s",
+    (title, category, niche) => {
+      expect(classifyProductNicheDecision(title, category)).toMatchObject({
+        niche,
+        confidence: "high",
+        automatic: true,
+      });
+    },
+  );
 
   it("keeps unclear items for review", () => {
-    expect(classifyProductNicheDecision("150 Bolinhas Transparentes Extras").automatic).toBe(false);
+    expect(
+      classifyProductNicheDecision("150 Bolinhas Transparentes Extras")
+        .automatic,
+    ).toBe(false);
   });
 });

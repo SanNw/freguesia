@@ -117,8 +117,7 @@ export async function runLomadeeDiscovery(
       );
       if (
         duplicate &&
-        localDate(duplicate.createdAt) ===
-          localDate(new Date().toISOString())
+        localDate(duplicate.createdAt) === localDate(new Date().toISOString())
       ) {
         recordSkip(result, "duplicate_today");
         continue;
@@ -248,7 +247,6 @@ export async function runLomadeeDiscovery(
       });
       result.created += 1;
       result.offerIds.push(offerId);
-
     } catch (error) {
       result.failed += 1;
       logger.warn(

@@ -1,7 +1,15 @@
 import { db } from "./db.js";
 import { calculatePriceDropPercent } from "../../domain/price.js";
 import type { Offer } from "../../domain/offer.js";
-import type { ProductNiche } from "../../domain/product-niche.js";
+import {
+  classifyProductNicheDecision,
+  type ProductNiche,
+} from "../../domain/product-niche.js";
+import { selectPublicationCandidate } from "../../domain/publication-variety.js";
+import {
+  normalizeProductTitle,
+  validatedGtin,
+} from "../../domain/product-identity.js";
 
 export class OfferRepository {
   async insertOffer(offer: {
@@ -177,29 +185,85 @@ export class OfferRepository {
     return rows.length === 1;
   }
 
-    async findNextScheduled(): Promise<Offer | null> {
-        const rows = await db.query(
-            `SELECT o.id, o.product_id, o.source_observation_id, o.status, o.score, o.discount_percent,
+  async findManualNicheForProduct(
+    productId: string,
+  ): Promise<ProductNiche | null> {
+    const identity = await db.query<{ gtin: string | null }>(
+      `SELECT gtin FROM products WHERE id = $1`,
+      [productId],
+    );
+    const gtin = validatedGtin(identity[0]?.gtin);
+    const rows = await db.query<{ publication_niche: ProductNiche }>(
+      `SELECT o.publication_niche FROM offers o
+       JOIN products previous ON previous.id = o.product_id
+       JOIN products current ON current.id = $1
+       WHERE o.publication_niche_source = 'manual'
+         AND o.publication_niche IS NOT NULL AND o.status <> 'rejected'
+         AND ((previous.source_id = current.source_id AND previous.external_id = current.external_id)
+           OR ($2::text IS NOT NULL AND previous.gtin ~ '^([0-9]{8}|[0-9]{12}|[0-9]{13}|[0-9]{14})$'
+             AND LPAD(previous.gtin, 14, '0') = $2))
+       ORDER BY o.updated_at DESC LIMIT 1`,
+      [productId, gtin],
+    );
+    return rows[0]?.publication_niche ?? null;
+  }
+
+  async findNextScheduled(): Promise<Offer | null> {
+    const rows = await db.query(
+      `SELECT o.id, o.product_id, o.source_observation_id, o.status, o.score, o.discount_percent,
                o.affiliate_url, o.affiliate_provider, o.image_url, o.additional_image_urls,
                o.coupon_code, o.coupon_description, o.proposed_caption,
                o.publication_niche, o.publication_niche_source, o.rejection_reason,
-               o.expires_at, o.idempotency_key, o.created_at, o.updated_at
+               o.expires_at, o.idempotency_key, o.created_at, o.updated_at,
+               p.title AS product_title, p.category AS product_category
               FROM offers o
               JOIN products p ON p.id = o.product_id
               WHERE o.status IN ('scheduled', 'approved')
                 AND (o.expires_at IS NULL OR o.expires_at > NOW())
               ORDER BY o.created_at ASC
-              LIMIT 1`,
-            []
-        );
-        return rows[0] ? this.mapRow(rows[0]) : null;
-    }
+              LIMIT 100`,
+      [],
+    );
+    if (!rows.length) return null;
+    const history = await db.query<{
+      niche: ProductNiche;
+      last_published: string;
+    }>(
+      `SELECT o.publication_niche AS niche, MAX(p.published_at)::text AS last_published
+           FROM publications p JOIN offers o ON o.id = p.offer_id
+           WHERE p.status = 'published' AND o.publication_niche IS NOT NULL
+           GROUP BY o.publication_niche`,
+    );
+    const selected = selectPublicationCandidate(
+      rows.map((row) => ({
+        id: String(row.id),
+        niche:
+          (row.publication_niche as ProductNiche | null) ??
+          classifyProductNicheDecision(
+            String(row.product_title),
+            row.product_category as string | null,
+          ).niche,
+        score: Number(row.score),
+        createdAt: new Date(row.created_at as string).toISOString(),
+        row,
+      })),
+      Object.fromEntries(history.map((row) => [row.niche, row.last_published])),
+    );
+    return selected ? this.mapRow(selected.row) : null;
+  }
 
   async wasRecentlyPublished(
     offerId: string,
     cooldownHours: number,
     minPriceDropPercent: number,
   ): Promise<boolean> {
+    const identity = await db.query<{ title: string; gtin: string | null }>(
+      `SELECT p.title, p.gtin FROM products p JOIN offers o ON o.product_id = p.id WHERE o.id = $1`,
+      [offerId],
+    );
+    if (!identity.length) return false;
+    const normalizedTitle = normalizeProductTitle(identity[0].title);
+    const gtin = validatedGtin(identity[0].gtin);
     const rows = await db.query<{
       current_price_cents: number;
       previous_price_cents: number;
@@ -209,7 +273,14 @@ export class OfferRepository {
        FROM offers current_offer
        JOIN products current_product ON current_product.id = current_offer.product_id
        JOIN price_observations current_price ON current_price.id = current_offer.source_observation_id
-       JOIN products previous_product ON previous_product.normalized_title = current_product.normalized_title
+       JOIN products previous_product ON
+         (previous_product.source_id = current_product.source_id AND previous_product.external_id = current_product.external_id)
+         OR (previous_product.normalized_title = $3 AND $3 <> '')
+         OR ($3 <> '' AND TRIM(REGEXP_REPLACE(
+           TRANSLATE(LOWER(previous_product.title), 'áàâãäéèêëíìîïóòôõöúùûüç', 'aaaaaeeeeiiiiooooouuuuc'),
+           '[^a-z0-9]+', ' ', 'g')) = $3)
+         OR ($4::text IS NOT NULL AND previous_product.gtin ~ '^([0-9]{8}|[0-9]{12}|[0-9]{13}|[0-9]{14})$'
+             AND LPAD(previous_product.gtin, 14, '0') = $4)
        JOIN offers previous_offer ON previous_offer.product_id = previous_product.id
        JOIN price_observations previous_price ON previous_price.id = previous_offer.source_observation_id
        JOIN publications publication ON publication.offer_id = previous_offer.id
@@ -219,7 +290,7 @@ export class OfferRepository {
          AND publication.published_at >= NOW() - ($2 * INTERVAL '1 hour')
        ORDER BY publication.published_at DESC
        LIMIT 1`,
-      [offerId, cooldownHours],
+      [offerId, cooldownHours, normalizedTitle, gtin],
     );
     return (
       rows.length > 0 &&

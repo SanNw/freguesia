@@ -58,7 +58,10 @@ export async function requestChannelApproval(
     "Canal precisa de confirmação",
     `Sugestão: ${productNicheLabel(decision.niche)}`,
     `Confiança: ${confidenceLabel[decision.confidence]}`,
-    `Evidência: ${decision.evidence}`,
+    `Motivo: ${{ official_category: "categoria reconhecida", category: "categoria genérica", title: "descrição do produto", explicit_general: "produto de ofertas gerais", manual_history: "escolha anterior para este produto", conflict: "indícios de mais de um canal", unclassified: "tipo de produto ainda não reconhecido" }[decision.evidence]}`,
+    decision.matchedTerms?.length
+      ? `Termos: ${decision.matchedTerms.join(", ")}`
+      : "",
     "",
     offer.proposedCaption || `Oferta: ${product.title}`,
   ].join("\n");

@@ -7,7 +7,6 @@ import { AppError } from "../../shared/errors.js";
 import { resilientFetch } from "../../shared/http-client.js";
 import { mmrSelect, applyRecencyBoost } from "../../shared/title-similarity.js";
 
-
 const LOMADEE_BASE_URL =
   process.env.LOMADEE_BASE_URL || "https://api.lomadee.com.br";
 const LOMADEE_API_KEY = process.env.LOMADEE_API_KEY;
@@ -204,11 +203,9 @@ export class LomadeeAdapter implements SourceAdapter {
 
     const boosted = applyRecencyBoost(candidates);
 
-    const selected = mmrSelect<LomadeeProduct>(
-      boosted,
-      input.limit ?? 20,
-      { getTitle: (product) => product.name },
-    ).map((candidate) => candidate.item);
+    const selected = mmrSelect<LomadeeProduct>(boosted, input.limit ?? 20, {
+      getTitle: (product) => product.name,
+    }).map((candidate) => candidate.item);
 
     return selected.map((product) => {
       this.productCache.set(product.url, product);

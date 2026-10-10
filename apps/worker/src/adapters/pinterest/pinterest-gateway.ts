@@ -14,23 +14,28 @@ export interface PinterestPinInput {
 export class PinterestGateway {
   constructor(private readonly logger: Logger) {}
 
-  async createPin(input: PinterestPinInput): Promise<{ id: string; url: string }> {
-    const response = await fetch(`${env.PINTEREST_API_BASE_URL.replace(/\/$/, "")}/pins`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${env.PINTEREST_ACCESS_TOKEN}`,
-        "Content-Type": "application/json",
+  async createPin(
+    input: PinterestPinInput,
+  ): Promise<{ id: string; url: string }> {
+    const response = await fetch(
+      `${env.PINTEREST_API_BASE_URL.replace(/\/$/, "")}/pins`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${env.PINTEREST_ACCESS_TOKEN}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          board_id: input.boardId,
+          title: input.title,
+          description: input.description,
+          link: input.link,
+          alt_text: input.altText,
+          media_source: { source_type: "image_url", url: input.imageUrl },
+        }),
+        signal: AbortSignal.timeout(env.PINTEREST_REQUEST_TIMEOUT_MS),
       },
-      body: JSON.stringify({
-        board_id: input.boardId,
-        title: input.title,
-        description: input.description,
-        link: input.link,
-        alt_text: input.altText,
-        media_source: { source_type: "image_url", url: input.imageUrl },
-      }),
-      signal: AbortSignal.timeout(env.PINTEREST_REQUEST_TIMEOUT_MS),
-    });
+    );
     const body = (await response.json().catch(() => ({}))) as {
       id?: string;
       code?: number;

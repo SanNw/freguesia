@@ -2,6 +2,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const query = vi.fn();
 
+vi.mock("../../src/config/runtime.js", () => ({ telegramEnv: {} }));
+
 vi.mock("../../src/adapters/persistence/db.js", () => ({
   db: { query },
 }));
@@ -11,6 +13,26 @@ const { OfferRepository } =
 
 describe("offer publication routing persistence", () => {
   beforeEach(() => vi.clearAllMocks());
+
+  it("does not use an invalid GTIN to reuse a manual choice across stores", async () => {
+    query
+      .mockResolvedValueOnce([{ gtin: "4006381333932" }])
+      .mockResolvedValueOnce([]);
+    expect(
+      await new OfferRepository().findManualNicheForProduct("product-1"),
+    ).toBeNull();
+    expect(query.mock.calls[1][1]).toEqual(["product-1", null]);
+  });
+
+  it("passes a checksum-verified canonical GTIN for channel reuse", async () => {
+    query
+      .mockResolvedValueOnce([{ gtin: "4006381333931" }])
+      .mockResolvedValueOnce([{ publication_niche: "hardware" }]);
+    expect(
+      await new OfferRepository().findManualNicheForProduct("product-1"),
+    ).toBe("hardware");
+    expect(query.mock.calls[1][1]).toEqual(["product-1", "04006381333931"]);
+  });
 
   it("maps a persisted manual publication niche", async () => {
     query.mockResolvedValue([

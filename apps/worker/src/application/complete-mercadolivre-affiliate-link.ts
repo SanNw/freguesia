@@ -64,8 +64,19 @@ export async function completeMercadoLivreAffiliateLink(
     },
     data.discount_percent == null ? null : Number(data.discount_percent),
   );
-  if (!(await offerRepository.completeAffiliateLink(offerId, affiliateUrl, caption))) {
-    throw new AppError("INVALID_STATE", "Offer expired before affiliate completion", false, 409);
+  if (
+    !(await offerRepository.completeAffiliateLink(
+      offerId,
+      affiliateUrl,
+      caption,
+    ))
+  ) {
+    throw new AppError(
+      "INVALID_STATE",
+      "Offer expired before affiliate completion",
+      false,
+      409,
+    );
   }
   logger.info({ offerId }, "Mercado Livre affiliate link completed");
   return { offerId, status: "scheduled" };

@@ -7,6 +7,7 @@ const updateStatus = vi.fn();
 const transitionStatus = vi.fn();
 const setPublicationNiche = vi.fn();
 const wasRecentlyPublished = vi.fn();
+const findManualNicheForProduct = vi.fn();
 const getProductById = vi.fn();
 const classifyProductNicheDecision = vi.fn();
 const publishOffer = vi.fn();
@@ -25,6 +26,7 @@ vi.mock("../../src/adapters/persistence/offer-repository.js", () => ({
     findNextScheduled,
     setPublicationNiche,
     wasRecentlyPublished,
+    findManualNicheForProduct,
     transitionStatus,
     updateStatus,
   },
@@ -34,6 +36,7 @@ vi.mock("../../src/adapters/persistence/product-repository.js", () => ({
 }));
 vi.mock("../../src/domain/product-niche.js", () => ({
   classifyProductNicheDecision,
+  PRODUCT_CLASSIFIER_VERSION: "2.0.0",
 }));
 vi.mock("../../src/application/publish-offer.js", () => ({ publishOffer }));
 vi.mock("../../src/application/request-channel-approval.js", () => ({
@@ -61,6 +64,7 @@ describe("scheduled offer processing", () => {
     });
     setPublicationNiche.mockResolvedValue(true);
     wasRecentlyPublished.mockResolvedValue(false);
+    findManualNicheForProduct.mockResolvedValue(null);
     transitionStatus.mockResolvedValue(true);
     updateStatus.mockResolvedValue(undefined);
     publishOffer.mockResolvedValue({ status: "published", messageId: 1 });
@@ -115,6 +119,23 @@ describe("scheduled offer processing", () => {
     expect(result).toBe("idle");
   });
 
+  it("keeps the repost cooldown after a manual channel choice", async () => {
+    findNextScheduled.mockResolvedValue({
+      id: "offer-1",
+      productId: "product-1",
+      status: "scheduled",
+      publicationNiche: "hardware",
+      publicationNicheSource: "manual",
+    });
+    wasRecentlyPublished.mockResolvedValue(true);
+    const result = await processNextScheduledOffer({
+      debug: vi.fn(),
+      warn: vi.fn(),
+    } as never);
+    expect(result).toBe("idle");
+    expect(publishOffer).not.toHaveBeenCalled();
+  });
+
   it("also drains offers left in the approved status", async () => {
     findNextScheduled.mockResolvedValue({
       id: "offer-1",
@@ -136,6 +157,26 @@ describe("scheduled offer processing", () => {
       ["approved"],
     );
     expect(publishOffer).toHaveBeenCalledOnce();
+  });
+
+  it("reuses a verified previous channel choice without asking again", async () => {
+    findManualNicheForProduct.mockResolvedValue("home_kitchen");
+    classifyProductNicheDecision.mockReturnValue({
+      niche: "general",
+      automatic: false,
+    });
+    const result = await processNextScheduledOffer({
+      debug: vi.fn(),
+      warn: vi.fn(),
+    } as never);
+    expect(result).toBe("published");
+    expect(setPublicationNiche).toHaveBeenCalledWith(
+      "offer-1",
+      "home_kitchen",
+      "classifier",
+      ["scheduled"],
+    );
+    expect(requestChannelApproval).not.toHaveBeenCalled();
   });
 
   it("returns an uncertain scheduled offer to channel approval", async () => {

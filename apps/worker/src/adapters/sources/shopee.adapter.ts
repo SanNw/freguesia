@@ -45,10 +45,7 @@ interface ShopeeApiResponse {
 }
 
 export type ShopeeReadinessReason =
-  | "disabled"
-  | "credentials_missing"
-  | "api_url_missing"
-  | "ready";
+  "disabled" | "credentials_missing" | "api_url_missing" | "ready";
 
 export function shopeeReadiness(config: {
   enabled: boolean;
@@ -78,7 +75,9 @@ export function shopeeAuthorization(
 
 function cents(value: string | undefined): number | null {
   const parsed = Number(value);
-  return Number.isFinite(parsed) && parsed > 0 ? Math.round(parsed * 100) : null;
+  return Number.isFinite(parsed) && parsed > 0
+    ? Math.round(parsed * 100)
+    : null;
 }
 
 function previousPrice(current: number, discount: number | undefined) {
@@ -219,7 +218,11 @@ export class ShopeeAdapter implements SourceAdapter {
     const found = await this.discover({ query: product.externalId, limit: 10 });
     const match = found.find((item) => item.externalId === product.externalId);
     if (!match) {
-      throw new AppError("SOURCE_UNAVAILABLE", "Shopee product not found", true);
+      throw new AppError(
+        "SOURCE_UNAVAILABLE",
+        "Shopee product not found",
+        true,
+      );
     }
     const extracted = await this.extract({ url: new URL(match.canonicalUrl) });
     return {

@@ -30,5 +30,7 @@ export function isUnchangedPrice(
   lastSeenPriceCents: number | null,
   currentPriceCents: number,
 ): boolean {
-  return lastSeenPriceCents !== null && lastSeenPriceCents === currentPriceCents;
+  return (
+    lastSeenPriceCents !== null && lastSeenPriceCents === currentPriceCents
+  );
 }

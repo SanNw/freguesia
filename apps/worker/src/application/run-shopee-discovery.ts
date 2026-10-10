@@ -6,10 +6,7 @@ import { offerRepository } from "../adapters/persistence/offer-repository.js";
 import { ShopeeAdapter } from "../adapters/sources/shopee.adapter.js";
 import { validateOffer } from "./validate-offer.js";
 import { scoreOffer } from "./score.js";
-import {
-  generateIdempotencyKey,
-  isUnchangedPrice,
-} from "./offer-helpers.js";
+import { generateIdempotencyKey, isUnchangedPrice } from "./offer-helpers.js";
 import { buildCaption } from "./create-manual-offer.js";
 
 export interface ShopeeDiscoveryInput {

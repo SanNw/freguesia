@@ -6,6 +6,7 @@ import { mercadoLivreEnv as env } from "../../config/runtime.js";
 import { AppError } from "../../shared/errors.js";
 import { resilientFetch } from "../../shared/http-client.js";
 import { getMercadoLivreAccessToken } from "../mercadolivre/oauth.js";
+import { mercadoLivreDiscoveryQuery } from "../../domain/mercadolivre-discovery-plan.js";
 import type {
   DiscoveredProduct,
   DiscoveryInput,
@@ -108,7 +109,9 @@ export class MercadoLivreAdapter implements SourceAdapter {
       );
       if (response.status !== 429 || attempt === 2) break;
       const retryAfter = Number(response.headers.get("retry-after")) * 1000;
-      await sleep(Math.max(1000 * 2 ** attempt, retryAfter || 0) + Math.random() * 250);
+      await sleep(
+        Math.max(1000 * 2 ** attempt, retryAfter || 0) + Math.random() * 250,
+      );
     }
     if (!response.ok) {
       const detail = await response.text();
@@ -126,12 +129,15 @@ export class MercadoLivreAdapter implements SourceAdapter {
 
   async discover(input: DiscoveryInput): Promise<DiscoveredProduct[]> {
     const limit = Math.min(input.limit ?? 20, 50);
-    const products = input.category
-      ? await this.productsFromHighlights(input.category, limit)
-      : await this.searchCatalogProducts(
-          input.query ?? "smartphone",
-          limit * 3,
-        );
+    const query =
+      input.query ??
+      (input.category
+        ? mercadoLivreDiscoveryQuery(input.category)
+        : "smartphone");
+    const products =
+      input.category && !query
+        ? await this.productsFromHighlights(input.category, limit)
+        : await this.searchCatalogProducts(query ?? "smartphone", limit * 3);
     const candidates: SearchResult[] = [];
 
     for (const product of products) {
@@ -225,10 +231,14 @@ export class MercadoLivreAdapter implements SourceAdapter {
     return products;
   }
 
-  private async fetchCategoryPath(categoryId: string | undefined): Promise<string | null> {
+  private async fetchCategoryPath(
+    categoryId: string | undefined,
+  ): Promise<string | null> {
     if (!categoryId) return null;
     try {
-      const category = await this.api<CategoryPathResponse>(`/categories/${categoryId}`);
+      const category = await this.api<CategoryPathResponse>(
+        `/categories/${categoryId}`,
+      );
       if (category.path_from_root && category.path_from_root.length > 0) {
         return category.path_from_root.map((c) => c.name).join(" > ");
       }

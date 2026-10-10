@@ -109,8 +109,7 @@ export async function runAliExpressDiscovery(
       );
       if (
         duplicate &&
-        localDate(duplicate.createdAt) ===
-          localDate(new Date().toISOString())
+        localDate(duplicate.createdAt) === localDate(new Date().toISOString())
       ) {
         skip("duplicate_today");
         continue;

@@ -97,19 +97,16 @@ export class AwinAdapter implements SourceAdapter {
       url?: string;
     };
     const payload = (await resp.json()) as
-      | Promotion[]
-      | { data?: Promotion[]; promotions?: Promotion[] };
+      Promotion[] | { data?: Promotion[]; promotions?: Promotion[] };
     const data = Array.isArray(payload)
       ? payload
       : payload.data || payload.promotions || [];
 
-    return data
-      .slice(0, limit)
-      .map((item) => ({
-        externalId: String(item.promotionId),
-        canonicalUrl: item.urlTracking || item.url || "",
-        title: item.title,
-      }));
+    return data.slice(0, limit).map((item) => ({
+      externalId: String(item.promotionId),
+      canonicalUrl: item.urlTracking || item.url || "",
+      title: item.title,
+    }));
   }
 
   async extract({ url }: { url: URL }): Promise<ExtractedProduct> {
@@ -220,7 +217,10 @@ export class AwinAdapter implements SourceAdapter {
 
     const advertiserId = advertiserIds()[0];
     if (!advertiserId) {
-      return { status: "unsupported", reason: "Awin advertiser not configured" };
+      return {
+        status: "unsupported",
+        reason: "Awin advertiser not configured",
+      };
     }
 
     try {

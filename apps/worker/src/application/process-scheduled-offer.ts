@@ -2,7 +2,11 @@ import { offerRepository } from "../adapters/persistence/offer-repository.js";
 import { productRepository } from "../adapters/persistence/product-repository.js";
 import type { Logger } from "../config/logger.js";
 import { publicationEnv as env } from "../config/runtime.js";
-import { classifyProductNicheDecision } from "../domain/product-niche.js";
+import {
+  classifyProductNicheDecision,
+  type ProductNicheDecision,
+  PRODUCT_CLASSIFIER_VERSION,
+} from "../domain/product-niche.js";
 import { AppError } from "../shared/errors.js";
 import { publishOffer } from "./publish-offer.js";
 import { requestChannelApproval } from "./request-channel-approval.js";
@@ -22,12 +26,11 @@ export async function processNextScheduledOffer(
     if (!offer) return "idle";
 
     if (
-      offer.publicationNicheSource !== "manual" &&
-      (await offerRepository.wasRecentlyPublished(
+      await offerRepository.wasRecentlyPublished(
         offer.id,
         env.REPOST_COOLDOWN_HOURS,
         env.REPOST_MIN_PRICE_DROP_PERCENT,
-      ))
+      )
     ) {
       await offerRepository.transitionStatus(
         offer.id,
@@ -48,10 +51,18 @@ export async function processNextScheduledOffer(
           422,
         );
       }
-      const decision = classifyProductNicheDecision(
-        product.title,
-        product.category,
+      const previousChoice = await offerRepository.findManualNicheForProduct(
+        offer.productId,
       );
+      const decision: ProductNicheDecision = previousChoice
+        ? {
+            niche: previousChoice,
+            automatic: true,
+            confidence: "high",
+            evidence: "manual_history",
+            version: PRODUCT_CLASSIFIER_VERSION,
+          }
+        : classifyProductNicheDecision(product.title, product.category);
       if (!decision.automatic) {
         const queuedForApproval = await offerRepository.transitionStatus(
           offer.id,
@@ -79,6 +90,10 @@ export async function processNextScheduledOffer(
         [offer.status],
       );
       if (!persisted) return "idle";
+      logger.info?.(
+        { offerId: offer.id, decision, previousChoice },
+        "Product channel classified",
+      );
     }
 
     await publishOffer(offer.id, `scheduled:${offer.id}`, logger);

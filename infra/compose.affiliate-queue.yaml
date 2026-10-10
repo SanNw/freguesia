@@ -1,0 +1,27 @@
+# Optional authenticated Mercado Livre link generator.
+# Requires mercadolivre-affiliate.json in the shared browser_auth volume.
+# docker compose -f compose.yaml -f infra/compose.affiliate-queue.yaml up -d affiliate-queue
+services:
+  affiliate-queue:
+    image: ${FREGUESIA_WORKER_IMAGE:-freguesia-worker}
+    restart: unless-stopped
+    depends_on:
+      worker:
+        condition: service_healthy
+    env_file:
+      - ./.env
+    environment:
+      WORKER_LOCAL_URL: http://worker:3001
+      MERCADOLIVRE_AFFILIATE_LOCAL_AUTH_DIR: /app/data/auth
+      DISPLAY: ":99"
+    volumes:
+      - browser_auth:/app/data/auth
+    networks: [internal]
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        Xvfb :99 -screen 0 1280x720x24 -nolisten tcp -ac &
+        while true; do
+          node dist/adapters/browser/process-mercadolivre-affiliate-queue.js
+          sleep 120
+        done
