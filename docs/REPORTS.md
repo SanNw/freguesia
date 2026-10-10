@@ -43,3 +43,9 @@ Falhas de rede durante o envio podem acontecer depois de o Telegram aceitar a me
 As comissões pendentes podem mudar depois do envio. O relatório registra a situação consultada naquele momento, não uma promessa de pagamento.
 
 Uma recusa explícita do Telegram (por exemplo, o administrador ainda não enviou `/start`) libera a reserva para uma nova tentativa. Isso é diferente de um timeout: na recusa, a API informa que não entregou a mensagem.
+# Atividade do assistente
+
+Os relatórios incluem novos usuários (primeiro `/start`), alertas criados e notificações com entrega confirmada ou incerta. A consulta usa o mesmo período fechado em Brasília das métricas financeiras, com início inclusivo e fim exclusivo. Notificações são agrupadas pela criação da tentativa e pelo status conhecido na consulta; envios incertos não são somados às entregas confirmadas. Um alerta reativado não conta como nova criação. Falhas de consulta aparecem como indisponibilidade, nunca como zero.
+
+Esses indicadores não representam cliques, compras nem usuários ativos. Comparações realizadas e crescimento dos canais ainda exigem coleta específica; não há histórico retroativo inventado.
+

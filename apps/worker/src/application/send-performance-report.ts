@@ -43,7 +43,18 @@ async function collect(period: ReportPeriod, logger: Logger) {
       }
     }),
   );
-  return { publications: await repository.publications(period), sources };
+  const botActivity = await repository.botActivity(period).catch(() => {
+    logger.warn(
+      { periodStart: period.startDate },
+      "Bot activity metrics unavailable",
+    );
+    return null;
+  });
+  return {
+    publications: await repository.publications(period),
+    sources,
+    botActivity,
+  };
 }
 
 export async function buildPerformanceReport(

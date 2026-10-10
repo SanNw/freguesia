@@ -27,10 +27,17 @@ export interface SourceMetrics {
   topProducts: Array<{ title: string; units: number }>;
   notes: string[];
 }
+export interface BotActivity {
+  newUsers: number;
+  watchesCreated: number;
+  notificationsSent: number;
+  notificationsUnknown: number;
+}
 export interface PerformanceReport {
   period: ReportPeriod;
   publications: Array<{ channel: string; count: number }>;
   sources: SourceMetrics[];
+  botActivity?: BotActivity | null;
   previous?: {
     publications: Array<{ channel: string; count: number }>;
     sources: SourceMetrics[];
@@ -250,6 +257,22 @@ export function formatPerformanceReport(report: PerformanceReport): string {
     );
     for (const row of report.publications)
       lines.push(`| ${richText(row.channel)} | ${row.count} |`);
+  }
+  if (report.botActivity) {
+    const activity = report.botActivity;
+    lines.push(
+      "",
+      "## 🤖 Atividade do bot",
+      "",
+      "| Indicador no período | Total |",
+      "| --- | ---: |",
+      `| Novos usuários | ${activity.newUsers} |`,
+      `| Alertas criados | ${activity.watchesCreated} |`,
+      `| Notificações confirmadas | ${activity.notificationsSent} |`,
+      `| Envios incertos | ${activity.notificationsUnknown} |`,
+    );
+  } else if (report.botActivity === null) {
+    lines.push("", "Atividade do bot indisponível; não equivale a zero.");
   }
   const products = available
     .flatMap((source) =>

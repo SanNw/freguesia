@@ -7,6 +7,7 @@ import {
 import type {
   PerformanceReport,
   ReportPeriod,
+  BotActivity,
 } from "../../domain/performance-report.js";
 
 export const performanceReportsSchema = `CREATE TABLE IF NOT EXISTS performance_reports (
@@ -23,6 +24,29 @@ export const performanceReportsSchema = `CREATE TABLE IF NOT EXISTS performance_
 )`;
 
 export const performanceReportRepository = {
+  async botActivity(period: ReportPeriod): Promise<BotActivity> {
+    const rows = await db.query<{
+      new_users: string;
+      watches_created: string;
+      notifications_sent: string;
+      notifications_unknown: string;
+    }>(
+      `SELECT
+      (SELECT COUNT(*) FROM shopper_users WHERE started_at >= $1 AND started_at < $2) AS new_users,
+      (SELECT COUNT(*) FROM product_watches WHERE created_at >= $1 AND created_at < $2) AS watches_created,
+      (SELECT COUNT(*) FROM product_watch_notifications WHERE status = 'sent' AND created_at >= $1 AND created_at < $2) AS notifications_sent,
+      (SELECT COUNT(*) FROM product_watch_notifications WHERE status = 'unknown' AND created_at >= $1 AND created_at < $2) AS notifications_unknown`,
+      [period.startIso, period.endExclusiveIso],
+    );
+    const row = rows[0];
+    if (!row) throw new Error("Bot activity query returned no result");
+    return {
+      newUsers: Number(row.new_users),
+      watchesCreated: Number(row.watches_created),
+      notificationsSent: Number(row.notifications_sent),
+      notificationsUnknown: Number(row.notifications_unknown),
+    };
+  },
   async publications(
     period: ReportPeriod,
   ): Promise<Array<{ channel: string; count: number }>> {

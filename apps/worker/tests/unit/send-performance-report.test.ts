@@ -18,6 +18,12 @@ vi.mock(
   () => ({
     performanceReportRepository: {
       publications: async () => [{ channel: "Moda", count: 3 }],
+      botActivity: async () => ({
+        newUsers: 4,
+        watchesCreated: 7,
+        notificationsSent: 3,
+        notificationsUnknown: 2,
+      }),
       reserve: async (key: string) => {
         if (state.reserved.has(key)) return false;
         state.reserved.add(key);
@@ -78,6 +84,12 @@ beforeEach(() => {
 });
 
 describe("private report delivery", () => {
+  it("delivers the collected bot activity in the private report", async () => {
+    await sendPerformanceReport("weekly", logger, now);
+    expect(state.messages[0]?.text).toContain(
+      "| Notificações confirmadas | 3 |",
+    );
+  });
   it("allows a new attempt after Telegram explicitly refuses the message", async () => {
     state.rejectSend = true;
     await expect(sendPerformanceReport("monthly", logger, now)).rejects.toThrow(

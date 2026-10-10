@@ -38,6 +38,35 @@ describe("report calendar periods in Sao Paulo", () => {
 });
 
 describe("report presentation", () => {
+  it("does not display a failed bot metrics query as measured zero", () => {
+    const text = formatPerformanceReport({
+      period: getReportPeriod("weekly", new Date("2026-10-09T12:00:00Z")),
+      publications: [],
+      sources: [],
+      botActivity: null,
+    });
+    expect(text).toContain(
+      "Atividade do bot indisponível; não equivale a zero.",
+    );
+    expect(text).not.toContain("| Novos usuários | 0 |");
+  });
+  it("includes measured bot activity without treating uncertain sends as delivered", () => {
+    const text = formatPerformanceReport({
+      period: getReportPeriod("weekly", new Date("2026-10-09T12:00:00Z")),
+      publications: [],
+      sources: [],
+      botActivity: {
+        newUsers: 4,
+        watchesCreated: 7,
+        notificationsSent: 3,
+        notificationsUnknown: 2,
+      },
+    });
+    expect(text).toContain("| Novos usuários | 4 |");
+    expect(text).toContain("| Alertas criados | 7 |");
+    expect(text).toContain("| Notificações confirmadas | 3 |");
+    expect(text).toContain("| Envios incertos | 2 |");
+  });
   it("distinguishes missing metrics from measured zero and keeps currencies separate", () => {
     const sources: SourceMetrics[] = [
       {
