@@ -25,7 +25,7 @@ export interface ProductNicheDecision {
   matchedTerms?: string[];
 }
 
-export const PRODUCT_CLASSIFIER_VERSION = "2.0.0";
+export const PRODUCT_CLASSIFIER_VERSION = "2.0.1";
 
 const RULES: Array<{ niche: ProductNiche; terms: string[] }> = [
   {
@@ -92,6 +92,8 @@ const RULES: Array<{ niche: ProductNiche; terms: string[] }> = [
       "televisao",
       "soundbar",
       "caixa de som",
+      "caixinha de som",
+      "caixa som",
       "fone",
       "headphone",
       "smartwatch",
@@ -432,7 +434,9 @@ function decideProductNiche(
   if (
     GENERAL_ONLY_TERMS.some((term) => matchesTerm(text, term)) ||
     /\b(boneca|brinquedo|cachorro|gato|pet)\b/.test(text) ||
-    /\bmonitor de pressao\b/.test(text)
+    /\bmonitor de pressao\b/.test(text) ||
+    (/\b(shampoo|cera|pretinho)\b/.test(text) &&
+      /\b(automotiv[oa]s?|carros?|pneus?)\b/.test(text))
   ) {
     return {
       niche: "general",
@@ -468,6 +472,12 @@ function decideProductNiche(
       text = text.replace(/\bbolsa\b/g, " ");
   }
   if (matchesTerm(text, "mousepad")) text = text.replace(/\btapetes?\b/g, " ");
+  if (
+    /^(caixa(?: caixinha)?|caixinha) (?:de )?som\b/.test(text) &&
+    !/\be (pendrive|pen drive)\b/.test(text)
+  ) {
+    text = text.replace(/\b(pendrive|pen drive)\b/g, " ");
+  }
   if (/\b(potes?|marmita|organizador)\b/.test(text)) {
     text = text.replace(/\b(?:para |de )?freezer\b/g, " ");
   }

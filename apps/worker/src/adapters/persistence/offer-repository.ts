@@ -158,7 +158,7 @@ export class OfferRepository {
     const rows = await db.query<{ id: string }>(
       `UPDATE offers
        SET status = 'expired', rejection_reason = 'Offer expired before publication', updated_at = NOW()
-       WHERE status IN ('scheduled', 'approved')
+       WHERE status IN ('scheduled', 'approved', 'needs_affiliate_link')
          AND expires_at IS NOT NULL AND expires_at <= NOW()
        RETURNING id`,
     );

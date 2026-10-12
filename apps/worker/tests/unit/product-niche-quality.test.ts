@@ -37,6 +37,18 @@ describe("editorial routing regression set", () => {
     ["1000 Peças Bolsa Elástico De Cabelo Feminino", "beauty"],
     ["Creatina Hardcore 300g", "general"],
     ["Kit Flores Enfeite Árvore de Natal", "home_kitchen"],
+    [
+      "Caixa Caixinha De Som Bluetooth Potente Pendrive Fm Sd Portatil Ipx6",
+      "electronics",
+    ],
+    ["Caixinha de som Bluetooth com entrada para pen drive", "electronics"],
+    ["Caixa som Bluetooth portatil", "electronics"],
+    [
+      "Kit Shampoo V-Floc Cera Tok Final Pneu Pretinho Restaurax Vonixx",
+      "general",
+    ],
+    ["Shampoo automotivo para carro", "general"],
+    ["Shampoo anticaspa para cabelos oleosos", "beauty"],
   ])("routes clear product %s automatically", (title, niche) => {
     expect(classify(title)).toMatchObject({ niche, automatic: true });
   });
@@ -62,6 +74,7 @@ describe("editorial routing regression set", () => {
     "Kit jogo de taças e liquidificador",
     "Mesa gamer com suporte de monitor",
     "Kit notebook e geladeira",
+    "Caixa de som e pendrive 64GB",
   ])("keeps ambiguous or mixed product %s reviewable", (title) => {
     expect(classify(title).automatic).toBe(false);
   });
