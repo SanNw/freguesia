@@ -1,3 +1,5 @@
+name: freguesia
+
 services:
   postgres:
     image: postgres:17-alpine
@@ -11,8 +13,8 @@ services:
       N8N_DB_PASSWORD: ${DB_POSTGRESDB_PASSWORD:-change-me}
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
-      - ./database/init-n8n-db.sh:/docker-entrypoint-initdb.d/02-init-n8n-db.sh:ro
+      - ${FREGUESIA_RUNTIME_ROOT:-.}/database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      - ${FREGUESIA_RUNTIME_ROOT:-.}/database/init-n8n-db.sh:/docker-entrypoint-initdb.d/02-init-n8n-db.sh:ro
     networks: [internal]
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-freguesia}"]
@@ -30,7 +32,7 @@ services:
       - ./.env
     volumes:
       - n8n_data:/home/node/.n8n
-      - ./n8n/workflows:/home/node/.n8n/workflows
+      - ${FREGUESIA_RUNTIME_ROOT:-.}/n8n/workflows:/home/node/.n8n/workflows
     environment:
       N8N_WORKFLOW_FOLDER: /home/node/.n8n/workflows
       N8N_BLOCK_ENV_ACCESS_IN_NODE: "false"
@@ -45,7 +47,7 @@ services:
       EXECUTIONS_DATA_MAX_AGE: ${N8N_EXECUTIONS_DATA_MAX_AGE:-168}
     networks: [internal]
     healthcheck:
-      test: ["CMD-SHELL", "node -e \"require('http').get('http://localhost:5678/healthz',r=>{process.exit(r.statusCode===200?0:1)}).on('error',()=>process.exit(1))\""]
+      test: ["CMD", "wget", "-q", "-T", "5", "-O", "/dev/null", "http://127.0.0.1:5678/healthz"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -53,7 +55,7 @@ services:
   worker:
     image: ${FREGUESIA_WORKER_IMAGE:-freguesia-worker}
     build:
-      context: ./apps/worker
+      context: ${FREGUESIA_WORKER_BUILD_CONTEXT:-./apps/worker}
     restart: unless-stopped
     depends_on:
       postgres:
@@ -100,7 +102,7 @@ services:
       - browser_auth:/app/data/auth
       - worker_traces:/app/data/traces
       - worker_screenshots:/app/data/screenshots
-      - ./data/awin:/app/data/awin:ro
+      - ${FREGUESIA_RUNTIME_ROOT:-.}/data/awin:/app/data/awin:ro
     ports:
       - "127.0.0.1:3001:3001"
     networks: [internal]
@@ -119,7 +121,7 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - ./infra/Caddyfile.dev:/etc/caddy/Caddyfile:ro
+      - ${FREGUESIA_RUNTIME_ROOT:-.}/infra/Caddyfile.dev:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
       - caddy_config:/config
     networks: [internal]

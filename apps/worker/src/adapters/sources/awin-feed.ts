@@ -126,10 +126,13 @@ export async function loadAwinFeed(
     .split(",")
     .map((value) => value.trim())
     .filter(Boolean);
-  const feeds = await Promise.all(
-    paths.map((feedPath) => readFile(feedPath, "utf8")),
-  );
-  return feeds.flatMap(parseAwinFeed);
+  const products: AwinFeedProduct[] = [];
+  for (const feedPath of paths) {
+    for (const product of parseAwinFeed(await readFile(feedPath, "utf8"))) {
+      products.push(product);
+    }
+  }
+  return products;
 }
 
 function parseAwinFeed(text: string): AwinFeedProduct[] {
